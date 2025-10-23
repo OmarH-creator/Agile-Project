@@ -1,0 +1,14 @@
+# === Node (React frontend) ===
+frontend/node_modules/
+frontend/build/
+frontend/.env
+
+# === Java (Spring Boot backend) ===
+Backend/backend/target/
+Backend/backend/.idea/
+Backend/backend/.vscode/
+
+# === General ===
+.DS_Store
+.vscode/
+*.log
