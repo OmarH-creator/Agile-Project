@@ -1,0 +1,104 @@
+/* Admin Dashboard specific styles */
+
+/* Root shell layout: topbar + sidebar + main */
+.shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: 56px 1fr;
+  height: 100vh;
+}
+
+/* Topbar */
+.topbar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  background: #4b64b3; /* blue bar similar to screenshot */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.brand-mini { display: flex; align-items: center; gap: 10px; }
+.mini-logo { width: 28px; height: 28px; border-radius: 50%; background: #fff; object-fit: contain; }
+.brand-text { font-weight: 600; font-size: 15px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.icon-btn { background: transparent; border: 0; color: #eaf0ff; padding: 6px; border-radius: 8px; cursor: pointer; }
+.icon-btn:hover { background: rgba(255,255,255,0.12); }
+.badge { display: inline-block; font-size: 10px; background: #f59e0b; color: #1e2a3a; border-radius: 10px; padding: 0 6px; margin-right: 6px; vertical-align: middle; }
+
+/* Sidebar */
+.sidebar {
+  grid-column: 1;
+  grid-row: 2;
+  background: #1f2937; /* dark */
+  color: #cbd5e1;
+  padding: 16px 12px;
+}
+.sidebar-user { display: flex; align-items: center; gap: 12px; padding: 10px; }
+.avatar { width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #4b64b3 0%, #89a4ff 100%); box-shadow: inset 0 0 0 3px rgba(255,255,255,0.12); display: grid; place-items: center; overflow: hidden; }
+.avatar-ico { color: #ffffff; display: grid; place-items: center; }
+.avatar-ico svg { width: 28px; height: 28px; }
+.user-name { font-weight: 600; color: #e2e8f0; }
+.side-nav { margin-top: 16px; display: grid; gap: 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; color: inherit; text-decoration: none; }
+.nav-item:hover { background: rgba(255,255,255,0.06); }
+.nav-item.active { background: rgba(255,255,255,0.1); color: #fff; }
+.nav-ico { color: #9fb3ff; display: grid; place-items: center; }
+
+/* Main content area */
+.main {
+  grid-column: 2;
+  grid-row: 2;
+  overflow: auto;
+  background: #f5f7fb;
+}
+.content { padding: 24px; }
+
+/* Page header block */
+.page-header { background: #eef2f8; border: 1px solid #e3e9f5; border-radius: 10px; margin: 20px 24px 16px; padding: 16px 20px; }
+.page-title { display: flex; align-items: center; gap: 12px; }
+.page-title-ico { width: 28px; height: 28px; display: grid; place-items: center; color: #7393F2; background: #eaf0ff; border-radius: 8px; }
+.page-header h2 { margin: 0; font-size: 22px; font-weight: 700; color: #1e2a3a; }
+.page-sub { margin: 2px 0 0; color: #64748b; font-size: 14px; }
+
+/* Grid of wide, horizontal cards */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 24px 28px;
+}
+
+/* Card */
+.card {
+  background: #f7faff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(20, 40, 80, 0.04), 0 1px 3px rgba(20, 40, 80, 0.04);
+  border: 1px solid #e9eef7;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  height: 140px; /* landscape feel */
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(20, 40, 80, 0.08), 0 2px 6px rgba(20, 40, 80, 0.06); }
+.card-title { display: flex; align-items: center; justify-content: space-between; padding: 22px 24px; height: 100%; }
+.card-heading { font-size: 18px; font-weight: 600; color: #1f2a3a; }
+.card-subtitle { margin-top: 6px; font-size: 13px; color: #7b8aa0; }
+.card-icon { width: 56px; height: 56px; display: grid; place-items: center; color: #7393F2; background: #eef3ff; border-radius: 12px; }
+
+/* Legacy centered header (hidden in new layout, kept for test text by class) */
+.admin-header, .brand, .brand-logo { display: none; }
+.brand-title { /* still present in topbar, so keep typography */ font-size: 15px; font-weight: 600; }
+
+/* Responsiveness */
+@media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .card { height: 130px; } .card-title{ padding: 20px; } }
+@media (max-width: 640px) { 
+  .shell { grid-template-columns: 0 1fr; }
+  .sidebar { display: none; }
+  .grid { grid-template-columns: 1fr; gap: 14px; padding: 0 16px 20px; }
+  .card { height: 120px; }
+  .card-title{ padding: 18px; }
+  .card-heading{ font-size: 18px; }
+  .card-icon{ width: 48px; height: 48px; }
+}
