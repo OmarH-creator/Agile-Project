@@ -1,3 +1,5 @@
+import {jwtDecode} from 'jwt-decode';
+
 export async function login(email, password) {
   const response = await fetch("http://localhost:8080/api/auth/login", {
     method: "POST",
@@ -10,4 +12,24 @@ export async function login(email, password) {
     throw new Error("Invalid credentials");
   }
   return await response.json(); // { token: ... }
+}
+
+export function isAuthenticated() {
+  const token = localStorage.getItem('token');
+  if (!token) return false;
+
+  try {
+    const decoded = jwtDecode(token);
+    // exp in JWT is in seconds, Date.now() gives ms
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+      // Token has expired
+      localStorage.removeItem('token');
+      return false;
+    }
+    return true;
+  } catch (e) {
+    // Invalid token
+    localStorage.removeItem('token');
+    return false;
+  }
 }

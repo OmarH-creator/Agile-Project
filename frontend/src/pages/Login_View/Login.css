@@ -81,6 +81,22 @@
   font-weight: 700;
   box-shadow: 0 2px 8px 0 rgba(40, 94, 199, 0.09);
 }
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #279e82;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .login-button:hover {
   background: #22427c;
 }

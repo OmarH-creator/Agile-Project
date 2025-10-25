@@ -26,30 +26,27 @@ function FloatingLabelInput({ id, type, label, value, setValue }) {
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (event) => {
-    event.preventDefault();
-    try {
-      if(email && password){
-      const data = await login(email, password); // you call the API here
+  event.preventDefault();
+  setIsLoading(true); // Start loading
+  try {
+    await new Promise(res => setTimeout(res, 2000));
+    if (email && password) {
+      const data = await login(email, password);
       localStorage.setItem("token", data.token);
       console.log(data.token);
-      // continue to dashboard or show success
-      // Confetti everywhere!
-      confetti({
-        particleCount: 200,
-        spread: 150,
-        origin: { y: 0.6 }
-        
-      });
-    }
-    else{
+      confetti({ particleCount: 200, spread: 150, origin: { y: 0.6 } });
+    } else {
       alert("fill all fields!");
     }
-    } catch (err) {
-      alert(err.message);
-    }
-  };
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    setIsLoading(false); // Stop loading (success or error)
+  }
+};
 
   return (
     <div className="login-split-container">
@@ -83,9 +80,10 @@ function Login() {
             value={password}
             setValue={setPassword}
           />
-          <button type="submit" onClick={handleLogin}  className="login-button">
-            Login
-          </button>
+        <button type="submit" onClick={handleLogin} className="login-button" disabled={isLoading}>
+          {isLoading ? <span className="loader"></span> : "Login"}
+        </button>
+
           <div className="login-footer">
             <span className="login-remember">
               <input type="checkbox" id="remember" />
