@@ -1,12 +1,9 @@
+import AppRoutes from './routes/AppRoutes';
 import './App.css';
 import AdminDashboard from './components/AdminDashboard';
 
 function App() {
-  return (
-    <div className="App">
-      <AdminDashboard />
-    </div>
-  );
+  return <AppRoutes />;
 }
 
 export default App;
