@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"
 import "./Login.css";
 import Illust from '../../assets/loginimage.png';
 import confetti from 'canvas-confetti';
@@ -27,6 +28,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (event) => {
   event.preventDefault();
@@ -38,6 +40,7 @@ function Login() {
       localStorage.setItem("token", data.token);
       console.log(data.token);
       confetti({ particleCount: 200, spread: 150, origin: { y: 0.6 } });
+      navigate("/Admin");
     } else {
       alert("fill all fields!");
     }

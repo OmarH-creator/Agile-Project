@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import './AdminDashboard.css';
-import umsLogo from '../UMS Logo.png';
+import umsLogo from '../../assets/UMS Logo.png';
 
 // Simple inline SVG icons for a clean, dependency-free UI
 const Icon = {
