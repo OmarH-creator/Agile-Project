@@ -1,0 +1,73 @@
+{
+  "version": "CESS-bylaw-2018",
+  "notes": [
+    "CSE491 requires standing (>=130 CH) rather than a specific course.",
+    "Electives (EL3/EL4) show 'varies' because prerequisites depend on the chosen course outline."
+  ],
+  "courses": [
+    {"code":"CSE111","title":"Logic Design","semester":3,"prerequisites":[]},
+    {"code":"CSE131","title":"Computer Programming","semester":3,"prerequisites":[]},
+    {"code":"PHM113","title":"Differential & Partial Differential Equations","semester":3,"prerequisites":["PHM013"]},
+    {"code":"EPM118","title":"Electrical & Electronic Circuits","semester":3,"prerequisites":["PHM022"]},
+    {"code":"EPM211","title":"Properties of Electrical Materials","semester":3,"prerequisites":["PHM022"]},
+    {"code":"ASU112","title":"Report Writing & Communication Skills","semester":3,"prerequisites":[]},
+
+    {"code":"CSE112","title":"Computer Organization & Architecture","semester":4,"prerequisites":["CSE111","CSE131"]},
+    {"code":"CSE231","title":"Advanced Computer Programming","semester":4,"prerequisites":["CSE131"]},
+    {"code":"CSE334","title":"Software Engineering","semester":4,"prerequisites":["CSE131"]},
+    {"code":"PHM111","title":"Probability & Statistics","semester":4,"prerequisites":["PHM013"]},
+    {"code":"PHM114","title":"Numerical Analysis","semester":4,"prerequisites":["PHM113"]},
+    {"code":"ASU-EL1","title":"ASU Elective (1)","semester":4,"prerequisites":[]},
+
+    {"code":"CSE312","title":"Electronic Design Automation","semester":5,"prerequisites":["CSE112"]},
+    {"code":"CSE335","title":"Operating Systems","semester":5,"prerequisites":["CSE112"]},
+    {"code":"CSE232","title":"Advanced Software Engineering","semester":5,"prerequisites":["CSE334"]},
+    {"code":"CSE331","title":"Data Structures & Algorithms","semester":5,"prerequisites":["CSE231"]},
+    {"code":"PHM211","title":"Discrete Mathematics","semester":5,"prerequisites":["PHM111","PHM113"]},
+    {"code":"ECE251","title":"Signals & Systems Fundamentals","semester":5,"prerequisites":["PHM111","PHM113"]},
+
+    {"code":"CSE332","title":"Design & Analysis of Algorithms","semester":6,"prerequisites":["CSE331"]},
+    {"code":"CSE333","title":"Database Systems","semester":6,"prerequisites":["CSE331"]},
+    {"code":"CSE338","title":"Software Testing, Validation & Verification","semester":6,"prerequisites":["CSE232"]},
+    {"code":"CSE371","title":"Control Engineering","semester":6,"prerequisites":["ECE251"]},
+    {"code":"CSE439","title":"Design of Compilers","semester":6,"prerequisites":["CSE131"]},
+    {"code":"CSE472","title":"Artificial Intelligence","semester":6,"prerequisites":["CSE131","PHM211"]},
+
+    {"code":"CSE211","title":"Introduction to Embedded Systems","semester":7,"prerequisites":["CSE131"]},
+    {"code":"CSE233","title":"Agile Software Engineering","semester":7,"prerequisites":["CSE232"]},
+    {"code":"CSE351","title":"Computer Networks","semester":7,"prerequisites":["CSE335"]},
+    {"code":"EL3-1","title":"Level-3 Technical Elective (1)","semester":7,"prerequisites":["varies"]},
+    {"code":"EPM119","title":"Engineering Economy & Investments","semester":7,"prerequisites":[]},
+    {"code":"ASU114","title":"Selected Topics in Contemporary Issues","semester":7,"prerequisites":[]},
+    {"code":"ASU-EL2","title":"ASU Elective (2)","semester":7,"prerequisites":[]},
+
+    {"code":"CSE341","title":"Internet Programming","semester":8,"prerequisites":["CSE231"]},
+    {"code":"CSE354","title":"Distributed Computing","semester":8,"prerequisites":["CSE231","CSE351"]},
+    {"code":"CSE411","title":"Real-Time & Embedded Systems Design","semester":8,"prerequisites":["CSE211"]},
+    {"code":"CSE432","title":"Automata & Computability","semester":8,"prerequisites":["CSE332"]},
+    {"code":"EL3-2","title":"Level-3 Technical Elective (2)","semester":8,"prerequisites":["varies"]},
+    {"code":"EL3-3","title":"Level-3 Technical Elective (3)","semester":8,"prerequisites":["varies"]},
+    {"code":"ASU111","title":"Human Rights","semester":8,"prerequisites":[]},
+
+    {"code":"CSE336","title":"Software Design Patterns","semester":9,"prerequisites":["CSE232"]},
+    {"code":"CSE431","title":"Mobile Programming","semester":9,"prerequisites":["CSE341"]},
+    {"code":"CSE441","title":"Software Project Management","semester":9,"prerequisites":["CSE334"]},
+    {"code":"EL4-1","title":"Level-4 Technical Elective (1)","semester":9,"prerequisites":["varies"]},
+    {"code":"EL4-2","title":"Level-4 Technical Elective (2)","semester":9,"prerequisites":["varies"]},
+    {"code":"CSE491","title":"Graduation Project (1)","semester":9,"prerequisites":["standing>=130CH"]},
+
+    {"code":"CSE451","title":"Computer & Network Security","semester":10,"prerequisites":["CSE351"]},
+    {"code":"CSE455","title":"High-Performance Computing","semester":10,"prerequisites":["CSE112"]},
+    {"code":"EL4-3","title":"Level-4 Technical Elective (3)","semester":10,"prerequisites":["varies"]},
+    {"code":"EL4-4","title":"Level-4 Technical Elective (4)","semester":10,"prerequisites":["varies"]},
+    {"code":"CSE492","title":"Graduation Project (2)","semester":10,"prerequisites":["CSE491"]},
+    {"code":"ASU113","title":"Professional Ethics & Legislations","semester":10,"prerequisites":[]}
+  ]
+}
+
+
+219, 338, 346, 347, 348, 350, main building capacity 80
+911, 911A, 912, 913, 914, 914A, 921, 921A, 922, 923, 924, 924A, 931, 931A, 932, 933, 941, 941A, 942, 943, 944, 944A Credit building Capacity 60
+Hall 1, Hall 2, Hall 3, Hall 4, capacity 180 Credit building
+Hall A, Hall B, Hall C, Hall D, Capacity 180 Next to architecture building
+500,501,502,504,505 architecture building capacity 250

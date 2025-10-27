@@ -1,0 +1,333 @@
+:root {
+    --neo-bg: #e7e9f6;
+    --neo-surface: rgba(248, 250, 255, 0.95);
+    --neo-shadow-dark: rgba(181, 190, 210, 0.8);
+    --neo-shadow-light: rgba(255, 255, 255, 0.95);
+    --neo-text: #1c2340;
+    --neo-muted: #6b7294;
+    --neo-accent: #6a7dff;
+    --neo-accent-strong: #4e63ff;
+}
+
+.curriculum-shell {
+    min-height: 100vh;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    background: radial-gradient(circle at 10% 20%, #fdf5ff 0%, #eaefff 40%, #dfe4f9 100%);
+    color: var(--neo-text);
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.curriculum-topline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px;
+    border-radius: 32px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(231, 237, 253, 0.82));
+    box-shadow: 18px 18px 34px var(--neo-shadow-dark), -18px -18px 34px var(--neo-shadow-light);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(24px);
+}
+
+.topline-brand {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.brand-logo-shell {
+    width: 80px;
+    height: 80px;
+    border-radius: 28px;
+    padding: 12px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(233, 238, 252, 0.85));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 12px 12px 24px rgba(175, 184, 205, 0.55), -12px -12px 24px rgba(255, 255, 255, 0.95);
+}
+
+.mini-logo {
+    width: 100%;
+    height: 100%;
+    border-radius: 22px;
+    object-fit: contain;
+    background: #fff;
+}
+
+.eyebrow {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--neo-muted);
+}
+
+.curriculum-topline h1 {
+    margin: 4px 0 6px;
+    font-size: 28px;
+}
+
+.curriculum-topline .sub {
+    margin: 0;
+    color: var(--neo-muted);
+}
+
+.curriculum-topline .meta {
+    display: flex;
+    align-items: flex-start;
+}
+
+.curriculum-topline .version {
+    padding: 8px 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    box-shadow: inset 6px 6px 12px rgba(183, 190, 208, 0.3), inset -6px -6px 12px rgba(255, 255, 255, 0.9);
+}
+
+.controls {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.controls input,
+.controls select {
+    border: none;
+    border-radius: 18px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: inset 6px 6px 12px rgba(183, 190, 208, 0.35), inset -6px -6px 12px rgba(255, 255, 255, 0.92);
+    min-width: 240px;
+    font-size: 14px;
+}
+
+.curriculum-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.semester-column {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(233, 238, 252, 0.82));
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 18px 18px 34px rgba(183, 190, 208, 0.55), -18px -18px 34px rgba(255, 255, 255, 0.95);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.semester-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.semester-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.semester-header span {
+    color: var(--neo-muted);
+    font-size: 13px;
+}
+
+.course-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.course-card {
+    padding: 18px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 12px 12px 24px rgba(183, 190, 208, 0.35), -12px -12px 24px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.course-card:hover,
+.course-card:focus-visible {
+    transform: translateY(-4px);
+    box-shadow: 16px 16px 28px rgba(183, 190, 208, 0.45), -16px -16px 28px rgba(255, 255, 255, 0.95);
+    outline: none;
+}
+
+.course-card.active {
+    border: 1px solid rgba(106, 125, 255, 0.45);
+    box-shadow: 18px 18px 36px rgba(106, 125, 255, 0.35), -18px -18px 36px rgba(255, 255, 255, 0.95);
+}
+
+.course-card header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.course-code {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--neo-accent-strong);
+    font-weight: 600;
+}
+
+.course-card h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.prerequisites {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.prereq-badge {
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: rgba(106, 125, 255, 0.12);
+    color: var(--neo-accent-strong);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.prereq-badge.none {
+    background: rgba(121, 205, 151, 0.25);
+    color: #1e7a4b;
+}
+
+.course-list .empty {
+    padding: 18px;
+    border-radius: 18px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--neo-muted);
+}
+
+.notes {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(235, 240, 255, 0.82));
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 18px 18px 34px rgba(183, 190, 208, 0.45), -18px -18px 34px rgba(255, 255, 255, 0.92);
+    padding: 24px 28px;
+}
+
+.notes h2 {
+    margin-top: 0;
+    font-size: 20px;
+}
+
+.notes ul {
+    margin: 12px 0 0;
+    padding-left: 20px;
+    display: grid;
+    gap: 10px;
+}
+
+.course-detail {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(233, 238, 252, 0.88));
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 22px 22px 40px rgba(183, 190, 208, 0.55), -22px -22px 40px rgba(255, 255, 255, 0.95);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.course-detail header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.course-detail .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+}
+
+.course-detail h3 {
+    margin-bottom: 6px;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--neo-muted);
+}
+
+.course-detail p,
+.course-detail ul {
+    margin: 0;
+    color: var(--neo-text);
+}
+
+.course-detail ul {
+    padding-left: 18px;
+    display: grid;
+    gap: 4px;
+}
+
+mark {
+    background: rgba(106, 125, 255, 0.35);
+    color: inherit;
+    border-radius: 6px;
+    padding: 0 2px;
+}
+
+.ghost-btn {
+    align-self: flex-start;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(235, 240, 255, 0.7));
+    color: var(--neo-accent-strong);
+    padding: 10px 18px;
+    border-radius: 16px;
+    font-weight: 600;
+    box-shadow: 8px 8px 18px rgba(180, 188, 210, 0.45), -8px -8px 18px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ghost-btn:hover {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 992px) {
+    .curriculum-shell {
+        padding: 24px;
+    }
+    .semester-column {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    .curriculum-shell {
+        padding: 18px;
+        gap: 20px;
+    }
+    .curriculum-topline {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    .controls input,
+    .controls select {
+        min-width: 100%;
+    }
+    .course-detail .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
