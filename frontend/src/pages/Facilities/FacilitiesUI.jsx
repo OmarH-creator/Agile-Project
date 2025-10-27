@@ -44,7 +44,6 @@ const hallClusters = [
         identifiers: ['500', '501', '502', '504', '505']
     }
 ];
-
 const formatHallName = (identifier) => {
     const trimmed = identifier.trim();
     if (/hall/i.test(trimmed)) {
@@ -57,7 +56,7 @@ const formatHallName = (identifier) => {
 };
 
 const hallSeed = hallClusters.flatMap((cluster) =>
-    cluster.identifiers.map((identifier, index) => {
+    cluster.identifiers.map((identifier) => {
         const name = formatHallName(identifier);
         const normalizedBuilding = cluster.building;
         const status = cluster.status || 'Available';
@@ -131,7 +130,11 @@ const scheduleSeed = [
 const hallTypes = ['Lecture Hall', 'Classroom', 'Auditorium', 'Grand Auditorium', 'Lab'];
 const hallStatuses = ['Available', 'Reserved', 'Under Maintenance'];
 const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+const SCHEDULE_START = '08:00';
+const SCHEDULE_END = '18:00';
+const SCHEDULE_STEP = 30;
+const MIN_EVENT_DISPLAY_MINUTES = 30;
+const SLOT_PIXEL_HEIGHT = 64;
 
 const hallPaletteByBuilding = {
     'Main Building': '#6a7dff',
@@ -142,6 +145,7 @@ const hallPaletteByBuilding = {
 
 const defaultHallForm = {
     name: '',
+    code: '',
     type: hallTypes[0],
     capacity: '',
     building: '',
@@ -157,10 +161,94 @@ const defaultBooking = {
     start: '09:00',
     end: '10:00'
 };
-
 const toMinutes = (time) => {
-    const [hours, mins] = time.split(':');
+    if (!time) return 0;
+    const [hours = '0', mins = '0'] = time.split(':');
     return Number(hours) * 60 + Number(mins);
+};
+
+const padTime = (value) => String(value).padStart(2, '0');
+
+const minutesToTime = (minutes) => {
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${padTime(hrs)}:${padTime(mins)}`;
+};
+
+const buildTimeline = (start, end, step) => {
+    const slots = [];
+    let cursor = toMinutes(start);
+    const endMinutes = toMinutes(end);
+    while (cursor <= endMinutes) {
+        const time = minutesToTime(cursor);
+        slots.push({
+            time,
+            label: cursor % 60 === 0 ? time : ''
+        });
+        cursor += step;
+    }
+    return slots;
+};
+
+const layoutDayEvents = (events, startBound, endBound) => {
+    const totalSpan = Math.max(endBound - startBound, 1);
+    const prepared = events
+        .map((event) => {
+            const start = toMinutes(event.start);
+            const end = toMinutes(event.end);
+            if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+                return null;
+            }
+            if (end <= startBound || start >= endBound) {
+                return null;
+            }
+            const clampedStart = Math.max(start, startBound);
+            const clampedEnd = Math.min(end, endBound);
+            const rawHeight = ((clampedEnd - clampedStart) / totalSpan) * 100;
+            const minHeight = Math.min((MIN_EVENT_DISPLAY_MINUTES / totalSpan) * 100, 100);
+            const top = ((clampedStart - startBound) / totalSpan) * 100;
+            const height = Math.min(Math.max(rawHeight, minHeight), 100 - top);
+            return {
+                event,
+                start,
+                end,
+                top,
+                height
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.start - b.start || a.end - b.end);
+
+    const laneEndTimes = [];
+    const withLane = prepared.map((item) => {
+        let laneIndex = laneEndTimes.findIndex((finish) => finish <= item.start);
+        if (laneIndex === -1) {
+            laneIndex = laneEndTimes.length;
+            laneEndTimes.push(item.end);
+        } else {
+            laneEndTimes[laneIndex] = item.end;
+        }
+        return { ...item, laneIndex };
+    });
+
+    return withLane.map((item, _, collection) => {
+        const overlaps = collection.filter((other) =>
+            other !== item && other.start < item.end && item.start < other.end
+        );
+        const lanes = new Set([item.laneIndex, ...overlaps.map((o) => o.laneIndex)]);
+        const columns = lanes.size || 1;
+        const ordered = Array.from(lanes).sort((a, b) => a - b);
+        const columnIndex = ordered.indexOf(item.laneIndex);
+        return {
+            ...item.event,
+            layout: {
+                top: item.top,
+                height: item.height,
+                columns,
+                columnIndex: columnIndex === -1 ? 0 : columnIndex
+            }
+        };
+    });
 };
 
 const hasConflict = (booking, list) =>
@@ -171,7 +259,6 @@ const hasConflict = (booking, list) =>
         toMinutes(item.start) < toMinutes(booking.end) &&
         toMinutes(booking.start) < toMinutes(item.end)
     );
-
 const Facilities = () => {
     const [halls, setHalls] = useState(hallSeed);
     const [hallQuery, setHallQuery] = useState('');
@@ -213,16 +300,14 @@ const Facilities = () => {
             acc[hall.building].capacity += Number(hall.capacity || 0);
             return acc;
         }, {});
+        const buildingRows = Object.entries(buildingSummary)
+            .map(([building, info]) => ({ building, ...info }))
+            .sort((a, b) => b.capacity - a.capacity);
         return {
             totalHalls: halls.length,
             totalCapacity,
             statusBreakdown,
-            buildingRows: Object.entries(buildingSummary)
-                .map(([building, info]) => ({
-                    building,
-                    ...info
-                }))
-                .sort((a, b) => b.capacity - a.capacity)
+            buildingRows
         };
     }, [halls]);
 
@@ -235,10 +320,52 @@ const Facilities = () => {
         });
     }, [requests, requestFilters]);
 
-    const scheduleWithConflicts = useMemo(() =>
-            schedule.map((event) => ({ ...event, conflict: hasConflict(event, schedule) })),
-        [schedule]);
+    const scheduleWindow = useMemo(() => ({
+        start: toMinutes(SCHEDULE_START),
+        end: toMinutes(SCHEDULE_END)
+    }), []);
 
+    const timelineSlots = useMemo(
+        () => buildTimeline(SCHEDULE_START, SCHEDULE_END, SCHEDULE_STEP),
+        []
+    );
+
+    const timelineHeight = useMemo(
+        () => Math.max((timelineSlots.length - 1) * SLOT_PIXEL_HEIGHT, SLOT_PIXEL_HEIGHT),
+        [timelineSlots]
+    );
+
+    const scheduleWithConflicts = useMemo(
+        () => schedule.map((event) => ({ ...event, conflict: hasConflict(event, schedule) })),
+        [schedule]
+    );
+
+    const filteredSchedule = useMemo(() => {
+        const base = calendarFilter === 'All'
+            ? scheduleWithConflicts
+            : scheduleWithConflicts.filter((event) => {
+                const hall = halls.find((h) => h.name === event.hall);
+                return hall ? hall.building === calendarFilter : false;
+            });
+
+        return [...base].sort((a, b) => {
+            const dayIndexA = daysOfWeek.indexOf(a.day);
+            const dayIndexB = daysOfWeek.indexOf(b.day);
+            if (dayIndexA !== dayIndexB) {
+                return dayIndexA - dayIndexB;
+            }
+            return toMinutes(a.start) - toMinutes(b.start);
+        });
+    }, [scheduleWithConflicts, calendarFilter, halls]);
+
+    const eventsByDay = useMemo(() => {
+        const grouped = {};
+        daysOfWeek.forEach((day) => {
+            const dayEvents = filteredSchedule.filter((event) => event.day === day);
+            grouped[day] = layoutDayEvents(dayEvents, scheduleWindow.start, scheduleWindow.end);
+        });
+        return grouped;
+    }, [filteredSchedule, scheduleWindow]);
     const openHallModal = (hall) => {
         if (hall) {
             setHallModal({ open: true, mode: 'edit', form: { ...hall }, id: hall.id });
@@ -249,21 +376,28 @@ const Facilities = () => {
 
     const submitHallForm = (e) => {
         e.preventDefault();
-        if (!hallModal.form.name || !hallModal.form.capacity || !hallModal.form.building) return;
-        const basePayload = {
+        const payload = {
             ...hallModal.form,
-            code: hallModal.form.code || hallModal.form.name,
-            capacity: Number(hallModal.form.capacity)
+            name: hallModal.form.name.trim(),
+            code: (hallModal.form.code || hallModal.form.name).trim(),
+            building: hallModal.form.building.trim(),
+            capacity: Number(hallModal.form.capacity || 0)
         };
-        if (hallModal.mode === 'edit') {
-            setHalls((prev) => prev.map((hall) => (hall.id === hallModal.id ? { ...hall, ...basePayload } : hall)));
+
+        if (!payload.name || !payload.building || payload.capacity <= 0) {
+            return;
+        }
+
+        if (hallModal.mode === 'edit' && hallModal.id) {
+            setHalls((prev) => prev.map((hall) => (hall.id === hallModal.id ? { ...hall, ...payload } : hall)));
         } else {
             const newHall = {
-                ...basePayload,
+                ...payload,
                 id: `H-${Math.floor(Math.random() * 900 + 100)}`
             };
             setHalls((prev) => [newHall, ...prev]);
         }
+
         setHallModal({ open: false, mode: 'add', form: defaultHallForm, id: null });
     };
 
@@ -273,28 +407,36 @@ const Facilities = () => {
         setDeletePrompt({ open: false, hall: null });
     };
 
-    const startRequestAction = (request, action) => {
+    const openRequestAction = (request, action) => {
         setRequestAction({ open: true, action, request, comment: '' });
     };
 
     const submitRequestAction = (e) => {
         e.preventDefault();
         if (!requestAction.request) return;
+
         const nextStatus = requestAction.action === 'approve' ? 'Approved' : 'Rejected';
-        setRequests((prev) => prev.map((req) => req.id === requestAction.request.id ? { ...req, status: nextStatus, comment: requestAction.comment } : req));
+        setRequests((prev) => prev.map((req) =>
+            req.id === requestAction.request.id
+                ? { ...req, status: nextStatus, comment: requestAction.comment }
+                : req
+        ));
+
         if (nextStatus === 'Approved') {
             setHalls((prev) => prev.map((hall) =>
                 hall.name === requestAction.request.hall ? { ...hall, status: 'Reserved' } : hall
             ));
         }
+
         setRequestAction({ open: false, action: 'approve', request: null, comment: '' });
     };
 
     const openBookingModal = (booking) => {
         if (booking) {
-            setBookingModal({ open: true, editing: booking.id, form: { ...booking } });
+            const { id, hall, course, faculty, day, start, end } = booking;
+            setBookingModal({ open: true, editing: id, form: { hall, course, faculty, day, start, end } });
         } else {
-            setBookingModal({ open: true, editing: null, form: { ...defaultBooking, hall: halls[0]?.name || '' } });
+            setBookingModal({ open: true, editing: null, form: { ...defaultBooking, hall: halls[0]?.name || defaultBooking.hall } });
         }
     };
 
@@ -304,13 +446,39 @@ const Facilities = () => {
             ...bookingModal.form,
             id: bookingModal.editing || `SCH-${Math.floor(Math.random() * 9000 + 1000)}`
         };
+
+        const startMinutes = toMinutes(payload.start);
+        const endMinutes = toMinutes(payload.end);
+
+        if (endMinutes <= startMinutes) {
+            alert('End time must be after the start time.');
+            return;
+        }
+
+        if (!daysOfWeek.includes(payload.day)) {
+            payload.day = daysOfWeek[0];
+        }
+
+        if (!payload.hall) {
+            payload.hall = halls[0]?.name || '';
+        }
+
         const conflict = hasConflict(payload, schedule);
         payload.conflict = conflict;
+
+        if (conflict) {
+            const proceed = window.confirm('This booking conflicts with another reservation for this hall. Save anyway?');
+            if (!proceed) {
+                return;
+            }
+        }
+
         if (bookingModal.editing) {
             setSchedule((prev) => prev.map((item) => (item.id === bookingModal.editing ? payload : item)));
         } else {
             setSchedule((prev) => [...prev, payload]);
         }
+
         setBookingModal({ open: false, editing: null, form: defaultBooking });
     };
 
@@ -319,16 +487,6 @@ const Facilities = () => {
         setSchedule((prev) => prev.filter((item) => item.id !== bookingModal.editing));
         setBookingModal({ open: false, editing: null, form: defaultBooking });
     };
-
-    const filteredSchedule = useMemo(() => {
-        if (calendarFilter === 'All') {
-            return scheduleWithConflicts;
-        }
-        return scheduleWithConflicts.filter((event) => {
-            const hall = halls.find((h) => h.name === event.hall);
-            return hall ? hall.building === calendarFilter : false;
-        });
-    }, [scheduleWithConflicts, calendarFilter, halls]);
 
     const getEventColor = (hallName) => {
         const hall = halls.find((h) => h.name === hallName);
@@ -340,7 +498,6 @@ const Facilities = () => {
         console.log(`Export to ${format} triggered`, filteredSchedule);
         alert(`Export to ${format} will be connected to the backend.`);
     };
-
     return (
         <div className="facilities-shell">
             <header className="facilities-topline" role="banner">
@@ -349,7 +506,7 @@ const Facilities = () => {
                         <img src={umsLogo} alt="UMS logo" className="mini-logo" />
                     </div>
                     <div>
-                        <p className="eyebrow">University Management  Admin</p>
+                        <p className="eyebrow">University Management - Admin</p>
                         <h1>Facilities Command Center</h1>
                         <p className="sub">Manage halls, approvals, and schedules in one glassy surface.</p>
                     </div>
@@ -402,7 +559,7 @@ const Facilities = () => {
                 <header className="section-head">
                     <div>
                         <h2>Hall Directory</h2>
-                        <p>Manage every hall, lab, and auditorium  create, edit, retire.</p>
+                        <p>Manage every hall, lab, and auditorium - create, edit, retire.</p>
                     </div>
                     <div className="filters">
                         <input
@@ -444,7 +601,7 @@ const Facilities = () => {
                   {hall.status}
                 </span>
               </span>
-                            <span className="resources">{hall.resources || ''}</span>
+                            <span className="resources">{hall.resources || '--'}</span>
                             <span className="row-actions">
                 <button onClick={() => openHallModal(hall)} aria-label={`Edit ${hall.name}`}>Edit</button>
                 <button onClick={() => setDeletePrompt({ open: true, hall })} aria-label={`Delete ${hall.name}`}>Delete</button>
@@ -458,7 +615,6 @@ const Facilities = () => {
                     )}
                 </div>
             </section>
-
             <section className="section-card">
                 <header className="section-head">
                     <div>
@@ -507,8 +663,8 @@ const Facilities = () => {
                 <span className={`status-pill status-${request.status.toLowerCase()}`}>{request.status}</span>
               </span>
                             <span className="row-actions">
-                <button onClick={() => startRequestAction(request, 'approve')} aria-label="Approve">Approve</button>
-                <button onClick={() => startRequestAction(request, 'reject')} aria-label="Reject">Reject</button>
+                <button onClick={() => openRequestAction(request, 'approve')} aria-label="Approve request">Approve</button>
+                <button onClick={() => openRequestAction(request, 'reject')} aria-label="Reject request">Reject</button>
               </span>
                         </div>
                     ))}
@@ -547,49 +703,88 @@ const Facilities = () => {
                     <span><i className="dot conflict" />Conflict</span>
                 </div>
 
-                <div className="schedule-grid" role="table">
-                    <div className="schedule-row schedule-head-row" role="row">
-                        <div className="time-cell" role="columnheader">Time</div>
+                <div className="schedule-grid" role="grid">
+                    <div className="schedule-grid-head" role="row">
+                        <div className="time-column head" role="columnheader">Time</div>
                         {daysOfWeek.map((day) => (
-                            <div className="day-cell" key={day} role="columnheader">{day}</div>
+                            <div className="day-column head" key={day} role="columnheader">{day}</div>
                         ))}
                     </div>
 
-                    {timeSlots.map((slot) => (
-                        <div className="schedule-row" key={slot} role="row">
-                            <div className="time-cell" role="rowheader">{slot}</div>
-                            {daysOfWeek.map((day) => {
-                                const eventsHere = filteredSchedule.filter((event) => event.day === day && event.start === slot);
-                                return (
-                                    <div className="day-cell" key={`${day}-${slot}`}>
-                                        {eventsHere.map((event) => (
-                                            <button
-                                                key={event.id}
-                                                className="calendar-event"
-                                                style={{ background: `linear-gradient(135deg, rgba(255,255,255,0.82), ${getEventColor(event.hall)})` }}
-                                                data-conflict={event.conflict}
-                                                onClick={() => openBookingModal(event)}
-                                            >
-                                                <strong>{event.course}</strong>
-                                                <span>{event.hall}</span>
-                                                <small>{event.start} - {event.end}</small>
-                                            </button>
-                                        ))}
-                                    </div>
-                                );
-                            })}
+                    <div className="schedule-grid-body" style={{ height: `${timelineHeight}px` }}>
+                        <div className="time-column" aria-hidden="true">
+                            {timelineSlots.slice(0, -1).map((slot) => (
+                                <div className="time-slot" key={slot.time}>
+                                    {slot.label ? <span>{slot.label}</span> : <span className="time-tick" />}
+                                </div>
+                            ))}
+                            <div className="time-slot time-slot-end">
+                                <span>{timelineSlots[timelineSlots.length - 1]?.time}</span>
+                            </div>
                         </div>
-                    ))}
+
+                        {daysOfWeek.map((day) => (
+                            <div className="day-column" key={day} role="gridcell">
+                                <div className="slot-stripes" aria-hidden="true">
+                                    {timelineSlots.slice(0, -1).map((slot, index) => (
+                                        <span className="slot-stripe" key={`${day}-stripe-${slot.time}-${index}`} />
+                                    ))}
+                                </div>
+
+                                {(eventsByDay[day] || []).map((event) => {
+                                    const layout = event.layout;
+                                    if (!layout) return null;
+
+                                    const widthPercent = 100 / layout.columns;
+                                    const leftPercent = widthPercent * layout.columnIndex;
+                                    const spacing = layout.columns > 1 ? 8 : 0;
+                                    const inset = 8;
+                                    const computedLeft = `calc(${leftPercent}% + ${(layout.columnIndex * spacing) + inset}px)`;
+                                    const computedWidth = `calc(${widthPercent}% - ${inset * 2 + spacing}px)`;
+
+                                    return (
+                                        <button
+                                            key={event.id}
+                                            className="calendar-event"
+                                            data-conflict={event.conflict}
+                                            style={{
+                                                top: `calc(${layout.top}% + 2px)`,
+                                                height: `calc(${layout.height}% - 4px)`,
+                                                left: computedLeft,
+                                                width: computedWidth,
+                                                background: `linear-gradient(145deg, rgba(255,255,255,0.85), ${getEventColor(event.hall)})`
+                                            }}
+                                            title={`${event.course} - ${event.hall} - ${event.start} - ${event.end}`}
+                                            onClick={() => openBookingModal(event)}
+                                        >
+                                            <strong>{event.course}</strong>
+                                            <span className="event-meta">{event.hall}</span>
+                                            <small>{event.start} - {event.end}</small>
+                                            <small>{event.faculty}</small>
+                                            {event.conflict && <span className="event-conflict">Conflict</span>}
+                                        </button>
+                                    );
+                                })}
+
+                                {!eventsByDay[day]?.length && (
+                                    <div className="no-events-hint">No bookings</div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </section>
-
             {hallModal.open && (
                 <div className="modal" role="dialog" aria-modal="true">
                     <form className="modal-card" onSubmit={submitHallForm}>
                         <h3>{hallModal.mode === 'edit' ? 'Edit Hall' : 'Add Hall'}</h3>
                         <label>
                             Name
-                            <input value={hallModal.form.name} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, name: e.target.value, code: e.target.value } }))} required />
+                            <input value={hallModal.form.name} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, name: e.target.value } }))} required />
+                        </label>
+                        <label>
+                            Code
+                            <input value={hallModal.form.code} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, code: e.target.value } }))} placeholder="Optional code" />
                         </label>
                         <label>
                             Type
@@ -644,7 +839,7 @@ const Facilities = () => {
                 <div className="modal" role="dialog" aria-modal="true">
                     <form className="modal-card" onSubmit={submitRequestAction}>
                         <h3>{requestAction.action === 'approve' ? 'Approve Request' : 'Reject Request'}</h3>
-                        <p>Request {requestAction.request?.id}  {requestAction.request?.course}</p>
+                        <p>Request {requestAction.request?.id} - {requestAction.request?.course}</p>
                         <label>
                             Comment (optional)
                             <textarea value={requestAction.comment} onChange={(e) => setRequestAction((prev) => ({ ...prev, comment: e.target.value }))} placeholder="Notes for the faculty" />
@@ -714,14 +909,3 @@ const Facilities = () => {
 };
 
 export default Facilities;
-
-
-
-
-
-
-
-
-
-
-
