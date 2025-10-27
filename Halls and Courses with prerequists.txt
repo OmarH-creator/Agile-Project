@@ -70,4 +70,4 @@
 911, 911A, 912, 913, 914, 914A, 921, 921A, 922, 923, 924, 924A, 931, 931A, 932, 933, 941, 941A, 942, 943, 944, 944A Credit building Capacity 60
 Hall 1, Hall 2, Hall 3, Hall 4, capacity 180 Credit building
 Hall A, Hall B, Hall C, Hall D, Capacity 180 Next to architecture building
-500,501,502,504,505 architecture building capacity 250
+500,501,502,504,505 architecture building capacity 250 :D
