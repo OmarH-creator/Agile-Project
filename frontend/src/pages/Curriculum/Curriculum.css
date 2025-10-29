@@ -6,7 +6,7 @@
     --neo-text: #1c2340;
     --neo-muted: #6b7294;
     --neo-accent: #6a7dff;
-    --neo-accent-strong: #4e63ff;
+    --neo-accent-strong: rgba(77, 99, 255, 0.9);
 }
 
 .curriculum-shell {

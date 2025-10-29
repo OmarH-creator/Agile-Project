@@ -26,12 +26,13 @@ const Icon = {
             <path d="M3 22h18"/>
         </svg>
     ),
-    // Curriculum / Open Book
-    curriculum: (
+    // Student / Graduation cap
+    student: (
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 5c-2-1.2-4-1.5-7-1v14c3-0.5 5-0.2 7 1"/>
-            <path d="M12 5c2-1.2 4-1.5 7-1v14c-3-0.5-5-0.2-7 1"/>
-            <path d="M12 5v14"/>
+            <path d="M3 7l9-4 9 4-9 4-9-4z"/>
+            <path d="M12 11v6"/>
+            <path d="M6 13.5c1.8 1.2 3.8 1.8 6 1.8s4.2-0.6 6-1.8"/>
+            <path d="M18 9l3 1.5-3 1.5"/>
         </svg>
     ),
     // Community / Globe
@@ -124,7 +125,7 @@ const AdminDashboard = () => {
 
     const tiles = [
         { title: 'Facilities', icon: Icon.facilities, accent: 'sunrise', path: '/admin/facilities' },
-        { title: 'Curriculum', icon: Icon.curriculum, accent: 'aqua', path: '/admin/curriculum' },
+        { title: 'Student', icon: Icon.student, accent: 'aqua', path: '/admin/curriculum' },
         { title: 'Staff', icon: Icon.staff, accent: 'orchid' },
         { title: 'Community', icon: Icon.community, accent: 'emerald' },
         { title: 'Analytics / Reports', icon: Icon.analytics, accent: 'violet' },
@@ -162,8 +163,8 @@ const AdminDashboard = () => {
                     </div>
                 </div>
                 <nav className="side-nav">
-                    <a className="nav-item active" href="#"><span className="nav-ico">{Icon.home16}</span><span>Dashboard</span></a>
-                    <a className="nav-item" href="#"><span className="nav-ico">{Icon.help16}</span><span>Help</span></a>
+                    <button type="button" className="nav-item active"><span className="nav-ico">{Icon.home16}</span><span>Dashboard</span></button>
+                    <button type="button" className="nav-item"><span className="nav-ico">{Icon.help16}</span><span>Help</span></button>
                 </nav>
             </aside>
 
@@ -201,3 +202,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
