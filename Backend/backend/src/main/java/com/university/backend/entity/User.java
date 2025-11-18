@@ -18,14 +18,17 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private String role;
     // Default constructor (required by JPA)
     public User() {}
 
     // Constructor with fields (optional)
-    public User(Long id, String email, String password) {
+    public User(Long id, String email, String password,String role) {
         this.id = id;
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 
     // Getters and Setters
@@ -53,4 +56,9 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public String getRole() { return role; }
+
+    public void setRole(String role) { this.role = role; }
+
 }

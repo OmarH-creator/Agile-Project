@@ -1,19 +1,18 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import Illust from "../../assets/loginimage.png";
 import umsLogo from "../../assets/UMS Logo.png";
 import confetti from "canvas-confetti";
 import { login } from "../../auth/login";
+
 function FloatingLabelInput({ id, type, label, value, setValue }) {
     return (
         <div className="floating-label-group">
-            {/* Keep placeholder as a single space so :placeholder-shown detects empty state */}
             <input
                 id={id}
                 type={type}
                 className="floating-input"
-                required
                 autoComplete="off"
                 value={value}
                 onChange={e => setValue(e.target.value)}
@@ -30,26 +29,46 @@ function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
     const navigate = useNavigate();
 
     const handleLogin = async (event) => {
         event.preventDefault();
-        setIsLoading(true); // Start loading
+        setIsLoading(true);
+        setError(""); // clear old errors
         try {
-            await new Promise(res => setTimeout(res, 2000));
-            if (email && password) {
-                const data = await login(email, password);
-                localStorage.setItem("token", data.token);
-                console.log(data.token);
-                confetti({ particleCount: 200, spread: 150, origin: { y: 0.6 } });
+            await new Promise(res => setTimeout(res, 1000));
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!email || !password) {
+                setError("Please fill all fields!");
+                setIsLoading(false);
+                return;
+            }
+            if (!emailPattern.test(email)) {
+                setError("Please enter a valid email address.");
+                setIsLoading(false);
+                return;
+            }
+
+            const data = await login(email, password);
+            if (!data.token) {
+                setError("Invalid credentials. Please try again.");
+                setIsLoading(false);
+                return;
+            }
+            localStorage.setItem("token", data.token);
+            confetti({ particleCount: 200, spread: 150, origin: { y: 0.6 } });
+            if(data.role === "admin"){
                 navigate("/Admin");
-            } else {
-                alert("fill all fields!");
+            }
+            else if(data.role === "student"){
+                navigate("/student");
             }
         } catch (err) {
-            alert(err.message);
+            setError(err.message || "Login failed. Please try again.");
         } finally {
-            setIsLoading(false); // Stop loading (success or error)
+            setIsLoading(false);
         }
     };
 
@@ -85,7 +104,7 @@ function Login() {
                         <h2 className="login-title">Sign in to Your Account</h2>
                         <FloatingLabelInput
                             id="email"
-                            type="email"
+                            type="text"
                             label="Email"
                             value={email}
                             setValue={setEmail}
@@ -97,6 +116,12 @@ function Login() {
                             value={password}
                             setValue={setPassword}
                         />
+                        {error && (
+                            <div className="login-error-bar">
+                                <strong>{error}</strong>
+                            </div>
+                        )}
+
                         <button type="submit" className="login-button" disabled={isLoading}>
                             {isLoading ? <span className="loader"></span> : "Login"}
                         </button>

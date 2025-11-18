@@ -143,6 +143,19 @@
     box-shadow: 16px 16px 32px rgba(183, 190, 208, 0.5), -16px -16px 32px rgba(255, 255, 255, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.45);
 }
+.login-error-bar {
+    width: 100%;
+    margin: 8px 0 0 0;
+    padding: 12px;
+    color: #fff;
+    background: #e53935;
+    border-radius: 20px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    letter-spacing: 0.5px;
+}
 
 .login-title {
     margin: 0 0 6px;

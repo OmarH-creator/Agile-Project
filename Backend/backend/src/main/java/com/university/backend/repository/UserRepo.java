@@ -11,8 +11,8 @@ public class UserRepo {
 
     public UserRepo() {
         // Add some sample users for testing
-        users.add(new User(1L, "user@example.com", "password123"));
-        users.add(new User(2L, "admin@example.com", "adminpass"));
+        users.add(new User(1L, "user@example.com", "password123","student"));
+        users.add(new User(2L, "admin@example.com", "adminpass","admin"));
     }
 
     public User findByEmail(String email) {

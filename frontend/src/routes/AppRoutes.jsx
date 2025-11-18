@@ -12,6 +12,7 @@ function AppRoutes() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/facilities" element={<FacilitiesUI />} />
         <Route path="/admin/curriculum" element={<Curriculum />} />
+        <Route path="/student" />
       </Routes>
     </Router>
   );
