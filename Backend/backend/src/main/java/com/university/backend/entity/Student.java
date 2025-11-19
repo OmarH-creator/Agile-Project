@@ -10,9 +10,9 @@ public class Student {
     private String email;
     private String department;
 
-
     private List<CourseRecord> completedCourses;
     private List<String> currentCourses;
+    private List<String> allocatedResources;
 
     public Student(String studentId, String name, String email, String department) {
         this.studentId = studentId;
@@ -75,10 +75,30 @@ public class Student {
 
     // Getters for ID needed by Admin ????
     public String getStudentId() {
-        return s.studentId;
+        return this.studentId;
     }
 
     public String getName() {
-        return student.name;
+        return this.name;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+    public String getDepartment() {
+        return this.department;
+    }
+    public List<String> getAllocatedResources() {
+        return this.allocatedResources;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 }
