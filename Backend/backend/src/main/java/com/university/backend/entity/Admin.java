@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import com.university.backend.repository.UniversityRepository;
 //import university.data.UniversityRepository;
-//import com.university.entity.Professor;
+//import com.university.entity.Professor;.
 
 
 //import university.data.UniversityRepository;
