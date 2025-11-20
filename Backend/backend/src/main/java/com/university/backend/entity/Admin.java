@@ -1,7 +1,15 @@
+//package com.university.backend.entity;
 package com.university.backend.entity;
 
-import university.data.UniversityRepository;
-import university.entity.Professor;
+import java.time.LocalDateTime;
+import jakarta.persistence.*;
+import com.university.backend.repository.UniversityRepository;
+//import university.data.UniversityRepository;
+//import com.university.entity.Professor;
+
+
+//import university.data.UniversityRepository;
+//import university.entity.Professor;
 
 public class Admin {
 
@@ -27,10 +35,10 @@ public class Admin {
 
     public void createProfessorRecord(String id, String name, String email, String Department) {
         //check if student already exists
-        if (getProfessorID(id) != null) {
+        /*if (getProfessorId(id) != null) {
             System.out.println("Professor already exists.");
             return;
-        }
+        }*/
         Professor newProfessor = new Professor(id, name, email, Department);
         UniversityRepository.professors.add(newProfessor);
     }

@@ -31,7 +31,7 @@ public class Professor {
     }
 
     public String getProfessorId() {
-        return ProfessorId;
+        return this.ProfessorId;
     }
     public void setProfessorId(String professorId) {
         ProfessorId = professorId;

@@ -1,4 +1,5 @@
 package com.university.backend.entity;
+
 import java.time.LocalDateTime;
 public class Booking {
     private LocalDateTime start;
