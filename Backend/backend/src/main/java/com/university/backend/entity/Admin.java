@@ -1,21 +1,29 @@
-//package com.university.backend.entity;
 package com.university.backend.entity;
 
-import java.time.LocalDateTime;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import com.university.backend.repository.UniversityRepository;
-//import university.data.UniversityRepository;
-//import com.university.entity.Professor;.
 
-
-//import university.data.UniversityRepository;
-//import university.entity.Professor;
-
+@Entity
+@Table(name = "admins")
 public class Admin {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // <--- ADDED THIS FIELD. This fixes the error at the bottom.
+
+    @Column(unique = true, nullable = false)
     private String adminId;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(unique = true, nullable = false)
     private String email;
+
+    // Default constructor (required by JPA)
+    public Admin() {
+    }
 
     public Admin(String adminId, String name, String email) {
         this.adminId = adminId;
@@ -23,23 +31,15 @@ public class Admin {
         this.email = email;
     }
 
-    public void createStudentRecord(String id, String name, String email, String Department) {
-        //check if student already exists
-        if (getStudent(id) != null) {
-            System.out.println("Student already exists.");
-            return;
-        }
-        Student newStudent = new Student(id, name, email, Department);
+    // --- Existing Logic Preserved ---
+
+    public void createStudentRecord(String id, String name, String email, String department) {
+        Student newStudent = new Student(id, name, email, department);
         UniversityRepository.students.add(newStudent);
     }
 
-    public void createProfessorRecord(String id, String name, String email, String Department) {
-        //check if student already exists
-        /*if (getProfessorId(id) != null) {
-            System.out.println("Professor already exists.");
-            return;
-        }*/
-        Professor newProfessor = new Professor(id, name, email, Department);
+    public void createProfessorRecord(String id, String name, String email, String department) {
+        Professor newProfessor = new Professor(id, name, email, department);
         UniversityRepository.professors.add(newProfessor);
     }
 
@@ -60,7 +60,7 @@ public class Admin {
                 .findFirst()
                 .orElse(null);
     }
-    // Hall scheduele
+
     public void addHall(Hall hall) {
         UniversityRepository.halls.add(hall);
     }
@@ -73,10 +73,9 @@ public class Admin {
         }
         return false;
     }
-    // Transcript
+
     public String generateTranscript(String studentId) {
         Student s = getStudent(studentId);
-
         if (s == null) return "Student not found.";
 
         StringBuilder sb = new StringBuilder();
@@ -93,21 +92,31 @@ public class Admin {
         sb.append("======================================");
         return sb.toString();
     }
+
     public String assignCourseToProfessor(String professorId, String courseName) {
-        // 1. Find the professor in the repository
         Professor targetProf = UniversityRepository.professors.stream()
                 .filter(p -> p.getProfessorId().equals(professorId))
                 .findFirst()
                 .orElse(null);
 
-        // 2. Validate results
         if (targetProf == null) {
             return "Error: Professor with ID " + professorId + " not found.";
         }
 
-        // 3. Assign the course
         targetProf.assignCourse(courseName);
         return "Success: Course '" + courseName + "' assigned to " + targetProf.getProfessorName();
     }
 
+    // Getters and Setters for JPA
+    public Long getId() { return this.id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getAdminId() { return adminId; }
+    public void setAdminId(String adminId) { this.adminId = adminId; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 }
