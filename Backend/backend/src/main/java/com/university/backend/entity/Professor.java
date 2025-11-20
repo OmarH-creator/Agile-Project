@@ -8,13 +8,8 @@ import java.util.List;
 @Table(name = "professors")
 public class Professor {
 
-    
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Technical PK
-
     @Id
-    @Column(unique = true, nullable = false)
-    private String professorId; // Business Key
+    private String professorId; // Primary Key
 
     @Column(nullable = false)
     private String professorName;
@@ -34,11 +29,12 @@ public class Professor {
     public Professor() {
     }
 
-    public Professor(String id, String name, String email, String department) {
-        this.professorId = id;
-        this.professorName = name;
-        this.professorEmail = email;
-        this.professorDepartment = department;
+    // Constructor with parameters
+    public Professor(String professorId, String professorName, String professorEmail, String professorDepartment) {
+        this.professorId = professorId;
+        this.professorName = professorName;
+        this.professorEmail = professorEmail;
+        this.professorDepartment = professorDepartment;
     }
 
     public void assignCourse(String courseName) {
@@ -46,15 +42,6 @@ public class Professor {
     }
 
     // Getters and Setters
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getProfessorId() {
         return professorId;
     }
