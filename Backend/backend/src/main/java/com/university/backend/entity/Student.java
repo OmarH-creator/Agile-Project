@@ -1,68 +1,76 @@
 package com.university.backend.entity;
 
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "students")
 public class Student {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
     private String studentId;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(unique = true, nullable = false)
     private String email;
+
     private String department;
 
-    private List<CourseRecord> completedCourses;
-    private List<String> currentCourses;
-    private List<String> allocatedResources;
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Course_record> completedCourses = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "student_current_courses",
+            joinColumns = @JoinColumn(name = "student_id"))
+    @Column(name = "course_name")
+    private List<String> currentCourses = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "student_allocated_resources",
+            joinColumns = @JoinColumn(name = "student_id"))
+    @Column(name = "resource")
+    private List<String> allocatedResources = new ArrayList<>();
+
+    // Default constructor (required by JPA)
+    public Student() {
+    }
 
     public Student(String studentId, String name, String email, String department) {
         this.studentId = studentId;
         this.name = name;
         this.email = email;
         this.department = department;
-
-        this.allocatedResources = new ArrayList<>();
-        this.completedCourses = new ArrayList<>();
-        this.currentCourses = new ArrayList<>();
     }
-
-
 
     public void enrollCourse(String courseName) {
         currentCourses.add(courseName);
     }
 
     public void addCompletedCourse(String courseName, double grade, int credits) {
-        completedCourses.add(new CourseRecord(courseName, grade, credits));
+        Course_record record = new Course_record(courseName, grade, credits);
+        record.setStudent(this);
+        completedCourses.add(record);
     }
 
     public double getGPA() {
         double totalPoints = 0;
         int totalCredits = 0;
 
-        for (CourseRecord cr : completedCourses) {
-            totalPoints += (cr.grade * cr.credits);
-            totalCredits += cr.credits;
+        for (Course_record cr : completedCourses) {
+            totalPoints += (cr.getGrade() * cr.getCredits());
+            totalCredits += cr.getCredits();
         }
 
         return totalCredits == 0 ? 0 : totalPoints / totalCredits;
     }
 
-    public List<CourseRecord> getCompletedCourses() {
-        return completedCourses;
-    }
-
-
-    public static class CourseRecord {
-        public String courseName;
-        public double grade;
-        public int credits;
-
-        public CourseRecord(String courseName, double grade, int credits) {
-            this.courseName = courseName;
-            this.grade = grade;
-            this.credits = credits;
-        }
-    }
     @Override
     public String toString() {
         return "Student {" +
@@ -73,32 +81,68 @@ public class Student {
                 '}';
     }
 
-    // Getters for ID needed by Admin ????
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getStudentId() {
-        return this.studentId;
+        return studentId;
+    }
+
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public String getName() {
-        return this.name;
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getEmail() {
-        return this.email;
-    }
-    public String getDepartment() {
-        return this.department;
-    }
-    public List<String> getAllocatedResources() {
-        return this.allocatedResources;
+        return email;
     }
 
     public void setEmail(String email) {
         this.email = email;
     }
+
+    public String getDepartment() {
+        return department;
+    }
+
     public void setDepartment(String department) {
         this.department = department;
     }
-    public void setStudentId(String studentId) {
-        this.studentId = studentId;
+
+    public List<Course_record> getCompletedCourses() {
+        return completedCourses;
+    }
+
+    public void setCompletedCourses(List<Course_record> completedCourses) {
+        this.completedCourses = completedCourses;
+    }
+
+    public List<String> getCurrentCourses() {
+        return currentCourses;
+    }
+
+    public void setCurrentCourses(List<String> currentCourses) {
+        this.currentCourses = currentCourses;
+    }
+
+    public List<String> getAllocatedResources() {
+        return allocatedResources;
+    }
+
+    public void setAllocatedResources(List<String> allocatedResources) {
+        this.allocatedResources = allocatedResources;
     }
 }

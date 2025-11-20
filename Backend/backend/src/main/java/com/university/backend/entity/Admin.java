@@ -73,7 +73,6 @@ public class Admin {
         }
         return false;
     }
-
     // Transcript
     public String generateTranscript(String studentId) {
         Student s = getStudent(studentId);
@@ -83,10 +82,10 @@ public class Admin {
         StringBuilder sb = new StringBuilder();
         sb.append("===== Transcript for ").append(s.getName()).append(" =====\n");
 
-        for (Student.CourseRecord cr : s.getCompletedCourses()) {
-            sb.append(cr.courseName)
-                    .append(" | Grade: ").append(cr.grade)
-                    .append(" | Credits: ").append(cr.credits)
+        for (Course_record cr : s.getCompletedCourses()) {
+            sb.append(cr.getCourseName())
+                    .append(" | Grade: ").append(cr.getGrade())
+                    .append(" | Credits: ").append(cr.getCredits())
                     .append("\n");
         }
 
@@ -94,7 +93,6 @@ public class Admin {
         sb.append("======================================");
         return sb.toString();
     }
-
     public String assignCourseToProfessor(String professorId, String courseName) {
         // 1. Find the professor in the repository
         Professor targetProf = UniversityRepository.professors.stream()
