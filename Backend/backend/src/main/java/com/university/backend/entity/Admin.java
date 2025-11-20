@@ -2,7 +2,6 @@ package com.university.backend.entity;
 
 import jakarta.persistence.*;
 import java.util.Date;
-import java.util.Date;
 
 import com.university.backend.repository.UniversityRepository;
 
@@ -112,13 +111,13 @@ public class Admin {
     // Getters and Setters for JPA
     public Long getId() { return this.id; }
     public void setId(Long id) { this.id = id; }
-    
+
     public String getAdminId() { return adminId; }
     public void setAdminId(String adminId) { this.adminId = adminId; }
-    
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    
+
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 }

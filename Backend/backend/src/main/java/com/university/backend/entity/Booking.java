@@ -5,17 +5,18 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 
-
 import java.util.Date;
 
 @Embeddable
 public class Booking {
 
     @Temporal(TemporalType.TIMESTAMP)
-    private Date start;
+    @Column(name = "start_time")
+    private Date startTime;
 
     @Temporal(TemporalType.TIMESTAMP)
-    private Date end;
+    @Column(name = "end_time")
+    private Date endTime;
 
     @Column(length = 255)
     private String purpose;
@@ -26,36 +27,32 @@ public class Booking {
     public Booking() {
     }
 
-    public Booking( Date start, Date end, String purpose, long reservationId, long staffId) {
-        this.start = start;
-        this.end = end;
+    public Booking(Date startTime, Date endTime, String purpose, long reservationId, long staffId) {
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.purpose = purpose;
         this.reservationId = reservationId;
         this.staffId = staffId;
-
     }
 
     // Logic preserved exactly as requested
     public boolean conflictsWith(Booking other) {
-        return start.before(other.end) && end.after(other.start);
+        // compare using renamed fields
+        return startTime.before(other.endTime) && endTime.after(other.startTime);
     }
 
-    public Date getStart() { return start; }
-    public void setStart(Date start) { this.start = start; } // Setter needed for JPA mapping
+    public Date getStartTime() { return startTime; }
+    public void setStartTime(Date startTime) { this.startTime = startTime; }
 
-    public Date getEnd() { return end; }
-    public void setEnd(Date end) { this.end = end; } // Setter needed for JPA mapping
+    public Date getEndTime() { return endTime; }
+    public void setEndTime(Date endTime) { this.endTime = endTime; }
 
     public String getPurpose() { return purpose; }
-    public void setPurpose(String purpose) { this.purpose = purpose; } // Setter needed for JPA mapping
+    public void setPurpose(String purpose) { this.purpose = purpose; }
 
-    public long getReservationId() { return reservationId;}
+    public long getReservationId() { return reservationId; }
+    public void setReservationId(long reservationId) { this.reservationId = reservationId; }
 
-    public void setReservationId(long reservationId) { this.reservationId = reservationId;}
-
-    public long getStaffId() { return staffId;}
-
-    public void setStaffId(long staffId) { this.staffId = staffId;}
-
-
+    public long getStaffId() { return staffId; }
+    public void setStaffId(long staffId) { this.staffId = staffId; }
 }

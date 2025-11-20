@@ -7,8 +7,7 @@ import jakarta.persistence.*;
 public class Major {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "major_id", nullable = false, unique = true)
+  @Column(name = "major_id", nullable = false, unique = true, length = 255)
   private String majorId;
 
   @Column(name = "major_name", nullable = false, unique = true)
