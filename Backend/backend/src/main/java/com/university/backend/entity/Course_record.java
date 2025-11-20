@@ -23,6 +23,9 @@ public class Course_record {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
+    @Column
+    private String semester;
+
     // Default constructor (required by JPA)
     public Course_record() {
     }

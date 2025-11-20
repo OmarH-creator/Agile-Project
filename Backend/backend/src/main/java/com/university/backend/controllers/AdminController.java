@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Optional;
 
 @RestController
@@ -126,7 +126,7 @@ public class AdminController {
         }
 
         Hall hall = hallOpt.get();
-        boolean success = hall.book(request.getStart(), request.getEnd(), request.getPurpose());
+        boolean success = hall.book(request.getStart(), request.getEnd(), request.getPurpose(),request.getReservationId(),request.getStaffId());
 
         if (success) {
             hallRepository.save(hall); // Save the new booking to DB
@@ -139,18 +139,24 @@ public class AdminController {
     // Helper class for the booking JSON body
     public static class BookingRequest {
         private String hallName;
-        private LocalDateTime start;
-        private LocalDateTime end;
+        private Date start;
+        private Date end;
         private String purpose;
+        private long reservationId;
+        private long staffId;
 
         // Getters and Setters
         public String getHallName() { return hallName; }
         public void setHallName(String hallName) { this.hallName = hallName; }
-        public LocalDateTime getStart() { return start; }
-        public void setStart(LocalDateTime start) { this.start = start; }
-        public LocalDateTime getEnd() { return end; }
-        public void setEnd(LocalDateTime end) { this.end = end; }
+        public Date getStart() { return start; }
+        public void setStart(Date start) { this.start = start; }
+        public Date getEnd() { return end; }
+        public void setEnd(Date end) { this.end = end; }
         public String getPurpose() { return purpose; }
         public void setPurpose(String purpose) { this.purpose = purpose; }
+        public long getReservationId() { return reservationId; }
+        public void setReservationId(long reservationId) { this.reservationId = reservationId; }
+        public long getStaffId() { return staffId; }
+        public void setStaffId(long staffId) { this.staffId = staffId; }
     }
 }

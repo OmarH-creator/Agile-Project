@@ -1,12 +1,42 @@
-package com.sample;
+package com.university.backend.entity;
 
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "courses")
 public class Course {
 
-  private String courseCode;
-  private String courseName;
-  private long creditHours;
 
+  @Id
+  @Column(name = "course_id", unique = true, nullable = false)
+  private String courseCode;
+
+  @Column(name = "course_name", nullable = false)
+  private String courseName;
+
+  @Column(name = "credit_hrs", nullable = false)
+  private int creditHours;
+
+  // Default constructor (required by JPA)
+  public Course() {
+  }
+
+  public Course(String courseCode, String courseName, int creditHours) {
+    this.courseCode = courseCode;
+    this.courseName = courseName;
+    this.creditHours = creditHours;
+  }
+
+  @Override
+  public String toString() {
+    return "Course {" +
+            ", code='" + courseCode + '\'' +
+            ", name='" + courseName + '\'' +
+            ", credits=" + creditHours +
+            '}';
+  }
+
+  // Getters and Setters
 
   public String getCourseCode() {
     return courseCode;
@@ -16,7 +46,6 @@ public class Course {
     this.courseCode = courseCode;
   }
 
-
   public String getCourseName() {
     return courseName;
   }
@@ -25,13 +54,11 @@ public class Course {
     this.courseName = courseName;
   }
 
-
-  public long getCreditHours() {
+  public int getCreditHours() {
     return creditHours;
   }
 
-  public void setCreditHours(long creditHours) {
+  public void setCreditHours(int creditHours) {
     this.creditHours = creditHours;
   }
-
 }

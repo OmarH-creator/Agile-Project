@@ -1,24 +1,26 @@
 package com.university.backend.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.Date;
+
 import com.university.backend.repository.UniversityRepository;
 
 @Entity
-@Table(name = "admins")
+@Table(name = "admin")
 public class Admin {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // <--- ADDED THIS FIELD. This fixes the error at the bottom.
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 255)
     private String adminId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 255)
     private String email;
 
     // Default constructor (required by JPA)
@@ -33,8 +35,8 @@ public class Admin {
 
     // --- Existing Logic Preserved ---
 
-    public void createStudentRecord(String id, String name, String email, String department) {
-        Student newStudent = new Student(id, name, email, department);
+    public void createStudentRecord(String studentId, String name, String email, Major major, String phone, String address, Date dateOfBirth, String militaryStatus) {
+        Student newStudent = new Student(studentId, name, email, major , phone, address, dateOfBirth, militaryStatus);
         UniversityRepository.students.add(newStudent);
     }
 
@@ -65,10 +67,10 @@ public class Admin {
         UniversityRepository.halls.add(hall);
     }
 
-    public boolean bookHall(String hallName, LocalDateTime start, LocalDateTime end, String purpose) {
+    public boolean bookHall(String hallName,Date start, Date end, String purpose, long reservationId, long staffId) {
         for (Hall hall : UniversityRepository.halls) {
             if (hall.getHallName().equals(hallName)) {
-                return hall.book(start, end, purpose);
+                return hall.book(start, end, purpose, reservationId, staffId);
             }
         }
         return false;
