@@ -9,6 +9,9 @@ public interface HallRepository extends JpaRepository<Hall, Long> {
     // Find hall by its name (e.g., "Main Auditorium")
     Optional<Hall> findByHallName(String hallName);
 
+ // --- NEW: Existence Check ---
+    boolean existsByHallName(String hallName); // Added for consistency
+    
  // --- NEW: Deletion Method ---
     @Transactional // Required for modifying operations
     void deleteByHallName(String hallName);
