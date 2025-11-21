@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,6 +32,8 @@ public class AdminController {
     private MajorRepository majorRepository; // ADDED
 
 
+    @Autowired
+    private BookingRepository bookingRepository; // ADDED
 
     // --- Student Management ---
 
@@ -248,6 +251,22 @@ public class AdminController {
 
     // --- Hall Management ---
 
+    @GetMapping("/halls")
+    public ResponseEntity<?> getAllHalls() {
+        // .findAll() is provided automatically by JpaRepository
+        return ResponseEntity.ok(hallRepository.findAll());
+    }
+
+    @GetMapping("/halls/{hallName}")
+    public ResponseEntity<?> getHall(@PathVariable String hallName) {
+        Optional<Hall> hallOpt = hallRepository.findByHallName(hallName);
+
+        if (hallOpt.isPresent()) {
+            return ResponseEntity.ok(hallOpt.get());
+        }
+        return ResponseEntity.status(404).body("Hall '" + hallName + "' not found.");
+    }
+
     @PostMapping("/halls")
     public ResponseEntity<String> addHall(@RequestBody Hall hall) {
         if (hallRepository.findByHallName(hall.getHallName()).isPresent()) {
@@ -257,51 +276,169 @@ public class AdminController {
         return ResponseEntity.ok("Hall added successfully.");
     }
 
+    // --- Get All Bookings ---
+    @GetMapping("/bookings")
+    public ResponseEntity<List<Booking>> getAllBookings() {
+        try {
+            List<Booking> bookings = bookingRepository.findAll();
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @PostMapping("/halls/book")
     public ResponseEntity<String> bookHall(@RequestBody BookingRequest request) {
+
+        // 1. Find the Hall Object using the String name from Frontend
         Optional<Hall> hallOpt = hallRepository.findByHallName(request.getHallName());
 
         if (hallOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Hall not found.");
+            return ResponseEntity.status(404).body("Hall not found: " + request.getHallName());
+        }
+
+        // 2. Check Conflicts
+        boolean hasConflict = bookingRepository.existsByHallAndOverlap(
+                request.getHallName(),
+                request.getStart(),
+                request.getEnd()
+        );
+
+        if (hasConflict) {
+//            return ResponseEntity.badRequest().body("Booking failed: Time conflict.");
+        }
+
+        try {
+            Booking newBooking = new Booking();
+
+            // 3. Set the fields (Matches the new Entity names)
+            newBooking.setStartTime(request.getStart());
+            newBooking.setEndTime(request.getEnd());
+            newBooking.setPurpose(request.getPurpose());
+            newBooking.setStaffId(String.valueOf(request.getStaffId())); // Ensure String format
+
+            // 4. CRITICAL: Set the Relationship Object
+            newBooking.setHall(hallOpt.get());
+
+            // 5. CRITICAL: Do NOT set reservationId (Let DB Auto-Generate)
+
+            bookingRepository.save(newBooking);
+
+            return ResponseEntity.ok("Hall booked successfully.");
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error saving booking: " + e.getMessage());
+        }
+    }
+
+    // ... inside AdminController class ...
+
+    // --- UPDATE BOOKING ---
+    @PutMapping("/bookings/{id}")
+    public ResponseEntity<String> updateBooking(@PathVariable Long id, @RequestBody BookingRequest request) {
+
+        // 1. Find the existing booking by its ID
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + id));
+
+        // 2. Find the Hall by Name (e.g. "219") to ensure it exists
+        Optional<Hall> hallOpt = hallRepository.findByHallName(request.getHallName());
+        if (hallOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Hall '" + request.getHallName() + "' not found.");
+        }
+
+        // 3. Check for conflicts (Excluding this booking's own ID)
+        boolean hasConflict = bookingRepository.existsByHallAndOverlapExcludingId(
+                request.getHallName(),
+                request.getStart(),
+                request.getEnd(),
+                id
+        );
+
+        if (hasConflict) {
+//            return ResponseEntity.badRequest().body("Update failed: Time conflict in hall " + request.getHallName());
+        }
+
+        // 4. Apply Updates
+        try {
+            // Update the relationship
+            booking.setHall(hallOpt.get());
+
+            // Update fields
+            booking.setStartTime(request.getStart());
+            booking.setEndTime(request.getEnd());
+            booking.setPurpose(request.getPurpose());
+
+            // Update staffId if present
+            if (request.getStaffId() != null) {
+                booking.setStaffId(String.valueOf(request.getStaffId()));
+            }
+
+            bookingRepository.save(booking);
+            return ResponseEntity.ok("Booking updated successfully.");
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error updating booking: " + e.getMessage());
+        }
+    }
+
+    // --- DELETE BOOKING ---
+    @DeleteMapping("/bookings/{id}")
+    public ResponseEntity<String> deleteBooking(@PathVariable Long id) {
+        if (!bookingRepository.existsById(id)) {
+            return ResponseEntity.status(404).body("Booking not found with ID: " + id);
+        }
+        try {
+            bookingRepository.deleteById(id);
+            return ResponseEntity.ok("Booking deleted successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error deleting booking: " + e.getMessage());
+        }
+    }
+
+    // --- UPDATE HALL (Fixed Identifier Error) ---
+    @PutMapping("/halls/{originalName}")
+    public ResponseEntity<String> updateHall(
+            @PathVariable String originalName,
+            @RequestBody Map<String, Object> payload) {
+
+        // 1. Find the existing Hall by the name in the URL
+        Optional<Hall> hallOpt = hallRepository.findByHallName(originalName);
+
+        if (hallOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Hall '" + originalName + "' not found.");
         }
 
         Hall hall = hallOpt.get();
-        boolean success = hall.book(request.getStart(), request.getEnd(), request.getPurpose(),request.getReservationId(),request.getStaffId());
 
-        if (success) {
-            hallRepository.save(hall); // Save the new booking to DB
-            return ResponseEntity.ok("Hall booked successfully.");
-        } else {
-            return ResponseEntity.badRequest().body("Booking failed: Time conflict.");
-        }
-    }
-
- // --- REFINED: Updates capacity and/or name of an existing hall record ---
-    @PutMapping("/halls/{hallName}")
-    public ResponseEntity<String> updateHallRecord(@PathVariable String hallName, @RequestBody Hall updatedHall) {
-        Optional<Hall> existingHallOpt = hallRepository.findByHallName(hallName);
-
-        if (existingHallOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Error: Hall '" + hallName + "' not found.");
+        // 2. Update Capacity (Only if provided)
+        if (payload.get("capacity") != null) {
+            // Handle integer conversion safely
+            hall.setCapacity(((Number) payload.get("capacity")).intValue());
         }
 
-        Hall existingHall = existingHallOpt.get();
+        // 3. Update Name (Handle Renaming)
+        String newName = (String) payload.get("hallName"); // Ensure frontend sends "hallName" (or "name" depending on your map)
 
-        // Update the capacity
-        existingHall.setCapacity(updatedHall.getCapacity());
+        // Fallback if frontend sends "name" instead of "hallName"
+        if (newName == null) {
+            newName = (String) payload.get("name");
+        }
 
-        // Allow updating the name as well
-        if (updatedHall.getHallName() != null && !updatedHall.getHallName().equals(existingHall.getHallName())) {
-            // Check if the new name is already taken by a different hall (important for unique constraints)
-            if (hallRepository.existsByHallName(updatedHall.getHallName())) {
-                return ResponseEntity.badRequest().body("Error: New hall name '" + updatedHall.getHallName() + "' is already in use.");
+        if (newName != null && !newName.equals(hall.getHallName())) {
+            // Check if the NEW name is already taken by a DIFFERENT hall
+            if (hallRepository.existsByHallName(newName)) {
+                return ResponseEntity.badRequest().body("Name '" + newName + "' is already taken.");
             }
-            existingHall.setHallName(updatedHall.getHallName());
+            hall.setHallName(newName);
         }
-        hallRepository.save(existingHall);
-        return ResponseEntity.ok("Hall record updated successfully.");
-    }
 
+        // CRITICAL: Do NOT call hall.setHallId(...) or hall.setId(...) here!
+        // Leave the ID exactly as it was loaded from the database.
+
+        hallRepository.save(hall);
+        return ResponseEntity.ok("Hall updated successfully.");
+    }
     // --- Course Management --- ADDED THIS SECTION
 
     @PostMapping("/courses")

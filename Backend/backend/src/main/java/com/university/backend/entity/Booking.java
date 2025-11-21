@@ -1,5 +1,7 @@
 package com.university.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.Date;
 
@@ -30,7 +32,14 @@ public class Booking {
     // Define the relationship: Many Bookings belong to One Hall
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hallName", nullable = false)
+    @JsonIgnore
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Hall hall; // Reference to the Hall this booking is for
+
+    // Transient field: This allows the JSON to send "hallName" as a string,
+    // and we can read it, even though we don't save it to this column directly.
+    @Transient
+    private String hallName;
 
     // Default constructor (Required by JPA)
     public Booking() {
@@ -64,5 +73,19 @@ public class Booking {
     public String getStaffId() { return staffId; }
     public void setStaffId(String staffId) { this.staffId = staffId; }
     public Hall getHall() { return hall; }
-    public void setHall(Hall hall) { this.hall = hall; }
+    public void setHall(Hall hall) { this.hall = hall;
+        // Automatically set the transient name for convenience
+        if(hall != null) this.hallName = hall.getHallName();
+    }
+
+    // This Getter allows the Frontend to see "hallName": "Lecture Hall A" in the response
+    public String getHallName() {
+        if (hall != null) return hall.getHallName();
+        return hallName;
+    }
+
+    public void setHallName(String hallName) {
+        this.hallName = hallName;
+    }
+
 }

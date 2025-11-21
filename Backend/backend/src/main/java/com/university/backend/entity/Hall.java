@@ -1,5 +1,6 @@
 package com.university.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.Date;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ public class Hall {
 
     // CHANGED: Use @OneToMany to manage the collection of Booking entities
     @OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Booking> bookings = new ArrayList<>();
 
     // Default constructor

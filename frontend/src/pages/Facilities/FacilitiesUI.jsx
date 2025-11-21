@@ -1,131 +1,201 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import './FacilitiesUI.css';
 import umsLogo from '../../assets/UMS Logo.png';
 
-const hallClusters = [
-    {
-        building: 'Main Building',
-        type: 'Lecture Hall',
-        capacity: 80,
-        resources: 'Hybrid capture, ceiling speakers, retractable seating',
-        status: 'Available',
-        identifiers: ['219', '338', '346', '347', '348', '350']
-    },
-    {
-        building: 'Credit Building',
-        type: 'Classroom',
-        capacity: 60,
-        resources: 'Interactive display, lecture recording, dual whiteboards',
-        status: 'Available',
-        identifiers: ['911', '911A', '912', '913', '914', '914A', '921', '921A', '922', '923', '924', '924A', '931', '931A', '932', '933', '941', '941A', '942', '943', '944', '944A']
-    },
-    {
-        building: 'Credit Building',
-        type: 'Auditorium',
-        capacity: 180,
-        resources: 'Tiered seating, stage lighting, broadcast booth',
-        status: 'Available',
-        identifiers: ['Hall 1', 'Hall 2', 'Hall 3', 'Hall 4']
-    },
-    {
-        building: 'Architect Annex',
-        type: 'Auditorium',
-        capacity: 180,
-        resources: 'Acoustic treatment, grand LED wall, translation headsets',
-        status: 'Available',
-        identifiers: ['Hall A', 'Hall B', 'Hall C', 'Hall D']
-    },
-    {
-        building: 'Architecture Building',
-        type: 'Grand Auditorium',
-        capacity: 250,
-        resources: 'Exhibition lighting, retractable truss, live-stream hub',
-        status: 'Available',
-        identifiers: ['500', '501', '502', '504', '505']
-    }
-];
-const formatHallName = (identifier) => {
-    const trimmed = identifier.trim();
-    if (/hall/i.test(trimmed)) {
-        return trimmed.replace(/\s+/g, ' ');
-    }
-    if (/^[A-Za-z]/.test(trimmed)) {
-        return `Hall ${trimmed.toUpperCase()}`;
-    }
-    return `Room ${trimmed}`;
+// API Configuration
+const API_BASE_URL = 'http://localhost:8081/api/admin';
+
+// Helper function to get authentication token from localStorage
+const getAuthToken = () => {
+    return localStorage.getItem('token');
 };
 
-const hallSeed = hallClusters.flatMap((cluster) =>
-    cluster.identifiers.map((identifier) => {
-        const name = formatHallName(identifier);
-        const normalizedBuilding = cluster.building;
-        const status = cluster.status || 'Available';
-        return {
-            id: `${normalizedBuilding.replace(/\s+/g, '-')}-${identifier}`,
-            code: identifier,
-            name,
-            building: normalizedBuilding,
-            type: cluster.type,
-            capacity: cluster.capacity,
-            resources: cluster.resources,
-            status
-        };
-    })
-);
+// Helper function to create request headers with auth token
+const createHeaders = () => {
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+    };
+};
 
-const hallNameByCode = hallSeed.reduce((acc, hall) => {
-    acc[hall.code] = hall.name;
-    return acc;
-}, {});
-
-const requestSeed = [
-    {
-        id: 'REQ-5101',
-        faculty: 'Dr. Layla Hassan',
-        course: 'ENG-210 Technical Writing',
-        hall: hallNameByCode['911'],
-        datetime: '2025-11-02 10:00',
-        status: 'Pending'
+// Hall API Functions
+const hallAPI = {
+    createHall: async (hallData) => {
+        const response = await fetch(`${API_BASE_URL}/halls`, {
+            method: 'POST',
+            headers: createHeaders(),
+            body: JSON.stringify({
+                hallName: hallData.name,
+                capacity: parseInt(hallData.capacity)
+            })
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error);
+        }
+        return await response.text();
     },
-    {
-        id: 'REQ-5102',
-        faculty: 'Prof. Omar Farouk',
-        course: 'CIS-340 Cloud Computing',
-        hall: hallNameByCode['Hall 1'],
-        datetime: '2025-11-03 14:00',
-        status: 'Pending'
+
+    deleteHall: async (hallName) => {
+        const response = await fetch(`${API_BASE_URL}/halls/${encodeURIComponent(hallName)}`, {
+            method: 'DELETE',
+            headers: createHeaders()
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error);
+        }
+        return await response.text();
+    },
+
+    fetchHalls: async () => {
+        const response = await fetch(`${API_BASE_URL}/halls`, {
+            method: 'GET',
+            headers: createHeaders()
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error);
+        }
+        return await response.json();
+    },
+
+    gethall: async (hallName) => {
+        const response = await fetch(`${API_BASE_URL}/halls/${encodeURIComponent(hallName)}`, {
+            method: 'GET',
+            headers: createHeaders()
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error);
+        }
+        return await response.json();
+    },
+
+    // UPDATE: Expects originalName for the URL, and hallData for the Body
+    updateHall: async (originalName, hallData) => {
+        const response = await fetch(`${API_BASE_URL}/halls/${encodeURIComponent(originalName)}`, {
+            method: 'PUT',
+            headers: createHeaders(),
+            body: JSON.stringify({
+                hallName: hallData.name, // The NEW name
+                capacity: parseInt(hallData.capacity)
+            })
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error);
+        }
+        return await response.text();
+    },
+};
+
+// --- DATE CONVERSION HELPERS (ROBUST) ---
+
+// 1. Frontend (Day/Time) -> Backend (Date Object)
+const convertToBackendDate = (day, time) => {
+    const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5 };
+    const today = new Date();
+    const currentDay = today.getDay();
+    const targetDay = dayMap[day] || 1;
+
+    // Calculate strict date difference
+    let daysToAdd = targetDay - currentDay;
+    // Optional: Force it to be 'this week' or 'next week' if passed
+    // For generic scheduling, we just want the correct day of the week
+    if (daysToAdd < 0) daysToAdd += 7;
+
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + daysToAdd);
+
+    const [hours, minutes] = time.split(':');
+
+    // CRITICAL: Set Seconds and MS to 0 to ensure clean :00 or :30 slots
+    targetDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+    return targetDate;
+};
+
+// 2. Backend (ISO String) -> Frontend (Day/Time)
+const parseBackendDate = (isoString) => {
+    if (!isoString) return { day: 'Mon', time: '00:00' };
+
+    const date = new Date(isoString);
+
+    // Get Day
+    const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+
+    // Get Time (Force 24h format HH:mm)
+    // We use local time methods to match the browser's timezone
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    // CRITICAL: Return clean 24h string (e.g., "13:00" for 1 PM)
+    const time = `${hours}:${minutes}`;
+
+    return { day, time };
+};
+
+// Booking API Functions
+const bookingAPI = {
+    createBooking: async (bookingData) => {
+        const response = await fetch(`${API_BASE_URL}/halls/book`, {
+            method: 'POST',
+            headers: createHeaders(),
+            body: JSON.stringify({
+                hallName: bookingData.hallName,
+                start: bookingData.start,
+                end: bookingData.end,
+                purpose: bookingData.purpose,
+                reservationId: bookingData.reservationId,
+                staffId: bookingData.staffId
+            })
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error);
+        }
+        return await response.text();
+    },
+// --- UPDATE (Connected) ---
+    updateBooking: async (id, bookingData) => {
+        const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
+            method: 'PUT',
+            headers: createHeaders(),
+            body: JSON.stringify({
+                hallName: bookingData.hallName, // "219" sent here
+                start: bookingData.start,
+                end: bookingData.end,
+                purpose: bookingData.purpose,
+                staffId: bookingData.staffId
+            })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        return await response.text();
+    },
+
+    // --- DELETE (Connected) ---
+    deleteBooking: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
+            method: 'DELETE',
+            headers: createHeaders()
+        });
+        if (!response.ok) throw new Error(await response.text());
+        return await response.text();
+    },
+    // --- NEW: Fetch All Bookings ---
+    fetchBookings: async () => {
+        const response = await fetch(`${API_BASE_URL}/bookings`, {
+            method: 'GET',
+            headers: createHeaders()
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error);
+        }
+        return await response.json();
     }
-];
-
-const scheduleSeed = [
-    {
-        id: 'SCH-101',
-        hall: hallNameByCode['219'],
-        course: 'Math Bridge Workshop',
-        faculty: 'College Advising Team',
-        day: 'Mon',
-        start: '09:00',
-        end: '10:30'
-    },
-    {
-        id: 'SCH-102',
-        hall: hallNameByCode['Hall A'],
-        course: 'Architectural Critique',
-        faculty: 'School of Architecture',
-        day: 'Tue',
-        start: '11:00',
-        end: '13:00'
-    },
-    {
-        id: 'SCH-103',
-        hall: hallNameByCode['500'],
-        course: 'Faculty Senate Meeting',
-        faculty: 'University Senate',
-        day: 'Thu',
-        start: '15:00',
-        end: '17:00'
-    }
-];
+};
 
 const hallTypes = ['Lecture Hall', 'Classroom', 'Auditorium', 'Grand Auditorium', 'Lab'];
 const hallStatuses = ['Available', 'Reserved', 'Under Maintenance'];
@@ -154,13 +224,14 @@ const defaultHallForm = {
 };
 
 const defaultBooking = {
-    hall: hallSeed[0]?.name || '',
+    hall: '',
     course: '',
     faculty: '',
     day: 'Mon',
     start: '09:00',
     end: '10:00'
 };
+
 const toMinutes = (time) => {
     if (!time) return 0;
     const [hours = '0', mins = '0'] = time.split(':');
@@ -259,32 +330,145 @@ const hasConflict = (booking, list) =>
         toMinutes(item.start) < toMinutes(booking.end) &&
         toMinutes(booking.start) < toMinutes(item.end)
     );
+
 const Facilities = () => {
-    const [halls, setHalls] = useState(hallSeed);
+    const [halls, setHalls] = useState([]);
     const [hallQuery, setHallQuery] = useState('');
     const [hallStatusFilter, setHallStatusFilter] = useState('All');
     const [hallModal, setHallModal] = useState({ open: false, mode: 'add', form: defaultHallForm, id: null });
     const [deletePrompt, setDeletePrompt] = useState({ open: false, hall: null });
 
-    const [requests, setRequests] = useState(requestSeed);
+    const [requests, setRequests] = useState([]);
     const [requestFilters, setRequestFilters] = useState({ status: 'Pending', faculty: '', date: '' });
     const [requestAction, setRequestAction] = useState({ open: false, action: 'approve', request: null, comment: '' });
 
-    const [schedule, setSchedule] = useState(scheduleSeed);
+    const [schedule, setSchedule] = useState([]);
     const [calendarFilter, setCalendarFilter] = useState('All');
     const [bookingModal, setBookingModal] = useState({ open: false, editing: null, form: defaultBooking });
 
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const handleAPICall = async (apiFunction, successCallback) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await apiFunction();
+            setLoading(false);
+            if (successCallback) {
+                successCallback(result);
+            }
+            return result;
+        } catch (err) {
+            setLoading(false);
+            let errorMessage = err.message || 'An error occurred';
+            if (errorMessage.includes('401')) errorMessage = 'Authentication failed.';
+            else if (errorMessage.includes('404')) errorMessage = 'Resource not found.';
+            else if (errorMessage.includes('500')) errorMessage = 'Server error.';
+            else if (errorMessage.includes('Failed to fetch')) errorMessage = 'Connection error.';
+
+            setError(errorMessage);
+            throw err;
+        }
+    };
+
+    // Helper to map backend hall object to frontend structure
+    const mapBackendHall = (h) => ({
+        // FIX: Use a stable ID fallback (hallName) instead of Math.random() to prevent React key errors
+        id: h.hallId || h.id || `hall-${h.hallName || h.name || 'unknown'}`,
+        name: h.hallName || h.name,
+        capacity: h.capacity,
+        code: h.code || (h.hallName || h.name),
+        building: h.building || 'Main Building',
+        type: h.type || 'Lecture Hall',
+        status: h.status || 'Available',
+        resources: h.resources || ''
+    });
+
+    // Helper to map backend booking to frontend schedule event
+    const mapBackendBooking = (b) => {
+
+        const startStr = b.start || b.startTime;
+        const endStr = b.end || b.endTime;
+
+        const startInfo = parseBackendDate(startStr);
+        const endInfo = parseBackendDate(endStr);
+
+        return {
+            id: `SCH-${b.reservationId}`,
+            hall: b.hallName,
+            course: b.purpose || 'Event',
+            faculty: b.staffId || 'Staff',
+            day: startInfo.day,
+            start: startInfo.time,
+            end: endInfo.time,
+            // Keep raw Reservation ID for updates if needed later
+            reservationId: b.reservationId
+        };
+    };
+
+    // Reusable function to fetch all halls
+    const loadAllHalls = async () => {
+        await handleAPICall(
+            () => hallAPI.fetchHalls(),
+            (data) => {
+                const list = Array.isArray(data) ? data : [];
+                const formatted = list.map(mapBackendHall);
+                setHalls(formatted);
+            }
+        );
+    };
+
+    // Reusable function to fetch all bookings (Schedule)
+    // Reusable function to fetch all bookings (Schedule)
+    const loadAllBookings = async () => {
+        await handleAPICall(
+            () => bookingAPI.fetchBookings(),
+            (data) => {
+                console.log("Raw Bookings from DB:", data); // <--- Add this check
+                const list = Array.isArray(data) ? data : [];
+                const formatted = list.map(mapBackendBooking);
+                console.log("Formatted for UI:", formatted); // <--- Add this check
+                setSchedule(formatted);
+            }
+        );
+    };
+
+    // --- 1. UseEffect to load data on Mount ---
+    useEffect(() => {
+        loadAllHalls();
+        loadAllBookings(); // <--- Now loads bookings too!
+    }, []);
+
+    // --- 2. Search Handler using gethall API ---
+    const handleSearch = async (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (!hallQuery.trim()) {
+                await loadAllHalls();
+                return;
+            }
+            await handleAPICall(
+                () => hallAPI.gethall(hallQuery.trim()),
+                (result) => {
+                    if (result) {
+                        const singleHall = Array.isArray(result) ? result : [result];
+                        const formatted = singleHall.map(mapBackendHall);
+                        setHalls(formatted);
+                    } else {
+                        setHalls([]);
+                    }
+                }
+            );
+        }
+    };
+
     const filteredHalls = useMemo(() => {
-        const query = hallQuery.trim().toLowerCase();
         return halls.filter((hall) => {
-            const matchesQuery = !query ||
-                hall.name.toLowerCase().includes(query) ||
-                hall.building.toLowerCase().includes(query) ||
-                hall.code.toLowerCase().includes(query);
             const matchesStatus = hallStatusFilter === 'All' || hall.status === hallStatusFilter;
-            return matchesQuery && matchesStatus;
+            return matchesStatus;
         });
-    }, [halls, hallQuery, hallStatusFilter]);
+    }, [halls, hallStatusFilter]);
 
     const campusSnapshot = useMemo(() => {
         const totalCapacity = halls.reduce((sum, hall) => sum + Number(hall.capacity || 0), 0);
@@ -366,6 +550,7 @@ const Facilities = () => {
         });
         return grouped;
     }, [filteredSchedule, scheduleWindow]);
+
     const openHallModal = (hall) => {
         if (hall) {
             setHallModal({ open: true, mode: 'edit', form: { ...hall }, id: hall.id });
@@ -374,61 +559,116 @@ const Facilities = () => {
         }
     };
 
-    const submitHallForm = (e) => {
+    const submitHallForm = async (e) => {
         e.preventDefault();
         const payload = {
-            ...hallModal.form,
             name: hallModal.form.name.trim(),
-            code: (hallModal.form.code || hallModal.form.name).trim(),
-            building: hallModal.form.building.trim(),
-            capacity: Number(hallModal.form.capacity || 0)
+            capacity: Number(hallModal.form.capacity),
+            // ... other fields
         };
 
-        if (!payload.name || !payload.building || payload.capacity <= 0) {
+        if (!payload.name || payload.capacity <= 0) {
+            alert("Please enter valid details");
             return;
         }
 
         if (hallModal.mode === 'edit' && hallModal.id) {
-            setHalls((prev) => prev.map((hall) => (hall.id === hallModal.id ? { ...hall, ...payload } : hall)));
-        } else {
-            const newHall = {
-                ...payload,
-                id: `H-${Math.floor(Math.random() * 900 + 100)}`
-            };
-            setHalls((prev) => [newHall, ...prev]);
-        }
+            // --- EDIT MODE ---
 
-        setHallModal({ open: false, mode: 'add', form: defaultHallForm, id: null });
+            // 1. Find the ORIGINAL name using the ID
+            // (We need this because the user might have typed a NEW name in the form)
+            const originalHall = halls.find(h => h.id === hallModal.id);
+            const originalName = originalHall ? originalHall.name : payload.name;
+
+            await handleAPICall(
+                // 2. Pass originalName to URL, payload to Body
+                () => hallAPI.updateHall(originalName, payload),
+                () => {
+                    loadAllHalls();
+                    setHallModal({ open: false, mode: 'add', form: defaultHallForm, id: null });
+                }
+            );
+        } else {
+            // --- CREATE MODE ---
+            await handleAPICall(
+                () => hallAPI.createHall(payload),
+                () => {
+                    loadAllHalls();
+                    setHallModal({ open: false, mode: 'add', form: defaultHallForm, id: null });
+                }
+            );
+        }
     };
 
-    const deleteHall = () => {
+    const deleteHall = async () => {
         if (!deletePrompt.hall) return;
-        setHalls((prev) => prev.filter((hall) => hall.id !== deletePrompt.hall.id));
-        setDeletePrompt({ open: false, hall: null });
+        await handleAPICall(
+            () => hallAPI.deleteHall(deletePrompt.hall.name),
+            (result) => {
+                setHalls((prev) => prev.filter((hall) => hall.id !== deletePrompt.hall.id));
+                setDeletePrompt({ open: false, hall: null });
+            }
+        );
     };
 
     const openRequestAction = (request, action) => {
         setRequestAction({ open: true, action, request, comment: '' });
     };
 
-    const submitRequestAction = (e) => {
+    const submitRequestAction = async (e) => {
         e.preventDefault();
         if (!requestAction.request) return;
 
         const nextStatus = requestAction.action === 'approve' ? 'Approved' : 'Rejected';
-        setRequests((prev) => prev.map((req) =>
-            req.id === requestAction.request.id
-                ? { ...req, status: nextStatus, comment: requestAction.comment }
-                : req
-        ));
 
-        if (nextStatus === 'Approved') {
-            setHalls((prev) => prev.map((hall) =>
-                hall.name === requestAction.request.hall ? { ...hall, status: 'Reserved' } : hall
+        if (requestAction.action === 'approve') {
+            const [datePart, timePart] = requestAction.request.datetime.split(' ');
+            const requestDate = new Date(datePart);
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayOfWeek = dayNames[requestDate.getDay()];
+            const startTime = timePart || '10:00';
+            const [hours, minutes] = startTime.split(':');
+            const endHours = (parseInt(hours) + 1).toString().padStart(2, '0');
+            const endTime = `${endHours}:${minutes}`;
+
+            const startDate = convertToBackendDate(dayOfWeek, startTime);
+            const endDate = convertToBackendDate(dayOfWeek, endTime);
+
+            const backendBookingData = {
+                hallName: requestAction.request.hall,
+                start: startDate,
+                end: endDate,
+                purpose: requestAction.request.course,
+                reservationId: null,
+                staffId: "1"
+            };
+
+            await handleAPICall(
+                () => bookingAPI.createBooking(backendBookingData),
+                (result) => {
+                    // Reload bookings to ensure UI syncs with actual DB IDs
+                    loadAllBookings();
+
+                    setRequests((prev) => prev.map((req) =>
+                        req.id === requestAction.request.id
+                            ? { ...req, status: 'Approved', comment: requestAction.comment }
+                            : req
+                    ));
+                    setHalls((prev) => prev.map((hall) =>
+                        hall.name === requestAction.request.hall ? { ...hall, status: 'Reserved' } : hall
+                    ));
+
+                    setRequestAction({ open: false, action: 'approve', request: null, comment: '' });
+                }
+            );
+        } else {
+            setRequests((prev) => prev.map((req) =>
+                req.id === requestAction.request.id
+                    ? { ...req, status: nextStatus, comment: requestAction.comment }
+                    : req
             ));
+            setRequestAction({ open: false, action: 'approve', request: null, comment: '' });
         }
-
-        setRequestAction({ open: false, action: 'approve', request: null, comment: '' });
     };
 
     const openBookingModal = (booking) => {
@@ -436,56 +676,114 @@ const Facilities = () => {
             const { id, hall, course, faculty, day, start, end } = booking;
             setBookingModal({ open: true, editing: id, form: { hall, course, faculty, day, start, end } });
         } else {
-            setBookingModal({ open: true, editing: null, form: { ...defaultBooking, hall: halls[0]?.name || defaultBooking.hall } });
+            const firstHallName = halls.length > 0 ? halls[0].name : '';
+            setBookingModal({ open: true, editing: null, form: { ...defaultBooking, hall: firstHallName || defaultBooking.hall } });
         }
     };
 
-    const submitBooking = (e) => {
+    // --- SUBMIT BOOKING (CREATE / UPDATE) ---
+    const submitBooking = async (e) => {
         e.preventDefault();
-        const payload = {
-            ...bookingModal.form,
-            id: bookingModal.editing || `SCH-${Math.floor(Math.random() * 9000 + 1000)}`
-        };
+        const payload = bookingModal.form;
 
-        const startMinutes = toMinutes(payload.start);
-        const endMinutes = toMinutes(payload.end);
-
-        if (endMinutes <= startMinutes) {
+        // 1. Time Validation
+        const startM = toMinutes(payload.start);
+        const endM = toMinutes(payload.end);
+        if (endM <= startM) {
             alert('End time must be after the start time.');
             return;
         }
 
-        if (!daysOfWeek.includes(payload.day)) {
-            payload.day = daysOfWeek[0];
-        }
-
-        if (!payload.hall) {
-            payload.hall = halls[0]?.name || '';
-        }
-
-        const conflict = hasConflict(payload, schedule);
-        payload.conflict = conflict;
+        // 2. Conflict Check
+        // We use the UI ID (bookingModal.editing) to exclude self from conflict check
+        const conflictCheckId = bookingModal.editing || 'temp-new';
+        const conflict = hasConflict({ ...payload, id: conflictCheckId }, schedule);
 
         if (conflict) {
-            const proceed = window.confirm('This booking conflicts with another reservation for this hall. Save anyway?');
-            if (!proceed) {
-                return;
-            }
+            const proceed = window.confirm('Conflict detected. Save anyway?');
+            if (!proceed) return;
         }
+
+        // 3. Prepare Backend Data
+        const startDate = convertToBackendDate(payload.day, payload.start);
+        const endDate = convertToBackendDate(payload.day, payload.end);
+
+        if (!payload.hall) {
+            alert("Please select a Hall.");
+            return;
+        }
+
+        const backendData = {
+            hallName: payload.hall,
+            start: startDate,
+            end: endDate,
+            purpose: payload.course,
+            staffId: "1"
+        };
 
         if (bookingModal.editing) {
-            setSchedule((prev) => prev.map((item) => (item.id === bookingModal.editing ? payload : item)));
-        } else {
-            setSchedule((prev) => [...prev, payload]);
-        }
+            // --- UPDATE PATH ---
 
-        setBookingModal({ open: false, editing: null, form: defaultBooking });
+            // FIX: Look up the real DB ID from the schedule array
+            const originalBooking = schedule.find(b => b.id === bookingModal.editing);
+
+            if (!originalBooking || !originalBooking.reservationId) {
+                alert("Error: Could not find original booking ID for update.");
+                return;
+            }
+
+            const realDbId = originalBooking.reservationId;
+
+            await handleAPICall(
+                () => bookingAPI.updateBooking(realDbId, backendData),
+                () => {
+                    loadAllBookings();
+                    setBookingModal({ open: false, editing: null, form: defaultBooking });
+                }
+            );
+        } else {
+            // --- CREATE PATH ---
+            await handleAPICall(
+                () => bookingAPI.createBooking({ ...backendData, reservationId: null }),
+                () => {
+                    loadAllBookings();
+                    setBookingModal({ open: false, editing: null, form: defaultBooking });
+                }
+            );
+        }
     };
 
-    const deleteBooking = () => {
+    // --- DELETE BOOKING ---
+    const deleteBooking = async () => {
         if (!bookingModal.editing) return;
-        setSchedule((prev) => prev.filter((item) => item.id !== bookingModal.editing));
-        setBookingModal({ open: false, editing: null, form: defaultBooking });
+
+        // 1. Find the full booking object in our state using the UI ID (e.g. "SCH-5")
+        const bookingToDelete = schedule.find(b => b.id === bookingModal.editing);
+
+        // Safety Check: Does it exist?
+        if (!bookingToDelete) {
+            console.error("Could not find booking object in state");
+            return;
+        }
+
+        // 2. Grab the REAL database ID (e.g. 5)
+        const rawId = bookingToDelete.reservationId;
+
+        // Debugging: Check your console to see exactly what ID is being sent
+        console.log("Attempting to delete Booking DB ID:", rawId);
+
+        if (!rawId) {
+            alert("Error: Cannot delete a booking that hasn't been saved to the DB yet.");
+            return;
+        }
+
+        await handleAPICall(
+            () => bookingAPI.deleteBooking(rawId),
+            () => {
+                loadAllBookings(); // Refresh from DB
+                setBookingModal({ open: false, editing: null, form: defaultBooking });
+            }
+        );
     };
 
     const getEventColor = (hallName) => {
@@ -495,9 +793,9 @@ const Facilities = () => {
     };
 
     const exportSchedule = (format) => {
-        console.log(`Export to ${format} triggered`, filteredSchedule);
         alert(`Export to ${format} will be connected to the backend.`);
     };
+
     return (
         <div className="facilities-shell">
             <header className="facilities-topline" role="banner">
@@ -515,6 +813,52 @@ const Facilities = () => {
                     + Add Hall
                 </button>
             </header>
+
+            {error && (
+                <div className="error-banner" style={{
+                    padding: '1rem',
+                    margin: '1rem 0',
+                    backgroundColor: '#fee',
+                    border: '1px solid #fcc',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <span style={{ color: '#c00' }}>{error}</span>
+                    <button onClick={() => setError(null)} style={{
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '1.2rem',
+                        color: '#c00'
+                    }}>×</button>
+                </div>
+            )}
+
+            {loading && (
+                <div className="loading-overlay" style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 9999
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '2rem',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                    }}>
+                        Processing...
+                    </div>
+                </div>
+            )}
 
             <section className="section-card inventory">
                 <header className="section-head">
@@ -537,8 +881,8 @@ const Facilities = () => {
                     <div className="inventory-status">
                         {campusSnapshot.statusBreakdown.map(({ status, count }) => (
                             <span key={status} className={`status-chip status-${status.replace(/\s/g, '').toLowerCase()}`}>
-                {status} - {count}
-              </span>
+                                {status} - {count}
+                            </span>
                         ))}
                     </div>
                     <div className="inventory-buildings">
@@ -564,9 +908,10 @@ const Facilities = () => {
                     <div className="filters">
                         <input
                             type="search"
-                            placeholder="Search by hall, code or building"
+                            placeholder="Search by hall name (Press Enter to search API)"
                             value={hallQuery}
                             onChange={(e) => setHallQuery(e.target.value)}
+                            onKeyDown={handleSearch}
                         />
                         <select value={hallStatusFilter} onChange={(e) => setHallStatusFilter(e.target.value)}>
                             <option value="All">All statuses</option>
@@ -579,33 +924,26 @@ const Facilities = () => {
 
                 <div className="table">
                     <div className="table-row table-head">
-                        <span>Hall</span>
-                        <span>Type</span>
+                        <span>Hall ID</span>
+                        <span>Room Name</span>
                         <span>Capacity</span>
-                        <span>Building</span>
                         <span>Status</span>
-                        <span>Resources</span>
                         <span>Actions</span>
                     </div>
                     {filteredHalls.map((hall) => (
                         <div className="table-row" key={hall.id}>
-              <span>
-                <strong>{hall.name}</strong>
-                <small>{hall.code}</small>
-              </span>
-                            <span>{hall.type}</span>
+                            <span><strong>{hall.id}</strong></span>
+                            <span>{hall.name}</span>
                             <span>{hall.capacity}</span>
-                            <span>{hall.building}</span>
                             <span>
-                <span className={`status-pill status-${hall.status.replace(/\s/g, '').toLowerCase()}`}>
-                  {hall.status}
-                </span>
-              </span>
-                            <span className="resources">{hall.resources || '--'}</span>
+                                <span className={`status-pill status-${hall.status.replace(/\s/g, '').toLowerCase()}`}>
+                                    {hall.status}
+                                </span>
+                            </span>
                             <span className="row-actions">
-                <button onClick={() => openHallModal(hall)} aria-label={`Edit ${hall.name}`}>Edit</button>
-                <button onClick={() => setDeletePrompt({ open: true, hall })} aria-label={`Delete ${hall.name}`}>Delete</button>
-              </span>
+                                <button onClick={() => openHallModal(hall)} aria-label={`Edit ${hall.name}`}>Edit</button>
+                                <button onClick={() => setDeletePrompt({ open: true, hall })} aria-label={`Delete ${hall.name}`}>Delete</button>
+                            </span>
                         </div>
                     ))}
                     {!filteredHalls.length && (
@@ -654,18 +992,18 @@ const Facilities = () => {
                         <div className="table-row" key={request.id}>
                             <span><strong>{request.id}</strong></span>
                             <span>
-                <strong>{request.faculty}</strong>
-                <small>{request.course}</small>
-              </span>
+                                <strong>{request.faculty}</strong>
+                                <small>{request.course}</small>
+                            </span>
                             <span>{request.hall}</span>
                             <span>{request.datetime.replace(' ', ' @ ')}</span>
                             <span>
-                <span className={`status-pill status-${request.status.toLowerCase()}`}>{request.status}</span>
-              </span>
+                                <span className={`status-pill status-${request.status.toLowerCase()}`}>{request.status}</span>
+                            </span>
                             <span className="row-actions">
-                <button onClick={() => openRequestAction(request, 'approve')} aria-label="Approve request">Approve</button>
-                <button onClick={() => openRequestAction(request, 'reject')} aria-label="Reject request">Reject</button>
-              </span>
+                                <button onClick={() => openRequestAction(request, 'approve')} aria-label="Approve request">Approve</button>
+                                <button onClick={() => openRequestAction(request, 'reject')} aria-label="Reject request">Reject</button>
+                            </span>
                         </div>
                     ))}
                     {!filteredRequests.length && (
@@ -711,11 +1049,12 @@ const Facilities = () => {
                         ))}
                     </div>
 
-                    <div className="schedule-grid-body" style={{ height: `${timelineHeight}px` }}>
+                    <div className="schedule-grid-body" style={{height: `${timelineHeight}px`, position: 'relative'}}>
+                        {/* Background Grid Lines */}
                         <div className="time-column" aria-hidden="true">
                             {timelineSlots.slice(0, -1).map((slot) => (
-                                <div className="time-slot" key={slot.time}>
-                                    {slot.label ? <span>{slot.label}</span> : <span className="time-tick" />}
+                                <div className="time-slot" key={slot.time} style={{height: `${SLOT_PIXEL_HEIGHT}px`}}>
+                                    {slot.label ? <span>{slot.label}</span> : <span className="time-tick"/>}
                                 </div>
                             ))}
                             <div className="time-slot time-slot-end">
@@ -723,24 +1062,40 @@ const Facilities = () => {
                             </div>
                         </div>
 
+                        {/* Day Columns */}
                         {daysOfWeek.map((day) => (
-                            <div className="day-column" key={day} role="gridcell">
+                            <div className="day-column" key={day} role="gridcell" style={{position: 'relative'}}>
+                                {/* Background Stripes */}
                                 <div className="slot-stripes" aria-hidden="true">
                                     {timelineSlots.slice(0, -1).map((slot, index) => (
-                                        <span className="slot-stripe" key={`${day}-stripe-${slot.time}-${index}`} />
+                                        <span
+                                            className="slot-stripe"
+                                            key={`${day}-stripe-${slot.time}-${index}`}
+                                            style={{height: `${SLOT_PIXEL_HEIGHT}px`}}
+                                        />
                                     ))}
                                 </div>
 
+                                {/* Events */}
                                 {(eventsByDay[day] || []).map((event) => {
                                     const layout = event.layout;
                                     if (!layout) return null;
 
                                     const widthPercent = 100 / layout.columns;
                                     const leftPercent = widthPercent * layout.columnIndex;
-                                    const spacing = layout.columns > 1 ? 8 : 0;
-                                    const inset = 8;
-                                    const computedLeft = `calc(${leftPercent}% + ${(layout.columnIndex * spacing) + inset}px)`;
+                                    const spacing = layout.columns > 1 ? 4 : 0;
+                                    const inset = 4;
+
+                                    const computedLeft = `calc(${leftPercent}% + ${inset}px)`;
                                     const computedWidth = `calc(${widthPercent}% - ${inset * 2 + spacing}px)`;
+
+                                    // RED COLOR FOR CONFLICTS
+                                    const backgroundStyle = event.conflict
+                                        ? `linear-gradient(135deg, #fee2e2 0%, #ef4444 100%)`
+                                        : `linear-gradient(145deg, rgba(255,255,255,0.9), ${getEventColor(event.hall)})`;
+
+                                    const borderStyle = event.conflict ? '2px solid #b91c1c' : '1px solid rgba(0,0,0,0.1)';
+                                    const textColor = event.conflict ? '#7f1d1d' : '#1e293b';
 
                                     return (
                                         <button
@@ -748,27 +1103,35 @@ const Facilities = () => {
                                             className="calendar-event"
                                             data-conflict={event.conflict}
                                             style={{
-                                                top: `calc(${layout.top}% + 2px)`,
-                                                height: `calc(${layout.height}% - 4px)`,
+                                                position: 'absolute', // Forces exact placement
+                                                top: `${layout.top}%`,
+                                                height: `${layout.height}%`,
                                                 left: computedLeft,
                                                 width: computedWidth,
-                                                background: `linear-gradient(145deg, rgba(255,255,255,0.85), ${getEventColor(event.hall)})`
+                                                background: backgroundStyle,
+                                                border: borderStyle,
+                                                color: textColor,
+                                                zIndex: event.conflict ? 10 : 1
                                             }}
-                                            title={`${event.course} - ${event.hall} - ${event.start} - ${event.end}`}
+                                            title={`${event.course} (${event.start} - ${event.end})`}
                                             onClick={() => openBookingModal(event)}
                                         >
                                             <strong>{event.course}</strong>
-                                            <span className="event-meta">{event.hall}</span>
-                                            <small>{event.start} - {event.end}</small>
-                                            <small>{event.faculty}</small>
-                                            {event.conflict && <span className="event-conflict">Conflict</span>}
+                                            <span className="event-meta" style={{color: textColor}}>{event.hall}</span>
+                                            <small style={{color: textColor}}>{event.start} - {event.end}</small>
+
+                                            {event.conflict && (
+                                                <div style={{
+                                                    backgroundColor: '#991b1b', color: 'white',
+                                                    fontSize: '9px', padding: '2px 4px',
+                                                    borderRadius: '4px', marginTop: '2px', display: 'inline-block'
+                                                }}>
+                                                    CONFLICT
+                                                </div>
+                                            )}
                                         </button>
                                     );
                                 })}
-
-                                {!eventsByDay[day]?.length && (
-                                    <div className="no-events-hint">No bookings</div>
-                                )}
                             </div>
                         ))}
                     </div>
@@ -780,15 +1143,27 @@ const Facilities = () => {
                         <h3>{hallModal.mode === 'edit' ? 'Edit Hall' : 'Add Hall'}</h3>
                         <label>
                             Name
-                            <input value={hallModal.form.name} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, name: e.target.value } }))} required />
+                            <input
+                                value={hallModal.form.name}
+                                onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, name: e.target.value } }))}
+                                required
+                                /* --- THE FIX: Disable if editing --- */
+                                disabled={hallModal.mode === 'edit'}
+                            />
                         </label>
                         <label>
                             Code
-                            <input value={hallModal.form.code} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, code: e.target.value } }))} placeholder="Optional code" />
+                            <input value={hallModal.form.code} onChange={(e) => setHallModal((prev) => ({
+                                ...prev,
+                                form: {...prev.form, code: e.target.value}
+                            }))} placeholder="Optional code"/>
                         </label>
                         <label>
                             Type
-                            <select value={hallModal.form.type} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, type: e.target.value } }))}>
+                            <select value={hallModal.form.type} onChange={(e) => setHallModal((prev) => ({
+                                ...prev,
+                                form: {...prev.form, type: e.target.value}
+                            }))}>
                                 {hallTypes.map((type) => (
                                     <option key={type} value={type}>{type}</option>
                                 ))}
@@ -796,27 +1171,48 @@ const Facilities = () => {
                         </label>
                         <label>
                             Capacity
-                            <input type="number" value={hallModal.form.capacity} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, capacity: e.target.value } }))} required />
+                            <input type="number" value={hallModal.form.capacity}
+                                   onChange={(e) => setHallModal((prev) => ({
+                                       ...prev,
+                                       form: {...prev.form, capacity: e.target.value}
+                                   }))} required/>
                         </label>
                         <label>
                             Building / Location
-                            <input value={hallModal.form.building} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, building: e.target.value } }))} required />
+                            <input value={hallModal.form.building} onChange={(e) => setHallModal((prev) => ({
+                                ...prev,
+                                form: {...prev.form, building: e.target.value}
+                            }))} required/>
                         </label>
                         <label>
                             Resources
-                            <textarea value={hallModal.form.resources} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, resources: e.target.value } }))} placeholder="Optional" />
+                            <textarea value={hallModal.form.resources} onChange={(e) => setHallModal((prev) => ({
+                                ...prev,
+                                form: {...prev.form, resources: e.target.value}
+                            }))} placeholder="Optional"/>
                         </label>
                         <label>
                             Status
-                            <select value={hallModal.form.status} onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, status: e.target.value } }))}>
+                            <select value={hallModal.form.status} onChange={(e) => setHallModal((prev) => ({
+                                ...prev,
+                                form: {...prev.form, status: e.target.value}
+                            }))}>
                                 {hallStatuses.map((status) => (
                                     <option key={status} value={status}>{status}</option>
                                 ))}
                             </select>
                         </label>
                         <div className="modal-actions">
-                            <button type="button" className="ghost" onClick={() => setHallModal({ open: false, mode: 'add', form: defaultHallForm, id: null })}>Cancel</button>
-                            <button type="submit">Save Hall</button>
+                            <button type="button" className="ghost" onClick={() => setHallModal({
+                                open: false,
+                                mode: 'add',
+                                form: defaultHallForm,
+                                id: null
+                            })}>Cancel
+                            </button>
+                            <button type="submit" disabled={loading}>
+                                {loading ? 'Saving...' : 'Save Hall'}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -826,10 +1222,15 @@ const Facilities = () => {
                 <div className="modal" role="alertdialog" aria-modal="true">
                     <div className="modal-card">
                         <h3>Delete hall?</h3>
-                        <p>"{deletePrompt.hall?.name}" will be removed from the directory. You can re-create it later.</p>
+                        <p>"{deletePrompt.hall?.name}" will be removed from the directory. You can re-create it
+                            later.</p>
                         <div className="modal-actions">
-                            <button className="ghost" onClick={() => setDeletePrompt({ open: false, hall: null })}>Cancel</button>
-                            <button className="danger" onClick={deleteHall}>Delete</button>
+                            <button className="ghost" onClick={() => setDeletePrompt({open: false, hall: null})}
+                                    disabled={loading}>Cancel
+                            </button>
+                            <button className="danger" onClick={deleteHall} disabled={loading}>
+                                {loading ? 'Deleting...' : 'Delete'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -842,11 +1243,21 @@ const Facilities = () => {
                         <p>Request {requestAction.request?.id} - {requestAction.request?.course}</p>
                         <label>
                             Comment (optional)
-                            <textarea value={requestAction.comment} onChange={(e) => setRequestAction((prev) => ({ ...prev, comment: e.target.value }))} placeholder="Notes for the faculty" />
+                            <textarea value={requestAction.comment}
+                                      onChange={(e) => setRequestAction((prev) => ({...prev, comment: e.target.value}))}
+                                      placeholder="Notes for the faculty"/>
                         </label>
                         <div className="modal-actions">
-                            <button type="button" className="ghost" onClick={() => setRequestAction({ open: false, action: 'approve', request: null, comment: '' })}>Cancel</button>
-                            <button type="submit">{requestAction.action === 'approve' ? 'Approve' : 'Reject'}</button>
+                            <button type="button" className="ghost" onClick={() => setRequestAction({
+                                open: false,
+                                action: 'approve',
+                                request: null,
+                                comment: ''
+                            })} disabled={loading}>Cancel
+                            </button>
+                            <button type="submit" disabled={loading}>
+                                {loading ? 'Processing...' : (requestAction.action === 'approve' ? 'Approve' : 'Reject')}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -896,10 +1307,12 @@ const Facilities = () => {
                         </label>
                         <div className="modal-actions">
                             {bookingModal.editing && (
-                                <button type="button" className="danger" onClick={deleteBooking}>Remove</button>
+                                <button type="button" className="danger" onClick={deleteBooking} disabled={loading}>Remove</button>
                             )}
-                            <button type="button" className="ghost" onClick={() => setBookingModal({ open: false, editing: null, form: defaultBooking })}>Cancel</button>
-                            <button type="submit">Save Booking</button>
+                            <button type="button" className="ghost" onClick={() => setBookingModal({ open: false, editing: null, form: defaultBooking })} disabled={loading}>Cancel</button>
+                            <button type="submit" disabled={loading} onClick={submitBooking}>
+                                {loading ? 'Saving...' : 'Save Booking'}
+                            </button>
                         </div>
                     </form>
                 </div>
