@@ -7,6 +7,7 @@
     --neo-muted: #6b7294;
     --neo-accent: #6a7dff;
     --neo-accent-strong: rgba(77, 99, 255, 0.9);
+    --edit-accent: #ff6b6b;
 }
 
 .curriculum-shell {
@@ -94,6 +95,7 @@
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .controls input,
@@ -105,6 +107,28 @@
     box-shadow: inset 6px 6px 12px rgba(183, 190, 208, 0.35), inset -6px -6px 12px rgba(255, 255, 255, 0.92);
     min-width: 240px;
     font-size: 14px;
+}
+
+.edit-course-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 18px;
+    background: linear-gradient(145deg, var(--edit-accent), #ff5252);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    box-shadow: 8px 8px 18px rgba(255, 107, 107, 0.4), -8px -8px 18px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.edit-course-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 12px 12px 24px rgba(255, 107, 107, 0.5), -12px -12px 24px rgba(255, 255, 255, 0.9);
 }
 
 .curriculum-grid {
@@ -207,6 +231,16 @@
 .prereq-badge.none {
     background: rgba(121, 205, 151, 0.25);
     color: #1e7a4b;
+}
+
+.course-credits {
+    font-size: 12px;
+    color: var(--neo-muted);
+    font-weight: 500;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    align-self: flex-start;
 }
 
 .course-list .empty {
@@ -323,9 +357,16 @@ mark {
         align-items: flex-start;
         gap: 16px;
     }
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
     .controls input,
     .controls select {
         min-width: 100%;
+    }
+    .edit-course-btn {
+        justify-content: center;
     }
     .course-detail .detail-grid {
         grid-template-columns: 1fr;

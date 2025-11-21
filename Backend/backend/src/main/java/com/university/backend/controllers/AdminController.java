@@ -22,6 +22,9 @@ public class AdminController {
     @Autowired
     private HallRepository hallRepository;
 
+    @Autowired
+    private CourseRepository courseRepository; // ADDED
+
     // --- Student Management ---
 
     @PostMapping("/students")
@@ -33,7 +36,7 @@ public class AdminController {
         studentRepository.save(student);
         return ResponseEntity.ok("Student created successfully.");
     }
-    
+
  // --- REFINED: Updates specific fields of an existing student record ---
     @PutMapping("/students/{studentId}")
     public ResponseEntity<String> updateStudentRecord(@PathVariable String studentId, @RequestBody Student updatedStudent) {
@@ -71,7 +74,7 @@ public class AdminController {
     @GetMapping("/students/{studentId}/transcript")
     public ResponseEntity<String> generateTranscript(@PathVariable String studentId) {
         Optional<Student> studentOpt = studentRepository.findByStudentId(studentId);
-        
+
         if (studentOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Student not found.");
         }
@@ -89,16 +92,16 @@ public class AdminController {
 
         sb.append("GPA: ").append(s.getGPA()).append("\n");
         sb.append("======================================");
-        
+
         return ResponseEntity.ok(sb.toString());
     }
-    
+
     /** NEW: Deletes a student record by studentId **/
     @DeleteMapping("/students/{studentId}")
     public ResponseEntity<String> deleteStudentRecord(@PathVariable String studentId) {
         if (studentRepository.existsByStudentId(studentId)) {
             // Use the new deleteByStudentId method
-            studentRepository.deleteByStudentId(studentId); 
+            studentRepository.deleteByStudentId(studentId);
             return ResponseEntity.ok("Student with ID " + studentId + " removed successfully.");
         }
         return ResponseEntity.status(404).body("Student with ID " + studentId + " not found.");
@@ -123,7 +126,7 @@ public class AdminController {
         }
         return ResponseEntity.status(404).body("Professor not found.");
     }
-    
+
  // --- REFINED: Updates specific fields of an existing professor record ---
     @PutMapping("/professors/{professorId}")
     public ResponseEntity<String> updateProfessorRecord(@PathVariable String professorId, @RequestBody Professor updatedProfessor) {
@@ -147,11 +150,11 @@ public class AdminController {
 
     @PutMapping("/professors/{professorId}/assign-course")
     public ResponseEntity<String> assignCourseToProfessor(
-            @PathVariable String professorId, 
+            @PathVariable String professorId,
             @RequestParam String courseName) {
-        
+
         Optional<Professor> profOpt = professorRepository.findByProfessorId(professorId);
-        
+
         if (profOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Error: Professor with ID " + professorId + " not found.");
         }
@@ -159,10 +162,10 @@ public class AdminController {
         Professor targetProf = profOpt.get();
         targetProf.assignCourse(courseName);
         professorRepository.save(targetProf); // Save changes to DB
-        
+
         return ResponseEntity.ok("Success: Course '" + courseName + "' assigned to " + targetProf.getProfessorName());
     }
-    
+
     /** NEW: Deletes a professor record by professorId **/
     @DeleteMapping("/professors/{professorId}")
     public ResponseEntity<String> deleteProfessorRecord(@PathVariable String professorId) {
@@ -203,34 +206,134 @@ public class AdminController {
             return ResponseEntity.badRequest().body("Booking failed: Time conflict.");
         }
     }
-    
+
  // --- REFINED: Updates capacity and/or name of an existing hall record ---
     @PutMapping("/halls/{hallName}")
     public ResponseEntity<String> updateHallRecord(@PathVariable String hallName, @RequestBody Hall updatedHall) {
         Optional<Hall> existingHallOpt = hallRepository.findByHallName(hallName);
-        
+
         if (existingHallOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Error: Hall '" + hallName + "' not found.");
         }
-        
+
         Hall existingHall = existingHallOpt.get();
-        
+
         // Update the capacity
         existingHall.setCapacity(updatedHall.getCapacity());
-        
+
         // Allow updating the name as well
         if (updatedHall.getHallName() != null && !updatedHall.getHallName().equals(existingHall.getHallName())) {
             // Check if the new name is already taken by a different hall (important for unique constraints)
             if (hallRepository.existsByHallName(updatedHall.getHallName())) {
                  return ResponseEntity.badRequest().body("Error: New hall name '" + updatedHall.getHallName() + "' is already in use.");
             }
-            existingHall.setHallName(updatedHall.getHallName()); 
+            existingHall.setHallName(updatedHall.getHallName());
         }
+
+    /** NEW: Deletes a hall record by hallName **/
+    @DeleteMapping("/halls/{hallName}")
+    public ResponseEntity<String> deleteHall(@PathVariable String hallName) {
+        if (hallRepository.existsByHallName(hallName)) {
+            // Use the new deleteByHallName method
+            hallRepository.deleteByHallName(hallName);
+            return ResponseEntity.ok("Hall '" + hallName + "' removed successfully.");
+        }
+        return ResponseEntity.status(404).body("Hall '" + hallName + "' not found.");
+    }
+
+    // --- Course Management --- ADDED THIS SECTION
+
+    @PostMapping("/courses")
+    public ResponseEntity<String> addCourse(@RequestBody Course course) {
+        if (courseRepository.existsByCourseCode(course.getCourseCode())) {
+            return ResponseEntity.badRequest().body("Course with this code already exists.");
+        }
+        courseRepository.save(course);
+        return ResponseEntity.ok("Course added successfully.");
+    }
+
+    @PutMapping("/courses/{courseCode}")
+    public ResponseEntity<String> updateCourse(@PathVariable String courseCode, @RequestBody Course updatedCourse) {
+        Optional<Course> existingCourseOpt = courseRepository.findByCourseCode(courseCode);
+
+        if (existingCourseOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Course not found.");
+        }
+
+        Course existingCourse = existingCourseOpt.get();
+
+        // Update fields if provided in the request
+        if (updatedCourse.getCourseName() != null) {
+            existingCourse.setCourseName(updatedCourse.getCourseName());
+        }
+        if (updatedCourse.getCreditHours() > 0) {
+            existingCourse.setCreditHours(updatedCourse.getCreditHours());
+        }
+
+        courseRepository.save(existingCourse);
+        return ResponseEntity.ok("Course updated successfully.");
+    }
+
+    @DeleteMapping("/courses/{courseCode}")
+    public ResponseEntity<String> removeCourse(@PathVariable String courseCode) {
+        Optional<Course> courseOpt = courseRepository.findByCourseCode(courseCode);
+
+        if (courseOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Course not found.");
+        }
+
+        courseRepository.delete(courseOpt.get());
+        return ResponseEntity.ok("Course removed successfully.");
+    }
+
+    @GetMapping("/courses/{courseCode}")
+    public ResponseEntity<?> getCourse(@PathVariable String courseCode) {
+        Optional<Course> course = courseRepository.findByCourseCode(courseCode);
+        if (course.isPresent()) {
+            return ResponseEntity.ok(course.get());
+        }
+        return ResponseEntity.status(404).body("Course not found.");
+    }
+
+    // Add these methods to the Course Management section in your AdminController
+
+    @GetMapping("/courses")
+    public ResponseEntity<?> getAllCourses() {
+        return ResponseEntity.ok(courseRepository.findAll());
+    }
+
+    @GetMapping("/courses/search")
+    public ResponseEntity<?> searchCourses(@RequestParam(required = false) String name) {
+        if (name != null && !name.trim().isEmpty()) {
+            // Search by course name containing the search term (case-insensitive)
+            return ResponseEntity.ok(courseRepository.findByCourseNameContainingIgnoreCase(name));
+        } else {
+            // If no search term, return all courses
+            return ResponseEntity.ok(courseRepository.findAll());
+        }
+    }
+
+    @GetMapping("/courses/filter/credits")
+    public ResponseEntity<?> getCoursesByCreditRange(
+            @RequestParam(required = false) Integer minCredits,
+            @RequestParam(required = false) Integer maxCredits) {
+
+        if (minCredits != null && maxCredits != null) {
+            return ResponseEntity.ok(courseRepository.findByCreditHoursBetween(minCredits, maxCredits));
+        } else if (minCredits != null) {
+            return ResponseEntity.ok(courseRepository.findByCreditHoursGreaterThanEqual(minCredits));
+        } else if (maxCredits != null) {
+            return ResponseEntity.ok(courseRepository.findByCreditHoursLessThanEqual(maxCredits));
+        } else {
+            return ResponseEntity.ok(courseRepository.findAll());
+        }
+    }
 
         hallRepository.save(existingHall);
         return ResponseEntity.ok("Hall record updated successfully.");
     }
-    
+
+
     /** NEW: Deletes a hall record by hallName **/
     @DeleteMapping("/halls/{hallName}")
     public ResponseEntity<String> deleteHall(@PathVariable String hallName) {

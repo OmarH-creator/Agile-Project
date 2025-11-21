@@ -5,6 +5,7 @@ import com.university.backend.entity.Student;
 import com.university.backend.entity.Hall;
 import com.university.backend.entity.Professor;
 import com.university.backend.entity.Admin;
+import com.university.backend.entity.Course;
 //import org.springframework.data.jpa.repository.JpaRepository; // (Keep this if it exists)
 //package com.university.backend.repository;
 
@@ -19,7 +20,7 @@ public class UniversityRepository {
     public static List<Student> students = new ArrayList<>();
     public static List<Hall> halls = new ArrayList<>();
     public static List<Professor> professors = new ArrayList<>();
-
+    public static List<Course> courses = new ArrayList<>();
     private UniversityRepository() {
     }
 }
