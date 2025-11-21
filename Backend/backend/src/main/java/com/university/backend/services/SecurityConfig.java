@@ -16,7 +16,7 @@ public class SecurityConfig {
                 .cors().and() // <--- THIS enables CORS using your WebConfig/global CORS
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/api/**").permitAll()
                                 .anyRequest().authenticated()
                 );
         return http.build();

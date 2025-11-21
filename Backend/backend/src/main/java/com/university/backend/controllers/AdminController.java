@@ -7,8 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
@@ -25,43 +27,110 @@ public class AdminController {
     @Autowired
     private CourseRepository courseRepository; // ADDED
 
+    @Autowired
+    private MajorRepository majorRepository; // ADDED
+
+
+
     // --- Student Management ---
 
+    // CREATE STUDENT
     @PostMapping("/students")
-    public ResponseEntity<String> createStudentRecord(@RequestBody Student student) {
-        // Check using the Repo method
-        if (studentRepository.existsByStudentId(student.getStudentId())) {
+    public ResponseEntity<?> createStudentRecord(@RequestBody Map<String, Object> payload) {
+        String studentId = (String) payload.get("studentId");
+
+        // 1. Check if student already exists
+        if (studentRepository.existsByStudentId(studentId)) {
             return ResponseEntity.badRequest().body("Student with this ID already exists.");
         }
-        studentRepository.save(student);
-        return ResponseEntity.ok("Student created successfully.");
+
+        try {
+            // 2. Create new Student object and map simple fields
+            Student student = new Student();
+            student.setStudentId(studentId);
+            student.setName((String) payload.get("name"));
+            student.setEmail((String) payload.get("email"));
+            student.setPhone((String) payload.get("phone"));
+            student.setAddress((String) payload.get("address"));
+            student.setMilitaryStatus((String) payload.get("militaryStatus"));
+
+//            // Handle Numbers safely (JSON numbers can be Integer or Double)
+//            if (payload.get("gradYear") != null)
+//                student.setGradYear(((Number) payload.get("gradYear")).intValue());
+//
+//            if (payload.get("completedHours") != null)
+//                student.setCompletedHours(((Number) payload.get("completedHours")).intValue());
+//
+//            if (payload.get("fees") != null)
+//                student.setFees(((Number) payload.get("fees")).doubleValue());
+//
+//            if (payload.get("gpa") != null)
+//                student.setGpa(((Number) payload.get("gpa")).doubleValue());
+
+            // 3. THE FIX: Look up the Major manually
+            String majorId = (String) payload.get("majorId");
+            if (majorId != null) {
+                Major major = majorRepository.findById(majorId)
+                        .orElseThrow(() -> new RuntimeException("Major not found: " + majorId));
+                student.setMajor(major); // Set the relationship
+            } else {
+                return ResponseEntity.badRequest().body("Major ID is required.");
+            }
+
+            // 4. Save
+            studentRepository.save(student);
+            return ResponseEntity.ok("Student created successfully.");
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error saving student: " + e.getMessage());
+        }
     }
 
- // --- REFINED: Updates specific fields of an existing student record ---
-    @PutMapping("/students/{studentId}")
-    public ResponseEntity<String> updateStudentRecord(@PathVariable String studentId, @RequestBody Student updatedStudent) {
-        Optional<Student> studentOpt = studentRepository.findByStudentId(studentId);
-
+    // UPDATE STUDENT
+    @PutMapping("/students/{id}")
+    public ResponseEntity<?> updateStudentRecord(@PathVariable String id, @RequestBody Map<String, Object> payload) {
+        // 1. Find existing student
+        Optional<Student> studentOpt = studentRepository.findByStudentId(id);
         if (studentOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Error: Student with ID " + studentId + " not found.");
+            return ResponseEntity.notFound().build();
         }
 
-        Student existingStudent = studentOpt.get();
+        Student student = studentOpt.get();
 
-        // Update the fields based on the incoming JSON body
-        // We only update mutable fields like name, email, phone, etc.
-        existingStudent.setName(updatedStudent.getName());
-        existingStudent.setEmail(updatedStudent.getEmail());
-        existingStudent.setPhone(updatedStudent.getPhone());
-        existingStudent.setAddress(updatedStudent.getAddress());
-        existingStudent.setDateOfBirth(updatedStudent.getDateOfBirth());
-        existingStudent.setMilitaryStatus(updatedStudent.getMilitaryStatus());
-        // Note: Major and ID fields are usually handled separately or not updated via this endpoint.
+        try {
+            // 2. Update simple fields
+            if (payload.containsKey("name")) student.setName((String) payload.get("name"));
+            if (payload.containsKey("email")) student.setEmail((String) payload.get("email"));
+            if (payload.containsKey("phone")) student.setPhone((String) payload.get("phone"));
+            if (payload.containsKey("address")) student.setAddress((String) payload.get("address"));
+            if (payload.containsKey("militaryStatus")) student.setMilitaryStatus((String) payload.get("militaryStatus"));
+//            if (payload.containsKey("status")) student.setStatus((String) payload.get("status"));
 
-        studentRepository.save(existingStudent);
-        return ResponseEntity.ok("Student record updated successfully for ID " + studentId + ".");
+//            if (payload.containsKey("gradYear"))
+//                student.setGradYear(((Number) payload.get("gradYear")).intValue());
+//            if (payload.containsKey("completedHours"))
+//                student.setCompletedHours(((Number) payload.get("completedHours")).intValue());
+//            if (payload.containsKey("fees"))
+//                student.setFees(((Number) payload.get("fees")).doubleValue());
+//            if (payload.containsKey("gpa"))
+//                student.setGpa(((Number) payload.get("gpa")).doubleValue());
+
+            // 3. Update Major if it changed
+            if (payload.containsKey("majorId")) {
+                String newMajorId = (String) payload.get("majorId");
+                Major major = majorRepository.findById(newMajorId)
+                        .orElseThrow(() -> new RuntimeException("Major not found: " + newMajorId));
+                student.setMajor(major);
+            }
+
+            // 4. Save updates
+            studentRepository.save(student);
+            return ResponseEntity.ok("Student updated successfully.");
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error updating student: " + e.getMessage());
+        }
     }
-
     @GetMapping("/students/{studentId}")
     public ResponseEntity<?> getStudent(@PathVariable String studentId) {
         Optional<Student> student = studentRepository.findByStudentId(studentId);

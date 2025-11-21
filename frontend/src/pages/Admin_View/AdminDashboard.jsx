@@ -38,21 +38,27 @@ const toBackendFormat = (student) => {
 // Transform backend student data to frontend format
 const toFrontendFormat = (backendStudent) => {
     return {
-        code: backendStudent.studentId,
-        name: backendStudent.name,
-        email: backendStudent.email,
-        phone: backendStudent.phone,
-        militaryStatus: backendStudent.militaryStatus,
-        address: backendStudent.address,
-        majorId: backendStudent.majorId,
-        majorName: backendStudent.majorName,
-        nationalId: backendStudent.nationalId,
-        birthdate: backendStudent.birthdate,
-        gradYear: backendStudent.gradYear,
-        completedHours: backendStudent.completedHours,
-        fees: backendStudent.fees,
-        status: backendStudent.status,
-        cgpa: backendStudent.gpa,
+        code: backendStudent.studentId || backendStudent.code || '', // Fallback for ID
+        name: backendStudent.name || 'Unknown',
+        email: backendStudent.email || '',
+        phone: backendStudent.phone || '',
+        militaryStatus: backendStudent.militaryStatus || 'Not Specified',
+        address: backendStudent.address || '',
+
+        // Handle nested major object if your backend sends it as an object
+        majorId: backendStudent.major?.majorId || '',
+        majorName: backendStudent.major?.majorName || backendStudent.majorName || '',
+
+        nationalId: backendStudent.nationalId || '',
+        birthdate: backendStudent.birthdate || '',
+        gradYear: backendStudent.gradYear || '',
+        completedHours: backendStudent.completedHours || 0,
+        fees: backendStudent.fees || 0,
+
+        // CRITICAL FIX: Default status to 'Active' if missing to prevent .toLowerCase() crash
+        status: backendStudent.status || 'Active',
+
+        cgpa: backendStudent.gpa || 0,
         academicHistory: backendStudent.completedCourses || [],
         currentRegistrations: backendStudent.currentRegistrations || [],
         notes: backendStudent.notes || '',
@@ -89,6 +95,7 @@ async function createStudent(studentData) {
 async function getStudent(studentId) {
     const token = getAuthToken();
 
+    // 1. Use the dynamic studentId passed to the function
     const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {
         method: 'GET',
         headers: {
@@ -97,6 +104,7 @@ async function getStudent(studentId) {
         }
     });
 
+    // 2. Check for errors (404, 403, etc.)
     if (!response.ok) {
         if (response.status === 404) {
             throw new Error('Student not found.');
@@ -105,7 +113,10 @@ async function getStudent(studentId) {
         throw new Error(errorMessage || `Failed to retrieve student: ${response.status}`);
     }
 
+    // 3. Parse the clean JSON (Circular reference fixed!)
     const backendStudent = await response.json();
+
+    // 4. Convert it to the format the UI expects and return it
     return toFrontendFormat(backendStudent);
 }
 
@@ -479,7 +490,7 @@ const LoadingSpinner = ({ size = 'medium', message = 'Loading...' }) => (
 // Error Message Component
 const ErrorMessage = ({ error, onDismiss }) => {
     if (!error) return null;
-    
+
     return (
         <div className="error-message" role="alert">
             <div className="error-content">
@@ -522,7 +533,7 @@ const AdminDashboard = () => {
         const fetchInitialStudents = async () => {
             setInitialLoading(true);
             clearError();
-            
+
             try {
                 // TODO: Uncomment when backend implements GET /api/admin/students endpoint
                 // const token = getAuthToken();
@@ -533,18 +544,18 @@ const AdminDashboard = () => {
                 //         'Authorization': `Bearer ${token}`
                 //     }
                 // });
-                
+
                 // if (!response.ok) {
                 //     throw new Error('Failed to fetch students');
                 // }
-                
+
                 // const backendStudents = await response.json();
                 // const frontendStudents = backendStudents.map(toFrontendFormat);
                 // setStudents(frontendStudents);
                 // if (frontendStudents.length > 0) {
                 //     setSelectedCode(frontendStudents[0].code);
                 // }
-                
+
                 // For now, initialize with empty array
                 // Students will be loaded as they are created or fetched individually
                 setStudents([]);
@@ -559,7 +570,6 @@ const AdminDashboard = () => {
                 setInitialLoading(false);
             }
         };
-
         fetchInitialStudents();
     }, []);
 
@@ -755,7 +765,7 @@ const AdminDashboard = () => {
 
     const handleFormSubmit = async (event) => {
         event.preventDefault();
-        
+
         // Clear error when user retries operation
         clearError();
 
@@ -799,7 +809,7 @@ const AdminDashboard = () => {
             setLoading(true);
             try {
                 await createStudent(newStudent);
-                
+
                 // Update local state only after successful API call
                 setStudents((prev) => [...prev, newStudent]);
                 setSelectedCode(newStudent.code);
@@ -821,7 +831,7 @@ const AdminDashboard = () => {
             // Once a PUT endpoint is implemented (e.g., PUT /api/admin/students/{studentId}),
             // this section should be updated to call an updateStudent API function similar to createStudent.
             // Until then, edits are maintained in the frontend state only and will not persist across sessions.
-            
+
             setStudents((prev) =>
                 prev.map((student) =>
                     student.code === selectedStudent.code
@@ -851,10 +861,10 @@ const AdminDashboard = () => {
         // Clear error when user retries operation
         clearError();
         setLoading(true);
-        
+
         try {
             const fetchedStudent = await getStudent(studentId);
-            
+
             // Update the students array with the fetched data
             setStudents((prev) => {
                 const existingIndex = prev.findIndex(s => s.code === studentId);
@@ -868,7 +878,7 @@ const AdminDashboard = () => {
                     return [...prev, fetchedStudent];
                 }
             });
-            
+
             // Set as selected
             setSelectedCode(studentId);
         } catch (err) {
@@ -894,10 +904,10 @@ const AdminDashboard = () => {
         try {
             // Call deleteStudent API function after user confirmation
             const successMessage = await deleteStudent(code);
-            
+
             // Update local students state only after successful deletion
             setStudents((prev) => prev.filter((student) => student.code !== code));
-            
+
             // If the deleted student was selected, clear selection
             if (selectedCode === code) {
                 setSelectedCode(students.length > 1 ? students.find(s => s.code !== code)?.code : null);
@@ -1052,7 +1062,7 @@ const AdminDashboard = () => {
 
     const downloadTranscript = () => {
         if (!selectedStudent || !transcriptModal.content) return;
-        
+
         downloadBlob(
             transcriptModal.content,
             `${selectedStudent.code}-transcript.txt`,
@@ -1149,6 +1159,7 @@ const AdminDashboard = () => {
                                 {Icon.home16}
                                 <span>Back to dashboard</span>
                             </button>
+
                             {selectedStudent && (
                                 <>
                                     <button
@@ -1197,7 +1208,7 @@ const AdminDashboard = () => {
                                 <div className="student-filters">
                                     <input
                                         type="search"
-                                        placeholder="Search by name, code, or major"
+                                        placeholder="Search by ID (Press Enter)"
                                         value={filters.query}
                                         onChange={(event) =>
                                             setFilters((prev) => ({
@@ -1205,7 +1216,25 @@ const AdminDashboard = () => {
                                                 query: event.target.value
                                             }))
                                         }
-                                        disabled={initialLoading}
+                                        onKeyDown={async (e) => {
+                                            if (e.key === 'Enter') {
+                                                try {
+                                                    setLoading(true);
+                                                    const foundStudent = await getStudent(filters.query);
+                                                    setStudents(prev => {
+                                                        if (prev.find(s => s.code === foundStudent.code)) return prev;
+                                                        return [...prev, foundStudent];
+                                                    });
+                                                    setSelectedCode(foundStudent.code);
+                                                    setFilters(prev => ({...prev, query: ''}));
+                                                } catch (err) {
+                                                    setError(err.message);
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }
+                                        }}
+                                        disabled={loading}
                                     />
                                     <div className="filter-row">
                                         <select
@@ -1248,15 +1277,15 @@ const AdminDashboard = () => {
                             <div className="student-list" role="list">
                                 {initialLoading && (
                                     <div className="empty-state">
-                                        <LoadingSpinner size="medium" message="Loading students..." />
+                                        <LoadingSpinner size="medium" message="Loading..." />
                                     </div>
                                 )}
 
                                 {!initialLoading && filteredStudents.length === 0 && (
                                     <div className="empty-state">
-                                        {students.length === 0 
-                                            ? 'No students found. Click "Add Student" to create a new student record.'
-                                            : 'No students match the current filters.'}
+                                        {students.length === 0
+                                            ? 'No students found.'
+                                            : 'No match.'}
                                     </div>
                                 )}
 
@@ -1275,16 +1304,16 @@ const AdminDashboard = () => {
                                             <span className="student-code">{student.code}</span>
                                         </div>
                                         <div className="student-card-meta">
-                                        <span
-                                            className="status-chip"
-                                            data-status={student.status.toLowerCase()}
-                                        >
-                                            {student.status}
-                                        </span>
+                                            <span
+                                                className="status-chip"
+                                                data-status={student.status.toLowerCase()}
+                                            >
+                                                {student.status}
+                                            </span>
                                             <span className="student-major">{student.majorName}</span>
                                             <span className="student-gpa">
-                                            GPA {studentGpaDisplay(student)}
-                                        </span>
+                                                GPA {studentGpaDisplay(student)}
+                                            </span>
                                         </div>
                                     </button>
                                 ))}
@@ -1293,15 +1322,13 @@ const AdminDashboard = () => {
                         <section className="detail-panel">
                             {(loading || initialLoading) && (
                                 <div className="empty-state large">
-                                    <LoadingSpinner size="large" message={initialLoading ? "Loading..." : "Loading student details..."} />
+                                    <LoadingSpinner size="large" />
                                 </div>
                             )}
-                            
+
                             {!loading && !initialLoading && !selectedStudent && (
                                 <div className="empty-state large">
-                                    {students.length === 0 
-                                        ? 'No students available. Add a new student to get started.'
-                                        : 'Select a student to view their full record.'}
+                                    Select a student to view record.
                                 </div>
                             )}
 
@@ -1311,18 +1338,11 @@ const AdminDashboard = () => {
                                         <header className="detail-card-header">
                                             <div className="detail-ident">
                                                 <div className="detail-logo-shell">
-                                                    <img
-                                                        src={String(umsLogo)}
-                                                        alt=""
-                                                        aria-hidden="true"
-                                                    />
+                                                    <img src={String(umsLogo)} alt="" aria-hidden="true" />
                                                 </div>
                                                 <div>
                                                     <h2>{selectedStudent.name}</h2>
-                                                    <p>
-                                                        {selectedStudent.majorName}  {' '}
-                                                        {selectedStudent.code}
-                                                    </p>
+                                                    <p>{selectedStudent.majorName} {selectedStudent.code}</p>
                                                     <p>{selectedStudent.email}</p>
                                                 </div>
                                             </div>
@@ -1351,66 +1371,47 @@ const AdminDashboard = () => {
                                         <div className="kpi-grid">
                                             <div className="kpi-card">
                                                 <span className="kpi-label">CGPA</span>
-                                                <strong>
-                                                    {(dynamicGpa ?? selectedStudent.cgpa ?? 0).toFixed(2)}
-                                                </strong>
-                                                <span className="kpi-sub">Target = 2.0</span>
+                                                <strong>{(dynamicGpa ?? selectedStudent.cgpa ?? 0).toFixed(2)}</strong>
                                             </div>
                                             <div className="kpi-card">
                                                 <span className="kpi-label">Completed Hours</span>
                                                 <strong>{completedHoursValue}</strong>
-                                                <span className="kpi-sub">
-                                                Standing {getStandingLabel(completedHoursValue)}
-                                            </span>
+                                                <span className="kpi-sub">{getStandingLabel(completedHoursValue)}</span>
                                             </div>
                                             <div className="kpi-card">
-                                                <span className="kpi-label">Registered Credits</span>
+                                                <span className="kpi-label">Registered</span>
                                                 <strong>{registeredCredits}</strong>
-                                                <span className="kpi-sub">Current term</span>
                                             </div>
                                             <div className="kpi-card">
-                                                <span className="kpi-label">Fees Due</span>
+                                                <span className="kpi-label">Fees</span>
                                                 <strong>{formatCurrency(selectedStudent.fees)}</strong>
-                                                <span className="kpi-sub">Next billing cycle</span>
                                             </div>
                                         </div>
 
                                         <div className="meta-grid">
                                             <div>
                                                 <span className="meta-label">Phone</span>
-                                                <span className="meta-value">
-                                                {selectedStudent.phone || ' '}
-                                            </span>
+                                                <span className="meta-value">{selectedStudent.phone || 'N/A'}</span>
                                             </div>
                                             <div>
                                                 <span className="meta-label">National ID</span>
-                                                <span className="meta-value">
-                                                {selectedStudent.nationalId || ' '}
-                                            </span>
+                                                <span className="meta-value">{selectedStudent.nationalId || 'N/A'}</span>
                                             </div>
                                             <div>
                                                 <span className="meta-label">Birthdate</span>
-                                                <span className="meta-value">
-                                                {selectedStudent.birthdate || ' '}
-                                            </span>
+                                                <span className="meta-value">{selectedStudent.birthdate || 'N/A'}</span>
                                             </div>
                                             <div>
                                                 <span className="meta-label">Military Status</span>
-                                                <span className="meta-value">
-                                                {selectedStudent.militaryStatus || ' '}
-                                            </span>
+                                                <span className="meta-value">{selectedStudent.militaryStatus || 'N/A'}</span>
                                             </div>
                                             <div>
                                                 <span className="meta-label">Address</span>
-                                                <span className="meta-value">
-                                                {selectedStudent.address || ' '}
-                                            </span>
+                                                <span className="meta-value">{selectedStudent.address || 'N/A'}</span>
                                             </div>
                                             <div>
                                                 <span className="meta-label">Graduation Year</span>
-                                                <span className="meta-value">
-                                                {selectedStudent.gradYear || ' '}
-                                            </span>
+                                                <span className="meta-value">{selectedStudent.gradYear || 'N/A'}</span>
                                             </div>
                                         </div>
                                     </article>
@@ -1418,9 +1419,7 @@ const AdminDashboard = () => {
                                     <article className="history-card">
                                         <header>
                                             <h3>Academic History</h3>
-                                            <span>
-                                            {(selectedStudent.academicHistory ?? []).length} courses
-                                        </span>
+                                            <span>{(selectedStudent.academicHistory ?? []).length} courses</span>
                                         </header>
                                         <div className="history-table-wrapper">
                                             <table className="history-table">
@@ -1434,30 +1433,23 @@ const AdminDashboard = () => {
                                                 </tr>
                                                 </thead>
                                                 <tbody>
-                                                {(selectedStudent.academicHistory ?? []).map(
-                                                    (record) => (
-                                                        <tr key={`${record.code}-${record.term}`}>
-                                                            <td>{record.code}</td>
-                                                            <td>{record.title}</td>
-                                                            <td>{record.credits ?? 3}</td>
-                                                            <td>{record.grade}</td>
-                                                            <td>{record.term}</td>
-                                                        </tr>
-                                                    )
-                                                )}
+                                                {(selectedStudent.academicHistory ?? []).map((record) => (
+                                                    <tr key={`${record.code}-${record.term}`}>
+                                                        <td>{record.code}</td>
+                                                        <td>{record.title}</td>
+                                                        <td>{record.credits ?? 3}</td>
+                                                        <td>{record.grade}</td>
+                                                        <td>{record.term}</td>
+                                                    </tr>
+                                                ))}
                                                 </tbody>
                                             </table>
                                         </div>
                                     </article>
+
                                     <article className="registration-card">
                                         <header>
-                                            <div>
-                                                <h3>Course Registration</h3>
-                                                <p>
-                                                    Eligible courses are filtered automatically using
-                                                    prerequisite data from the curriculum.
-                                                </p>
-                                            </div>
+                                            <h3>Course Registration</h3>
                                         </header>
                                         <div className="registration-grid">
                                             <div className="eligible-courses">
@@ -1465,58 +1457,32 @@ const AdminDashboard = () => {
                                                 <div className="course-scroll">
                                                     {availableCourses.length === 0 && (
                                                         <div className="empty-state small">
-                                                            No additional courses found for the current
-                                                            standing.
+                                                            No courses available.
                                                         </div>
                                                     )}
-
                                                     {availableCourses.map((course) => (
-                                                        <article
-                                                            className="course-option"
-                                                            key={course.code}
-                                                        >
+                                                        <article className="course-option" key={course.code}>
                                                             <header>
                                                                 <div>
-                                                                <span className="course-code">
-                                                                    {course.code}
-                                                                </span>
+                                                                    <span className="course-code">{course.code}</span>
                                                                     <h5>{course.title}</h5>
                                                                 </div>
-                                                                <span className="course-hours">
-                                                                {course.creditHours} cr.
-                                                            </span>
+                                                                <span className="course-hours">{course.creditHours} cr.</span>
                                                             </header>
                                                             <div className="course-meta">
-                                                                <span>Semester {course.semester}</span>
-                                                            </div>
-                                                            <div className="prereq-row">
-                                                                {(course.prerequisites ?? []).length === 0 && (
-                                                                    <span className="prereq-chip met">
-                                                                    No prerequisites
-                                                                </span>
-                                                                )}
                                                                 {(course.prerequisites ?? []).map((prerequisite) => (
-                                                                    <span
-                                                                        key={`${course.code}-${prerequisite}`}
-                                                                        className="prereq-chip met"
-                                                                    >
-                                                                    {prerequisite}
-                                                                </span>
+                                                                    <span key={`${course.code}-${prerequisite}`} className="prereq-chip met">
+                                                                        {prerequisite}
+                                                                    </span>
                                                                 ))}
                                                             </div>
-                                                            {course.requiresManual && (
-                                                                <p className="advisor-note">
-                                                                    Advisor approval required for elective
-                                                                    prerequisite (varies).
-                                                                </p>
-                                                            )}
                                                             <button
                                                                 type="button"
                                                                 className="primary-btn"
                                                                 onClick={() => handleAddCourse(course)}
                                                             >
                                                                 {Icon.plus16}
-                                                                <span>Add to plan</span>
+                                                                <span>Add</span>
                                                             </button>
                                                         </article>
                                                     ))}
@@ -1528,14 +1494,11 @@ const AdminDashboard = () => {
                                                 <div className="pending-list">
                                                     {pendingRegistration.length === 0 && (
                                                         <div className="empty-state small">
-                                                            No courses selected yet.
+                                                            No courses selected.
                                                         </div>
                                                     )}
                                                     {pendingRegistration.map((course) => (
-                                                        <div
-                                                            className="pending-item"
-                                                            key={`pending-${course.code}`}
-                                                        >
+                                                        <div className="pending-item" key={`pending-${course.code}`}>
                                                             <div>
                                                                 <strong>{course.code}</strong>
                                                                 <span>{course.title}</span>
@@ -1546,7 +1509,6 @@ const AdminDashboard = () => {
                                                                 onClick={() => handleRemovePending(course.code)}
                                                             >
                                                                 {Icon.close16}
-                                                                <span>Remove</span>
                                                             </button>
                                                         </div>
                                                     ))}
@@ -1566,8 +1528,7 @@ const AdminDashboard = () => {
                                                         onClick={confirmRegistration}
                                                         disabled={pendingRegistration.length === 0}
                                                     >
-                                                        {Icon.check16}
-                                                        <span>Submit registration</span>
+                                                        Submit
                                                     </button>
                                                 </div>
                                             </div>
@@ -1581,27 +1542,22 @@ const AdminDashboard = () => {
                                                         No active registrations.
                                                     </div>
                                                 )}
-                                                {(selectedStudent.currentRegistrations ?? []).map(
-                                                    (course) => (
-                                                        <div
-                                                            className="registration-item"
-                                                            key={`active-${course.code}`}
-                                                        >
-                                                            <div>
-                                                                <strong>{course.code}</strong>
-                                                                <span>{course.title}</span>
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                className="ghost-btn danger"
-                                                                onClick={() => handleDropCourse(course.code)}
-                                                            >
-                                                                {Icon.trash16}
-                                                                <span>Drop</span>
-                                                            </button>
+                                                {(selectedStudent.currentRegistrations ?? []).map((course) => (
+                                                    <div className="registration-item" key={`active-${course.code}`}>
+                                                        <div>
+                                                            <strong>{course.code}</strong>
+                                                            <span>{course.title}</span>
                                                         </div>
-                                                    )
-                                                )}
+                                                        <button
+                                                            type="button"
+                                                            className="ghost-btn danger"
+                                                            onClick={() => handleDropCourse(course.code)}
+                                                        >
+                                                            {Icon.trash16}
+                                                            <span>Drop</span>
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </article>
@@ -1610,16 +1566,16 @@ const AdminDashboard = () => {
                                         <header>
                                             <h3>Advisor Notes</h3>
                                             <span>
-                                            {selectedStudent.holds?.length
-                                                ? `${selectedStudent.holds.length} hold(s)`
-                                                : 'No active holds'}
-                                        </span>
+                                                {selectedStudent.holds?.length
+                                                    ? `${selectedStudent.holds.length} hold(s)`
+                                                    : 'No active holds'}
+                                            </span>
                                         </header>
                                         <textarea
                                             value={notesDraft}
                                             onChange={(event) => setNotesDraft(event.target.value)}
                                             onBlur={handleNotesBlur}
-                                            placeholder="Add advising notes, action items, or follow-ups..."
+                                            placeholder="Add notes..."
                                         />
                                     </article>
                                 </>
@@ -1627,6 +1583,7 @@ const AdminDashboard = () => {
                         </section>
                     </section>
                 )}
+
                 {!isStudentView && (
                     <div className="grid">
                         {tiles.map((tile) => (
@@ -1681,214 +1638,140 @@ const AdminDashboard = () => {
                     </div>
                 )}
             </main>
+
             {formMode && (
-                <div className="modal-backdrop" role="dialog" aria-modal="true">
+                <div className="modal-backdrop">
                     <div className="modal">
+                        {/* HEADER */}
                         <header className="modal-header">
                             <h3>{formMode === 'add' ? 'Add Student' : 'Edit Student'}</h3>
-                            <button type="button" className="ghost-btn" onClick={closeForm}>
+                            <button type="button" className="close-btn" onClick={closeForm}>
                                 {Icon.close16}
-                                <span>Close</span>
                             </button>
                         </header>
-                        <form className="modal-body" onSubmit={handleFormSubmit}>
-                            <div className="form-grid">
-                                <label>
-                                    <span>Student Code</span>
-                                    <input
-                                        name="code"
-                                        value={formData.code}
-                                        onChange={handleFormChange}
-                                        required
-                                        disabled={formMode === 'edit'}
-                                    />
-                                </label>
-                                <label>
-                                    <span>Full Name</span>
-                                    <input
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleFormChange}
-                                        required
-                                    />
-                                </label>
-                                <label>
-                                    <span>Email</span>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleFormChange}
-                                    />
-                                </label>
-                                <label>
-                                    <span>Phone</span>
-                                    <input
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handleFormChange}
-                                    />
-                                </label>
-                                <label>
-                                    <span>Major</span>
-                                    <input
-                                        name="majorName"
-                                        value={formData.majorName}
-                                        onChange={handleFormChange}
-                                    />
-                                </label>
-                                <label>
-                                    <span>Major ID</span>
-                                    <input
-                                        name="majorId"
-                                        value={formData.majorId}
-                                        onChange={handleFormChange}
-                                    />
-                                </label>
-                                <label>
-                                    <span>Status</span>
-                                    <select
-                                        name="status"
-                                        value={formData.status}
-                                        onChange={handleFormChange}
-                                    >
-                                        <option value="Active">Active</option>
-                                        <option value="Probation">Probation</option>
-                                        <option value="Suspended">Suspended</option>
-                                        <option value="Graduated">Graduated</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    <span>CGPA</span>
-                                    <input
-                                        name="cgpa"
-                                        value={formData.cgpa}
-                                        onChange={handleFormChange}
-                                        inputMode="decimal"
-                                    />
-                                </label>
-                                <label>
-                                    <span>Completed Hours</span>
-                                    <input
-                                        name="completedHours"
-                                        value={formData.completedHours}
-                                        onChange={handleFormChange}
-                                        inputMode="numeric"
-                                    />
-                                </label>
-                                <label>
-                                    <span>Fees Due</span>
-                                    <input
-                                        name="fees"
-                                        value={formData.fees}
-                                        onChange={handleFormChange}
-                                        inputMode="numeric"
-                                    />
-                                </label>
-                                <label>
-                                    <span>Graduation Year</span>
-                                    <input
-                                        name="gradYear"
-                                        value={formData.gradYear}
-                                        onChange={handleFormChange}
-                                        inputMode="numeric"
-                                    />
-                                </label>
-                                <label>
-                                    <span>Military Status</span>
-                                    <input
-                                        name="militaryStatus"
-                                        value={formData.militaryStatus}
-                                        onChange={handleFormChange}
-                                    />
-                                </label>
-                                <label className="full">
-                                    <span>Address</span>
-                                    <input
-                                        name="address"
-                                        value={formData.address}
-                                        onChange={handleFormChange}
-                                    />
-                                </label>
-                                <label className="full">
-                                    <span>Notes</span>
-                                    <textarea
-                                        name="notes"
-                                        value={formData.notes}
-                                        onChange={handleFormChange}
-                                    />
-                                </label>
-                            </div>
 
+                        {/* BODY (Scrollable) */}
+                        <div className="modal-body">
+                            <form id="studentForm" onSubmit={handleFormSubmit}>
+                                <div className="form-grid">
+                                    <label>
+                                        <span>Student Code</span>
+                                        <input name="code" value={formData.code} onChange={handleFormChange} required disabled={formMode === 'edit'} />
+                                    </label>
+                                    <label>
+                                        <span>Full Name</span>
+                                        <input name="name" value={formData.name} onChange={handleFormChange} required />
+                                    </label>
+                                    <label>
+                                        <span>Email</span>
+                                        <input type="email" name="email" value={formData.email} onChange={handleFormChange} />
+                                    </label>
+                                    <label>
+                                        <span>Phone</span>
+                                        <input name="phone" value={formData.phone} onChange={handleFormChange} />
+                                    </label>
+                                    <label>
+                                        <span>Major</span>
+                                        <input name="majorName" value={formData.majorName} onChange={handleFormChange} />
+                                    </label>
+                                    <label>
+                                        <span>Major ID</span>
+                                        <input name="majorId" value={formData.majorId} onChange={handleFormChange} />
+                                    </label>
+                                    <label>
+                                        <span>Status</span>
+                                        <select name="status" value={formData.status} onChange={handleFormChange}>
+                                            <option value="Active">Active</option>
+                                            <option value="Probation">Probation</option>
+                                            <option value="Suspended">Suspended</option>
+                                            <option value="Graduated">Graduated</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>CGPA</span>
+                                        <input name="cgpa" value={formData.cgpa} onChange={handleFormChange} />
+                                    </label>
+                                    <label>
+                                        <span>Hours</span>
+                                        <input name="completedHours" value={formData.completedHours} onChange={handleFormChange} />
+                                    </label>
+                                    <label>
+                                        <span>Fees</span>
+                                        <input name="fees" value={formData.fees} onChange={handleFormChange} />
+                                    </label>
+                                    <label>
+                                        <span>Grad Year</span>
+                                        <input name="gradYear" value={formData.gradYear} onChange={handleFormChange} />
+                                    </label>
+                                    <label>
+                                        <span>Military Status</span>
+                                        <input name="militaryStatus" value={formData.militaryStatus} onChange={handleFormChange} />
+                                    </label>
+                                    <label className="full">
+                                        <span>Address</span>
+                                        <input name="address" value={formData.address} onChange={handleFormChange} />
+                                    </label>
+                                    <label className="full">
+                                        <span>Notes</span>
+                                        <textarea name="notes" value={formData.notes} onChange={handleFormChange} />
+                                    </label>
+                                </div>
+                            </form>
                             {validationError && (
-                                <p className="form-error" role="alert">
-                                    {validationError}
-                                </p>
+                                <p className="form-error" style={{ marginTop: '1rem' }}>{validationError}</p>
                             )}
+                        </div>
 
-                            <footer className="modal-footer">
-                                <button type="button" className="ghost-btn" onClick={closeForm} disabled={loading}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="primary-btn" disabled={loading}>
-                                    {loading ? Icon.spinner : Icon.check16}
-                                    <span>{loading ? 'Saving...' : 'Save'}</span>
-                                </button>
-                            </footer>
-                        </form>
+                        {/* FOOTER (Fixed at bottom) */}
+                        <footer className="modal-footer">
+                            <button type="button" className="ghost-btn" onClick={closeForm} disabled={loading}>
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                form="studentForm"
+                                className="primary-btn"
+                                disabled={loading}
+                            >
+                                {loading ? Icon.spinner : Icon.check16}
+                                <span>{loading ? 'Saving...' : 'Save'}</span>
+                            </button>
+                        </footer>
                     </div>
                 </div>
             )}
+
+            {/* --- MODAL: TRANSCRIPT --- */}
             {transcriptModal.open && (
                 <div className="modal-backdrop" role="dialog" aria-modal="true">
                     <div className="modal">
                         <header className="modal-header">
                             <h3>Student Transcript</h3>
-                            <button type="button" className="ghost-btn" onClick={closeTranscriptModal}>
+                            <button type="button" className="close-btn" onClick={closeTranscriptModal} aria-label="Close">
                                 {Icon.close16}
-                                <span>Close</span>
                             </button>
                         </header>
                         <div className="modal-body">
                             {transcriptModal.loading ? (
-                                <div className="empty-state">
-                                    <LoadingSpinner size="medium" message="Generating transcript..." />
-                                </div>
+                                <LoadingSpinner size="medium" message="Generating transcript..." />
                             ) : (
-                                <pre style={{ 
-                                    whiteSpace: 'pre-wrap', 
-                                    fontFamily: 'monospace', 
-                                    fontSize: '14px',
-                                    lineHeight: '1.5',
-                                    padding: '1rem',
-                                    backgroundColor: '#f5f5f5',
-                                    borderRadius: '4px',
-                                    maxHeight: '500px',
-                                    overflow: 'auto'
-                                }}>
-                                    {transcriptModal.content}
-                                </pre>
+                                <pre className="transcript-viewer">{transcriptModal.content}</pre>
                             )}
-                            <footer className="modal-footer">
-                                <button 
-                                    type="button" 
-                                    className="ghost-btn" 
-                                    onClick={closeTranscriptModal}
-                                    disabled={transcriptModal.loading}
-                                >
-                                    Close
-                                </button>
-                                <button 
-                                    type="button" 
-                                    className="primary-btn" 
-                                    onClick={downloadTranscript}
-                                    disabled={transcriptModal.loading || !transcriptModal.content}
-                                >
-                                    {Icon.download16}
-                                    <span>Download</span>
-                                </button>
-                            </footer>
                         </div>
+                        <footer className="modal-footer">
+                            <button type="button" className="ghost-btn" onClick={closeTranscriptModal}>
+                                Close
+                            </button>
+                            <button
+                                type="button"
+                                className="primary-btn"
+                                onClick={downloadTranscript}
+                                disabled={transcriptModal.loading || !transcriptModal.content}
+                            >
+                                {Icon.download16}
+                                <span>Download</span>
+                            </button>
+                        </footer>
                     </div>
                 </div>
             )}

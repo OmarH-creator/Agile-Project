@@ -59,11 +59,14 @@ function Login() {
             }
             localStorage.setItem("token", data.token);
             confetti({ particleCount: 200, spread: 150, origin: { y: 0.6 } });
-            if(data.role === "admin"){
+            if(data.role === "ADMIN"){
                 navigate("/Admin");
             }
-            else if(data.role === "student"){
+            else if(data.role === "STUDENT"){
                 navigate("/student");
+            }
+            else if(data.role === "PROFESSOR"){
+                navigate("/professor");
             }
         } catch (err) {
             setError(err.message || "Login failed. Please try again.");
