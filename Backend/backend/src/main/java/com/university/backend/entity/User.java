@@ -1,15 +1,13 @@
 package com.university.backend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Column;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users") // Optional to specify table name
+@Table(name = "users")
 public class User {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Added auto-generation
     private Long id;
 
     @Column(nullable = false, unique = true)
@@ -18,14 +16,25 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private String role;
+
     // Default constructor (required by JPA)
     public User() {}
 
-    // Constructor with fields (optional)
-    public User(Long id, String email, String password) {
+    // Constructor without ID (since ID is auto-generated)
+    public User(String email, String password, String role) {
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+    
+    // Constructor with ID (useful for testing or updates)
+    public User(Long id, String email, String password, String role) {
         this.id = id;
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 
     // Getters and Setters
@@ -52,5 +61,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getRole() { 
+        return role; 
+    }
+
+    public void setRole(String role) { 
+        this.role = role; 
     }
 }

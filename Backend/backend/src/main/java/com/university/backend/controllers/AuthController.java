@@ -27,8 +27,7 @@ public class AuthController {
         if (user != null && user.getPassword().equals(req.getPassword())) {
             Map<String, Object> claims = new HashMap<>();
                 claims.put("userId", user.getId());
-                claims.put("role", "admin"); // add role or other claims as needed
-
+                claims.put("role", user.getRole()); // add role or other claims as needed
                 String token = JwtUtil.generateToken(user.getEmail(), claims);
 
                // Include role in response as well
