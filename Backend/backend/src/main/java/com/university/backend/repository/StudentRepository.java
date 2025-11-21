@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional; // Import needed for deletion
 
 // T is Student, ID is String
-public interface StudentRepository extends JpaRepository<Student, Long> {
+public interface StudentRepository extends JpaRepository<Student, String> {
 // These methods MUST be defined here for the Controller to see them
 
     // Custom finder to search by business key (studentId)

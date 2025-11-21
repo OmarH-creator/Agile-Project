@@ -10,9 +10,6 @@ import java.util.List;
 public class Student {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @Column(unique = true, nullable = false, length = 255)
     private String studentId;
 
@@ -30,13 +27,13 @@ public class Student {
     @Column(unique = true, nullable = false, length = 255)
     private String phone;
 
-    @Column(unique = true, nullable = false, length = 255)
+    @Column( nullable = false, length = 255)
     private String address;
 
     @Temporal(TemporalType.DATE) // Good practice for java.util.Date
     private Date dateOfBirth;
 
-    @Column(unique = true, nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String militaryStatus; // Renamed to camelCase for standard convention
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -67,8 +64,8 @@ public class Student {
         currentCourses.add(courseName);
     }
 
-    public void addCompletedCourse(String courseName, double grade, int credits) {
-        Course_record record = new Course_record(courseName, grade, credits);
+    public void addCompletedCourse(String courseName, double grade, int credits, String semester) {
+        Course_record record = new Course_record(courseName, grade, credits, semester);
         record.setStudent(this);
         completedCourses.add(record);
     }
@@ -88,7 +85,6 @@ public class Student {
     @Override
     public String toString() {
         return "Student {" +
-                "id=" + id +
                 ", studentId='" + studentId + '\'' +
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
@@ -102,13 +98,7 @@ public class Student {
 
     // Getters and Setters
 
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getStudentId() {
         return studentId;

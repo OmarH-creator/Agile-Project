@@ -19,21 +19,23 @@ public class Course_record {
     @Column(nullable = false)
     private int credits;
 
+    @Column(nullable = false)
+    private String semester;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @Column
-    private String semester;
 
     // Default constructor (required by JPA)
     public Course_record() {
     }
 
-    public Course_record(String courseName, double grade, int credits) {
+    public Course_record(String courseName, double grade, int credits , String semester) {
         this.courseName = courseName;
         this.grade = grade;
         this.credits = credits;
+        this.semester = semester;
     }
 
     // Getters and Setters
@@ -77,12 +79,17 @@ public class Course_record {
         this.student = student;
     }
 
+    public String getSemester() { return semester; }
+
+    public void setSemester(String semester) { this.semester = semester; }
+
     @Override
     public String toString() {
         return "CourseRecord{" +
                 "courseName='" + courseName + '\'' +
                 ", grade=" + grade +
                 ", credits=" + credits +
+                ", semester='" + semester + '\'' +
                 '}';
     }
 }

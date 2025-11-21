@@ -7,10 +7,10 @@ import jakarta.persistence.*;
 public class Major {
 
   @Id
-  @Column(name = "major_id", nullable = false, unique = true, length = 255)
+  @Column(name = "major_id", nullable = false, length = 255)
   private String majorId;
 
-  @Column(name = "major_name", nullable = false, unique = true)
+  @Column(name = "major_name", nullable = false)
   private String majorName;
 
   // Default constructor (required by JPA)

@@ -1,9 +1,11 @@
 package com.university.backend.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Check;
 
 @Entity
 @Table(name = "course_prerequisites")
+@Check(constraints = "course_code <> prerequisite_code")
 public class CoursePrerequisite {
 
   @Id
@@ -25,10 +27,17 @@ public class CoursePrerequisite {
   }
 
   public CoursePrerequisite(Course course, Course prerequisite) {
+    validatePrerequisite(course, prerequisite);
     this.course = course;
     this.prerequisite = prerequisite;
-  }
 
+  }
+  private void validatePrerequisite(Course course, Course prerequisite) {
+    if (course != null && prerequisite != null &&
+            course.getCourseCode().equals(prerequisite.getCourseCode())) {
+      throw new IllegalArgumentException("A course cannot be a prerequisite for itself.");
+    }
+  }
   @Override
   public String toString() {
     return "CoursePrerequisite {" +

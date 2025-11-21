@@ -17,14 +17,18 @@ public class Course {
   @Column(name = "credit_hrs", nullable = false)
   private int creditHours;
 
+  @Column(name = "semester", nullable = false)
+  private String semester;
   // Default constructor (required by JPA)
   public Course() {
   }
 
-  public Course(String courseCode, String courseName, int creditHours) {
+  public Course(String courseCode, String courseName, int creditHours, String semester) {
     this.courseCode = courseCode;
     this.courseName = courseName;
     this.creditHours = creditHours;
+    this.semester = semester;
+
   }
 
   @Override
@@ -33,6 +37,7 @@ public class Course {
             ", code='" + courseCode + '\'' +
             ", name='" + courseName + '\'' +
             ", credits=" + creditHours +
+            ", semester=" + semester +
             '}';
   }
 
@@ -61,4 +66,8 @@ public class Course {
   public void setCreditHours(int creditHours) {
     this.creditHours = creditHours;
   }
+
+  public String getSemester() {return semester;}
+
+  public void setSemester(String semester) {}
 }

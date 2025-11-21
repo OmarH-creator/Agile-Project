@@ -9,7 +9,10 @@ export async function login(email, password) {
 
   // Throws an error if not successful
   if (!response.ok) {
-    throw new Error("Invalid credentials");
+    return response.text().then(text => {
+      // Show the error message in your UI
+      throw new Error(text);
+    });
   }
   return await response.json(); // { token: ... }
 }

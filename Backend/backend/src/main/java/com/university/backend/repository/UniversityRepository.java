@@ -8,6 +8,7 @@ import com.university.backend.entity.Admin;
 //import org.springframework.data.jpa.repository.JpaRepository; // (Keep this if it exists)
 //package com.university.backend.repository;
 
+//file not in use...............................................
 
 import java.util.ArrayList;
 import java.util.List;

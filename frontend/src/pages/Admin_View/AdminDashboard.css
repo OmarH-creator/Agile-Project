@@ -1002,8 +1002,8 @@
     outline: 2px solid rgba(106, 125, 255, 0.45);
     outline-offset: 3px;
 }
-/
-* Loading Spinner */
+
+/** Loading Spinner **/
 .loading-spinner {
     display: flex;
     flex-direction: column;

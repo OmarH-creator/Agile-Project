@@ -10,12 +10,9 @@ import java.util.List;
 public class Hall {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(unique = true, nullable = false, length = 255)
     private String hallName;
 
+    @Column( nullable = false, length = 255)
     private int capacity;
 
     // CHANGED: Use @OneToMany to manage the collection of Booking entities
@@ -35,7 +32,7 @@ public class Hall {
      * Attempts to book the hall. If successful, it creates the new Booking entity
      * and adds the reference to this Hall.
      */
-    public boolean book(Date start, Date end, String purpose, long reservationId, long staffId) {
+    public boolean book(Date start, Date end, String purpose, long reservationId, String staffId) {
         // Create a temporary booking object for conflict checking
         Booking newBooking = new Booking(start, end, purpose, reservationId, staffId, this);
 
@@ -72,8 +69,7 @@ public class Hall {
     }
 
     // --- Getters and Setters ---
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+
     public String getHallName() { return hallName; }
     public void setHallName(String hallName) { this.hallName = hallName; }
     public int getCapacity() { return capacity; }

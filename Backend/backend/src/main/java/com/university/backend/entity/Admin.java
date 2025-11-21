@@ -10,11 +10,7 @@ import com.university.backend.repository.UniversityRepository;
 public class Admin {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // <--- ADDED THIS FIELD. This fixes the error at the bottom.
-
-    @Column(unique = true, nullable = false, length = 255)
-    private String adminId;
+    private String adminId; // <--- ADDED THIS FIELD. This fixes the error at the bottom.
 
     @Column(nullable = false, length = 255)
     private String name;
@@ -66,7 +62,7 @@ public class Admin {
         UniversityRepository.halls.add(hall);
     }
 
-    public boolean bookHall(String hallName,Date start, Date end, String purpose, long reservationId, long staffId) {
+    public boolean bookHall(String hallName,Date start, Date end, String purpose, long reservationId, String staffId) {
         for (Hall hall : UniversityRepository.halls) {
             if (hall.getHallName().equals(hallName)) {
                 return hall.book(start, end, purpose, reservationId, staffId);
@@ -109,8 +105,6 @@ public class Admin {
     }
 
     // Getters and Setters for JPA
-    public Long getId() { return this.id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getAdminId() { return adminId; }
     public void setAdminId(String adminId) { this.adminId = adminId; }

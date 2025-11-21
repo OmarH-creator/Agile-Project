@@ -249,7 +249,7 @@ public class AdminController {
         private Date end;
         private String purpose;
         private long reservationId;
-        private long staffId;
+        private String staffId;
 
         // Getters and Setters
         public String getHallName() { return hallName; }
@@ -262,7 +262,7 @@ public class AdminController {
         public void setPurpose(String purpose) { this.purpose = purpose; }
         public long getReservationId() { return reservationId; }
         public void setReservationId(long reservationId) { this.reservationId = reservationId; }
-        public long getStaffId() { return staffId; }
-        public void setStaffId(long staffId) { this.staffId = staffId; }
+        public String  getStaffId() { return staffId; }
+        public void setStaffId(String staffId) { this.staffId = staffId; }
     }
 }

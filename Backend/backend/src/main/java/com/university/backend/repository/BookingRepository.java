@@ -9,15 +9,12 @@ import java.util.Optional;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     // Find all bookings made by a specific staff member (e.g., a Professor)
-    List<Booking> findByStaffId(long staffId);
+    List<Booking> findByStaffId(String staffId);
 
     // Find a specific reservation by its unique ID
     Optional<Booking> findByReservationId(long reservationId);
 
-    // Find all bookings for a specific Hall (by Hall ID)
-    // Spring Data JPA can traverse the 'hall' relationship
-    List<Booking> findByHall_Id(Long hallId);
-    
+
     // Find all bookings within a specific time range
     List<Booking> findByStartTimeBetween(Date start, Date end);
 

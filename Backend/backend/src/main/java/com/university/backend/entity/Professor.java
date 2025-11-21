@@ -9,6 +9,7 @@ import java.util.List;
 public class Professor {
 
     @Id
+    @Column(unique = true, nullable = false, length = 255)
     private String professorId; // Primary Key
 
     @Column(nullable = false)
