@@ -4,6 +4,163 @@ import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
 import { curriculumData } from '../../data/curriculumData';
 
+// API Configuration
+const API_BASE_URL = 'http://localhost:8081/api/admin';
+
+// Helper function to get authentication token from localStorage
+const getAuthToken = () => {
+    return localStorage.getItem('token');
+};
+
+// Transform frontend student data to backend format
+const toBackendFormat = (student) => {
+    return {
+        studentId: student.code,
+        name: student.name,
+        email: student.email,
+        phone: student.phone,
+        militaryStatus: student.militaryStatus,
+        address: student.address,
+        majorId: student.majorId,
+        majorName: student.majorName,
+        nationalId: student.nationalId,
+        birthdate: student.birthdate,
+        gradYear: student.gradYear,
+        completedHours: student.completedHours,
+        fees: student.fees,
+        status: student.status,
+        gpa: student.cgpa,
+        completedCourses: student.academicHistory || [],
+        currentRegistrations: student.currentRegistrations || []
+    };
+};
+
+// Transform backend student data to frontend format
+const toFrontendFormat = (backendStudent) => {
+    return {
+        code: backendStudent.studentId,
+        name: backendStudent.name,
+        email: backendStudent.email,
+        phone: backendStudent.phone,
+        militaryStatus: backendStudent.militaryStatus,
+        address: backendStudent.address,
+        majorId: backendStudent.majorId,
+        majorName: backendStudent.majorName,
+        nationalId: backendStudent.nationalId,
+        birthdate: backendStudent.birthdate,
+        gradYear: backendStudent.gradYear,
+        completedHours: backendStudent.completedHours,
+        fees: backendStudent.fees,
+        status: backendStudent.status,
+        cgpa: backendStudent.gpa,
+        academicHistory: backendStudent.completedCourses || [],
+        currentRegistrations: backendStudent.currentRegistrations || [],
+        notes: backendStudent.notes || '',
+        holds: backendStudent.holds || []
+    };
+};
+
+// API Functions
+
+// Create a new student record
+async function createStudent(studentData) {
+    const token = getAuthToken();
+    const backendData = toBackendFormat(studentData);
+
+    const response = await fetch(`${API_BASE_URL}/students`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(backendData)
+    });
+
+    if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || `Failed to create student: ${response.status}`);
+    }
+
+    const successMessage = await response.text();
+    return successMessage;
+}
+
+// Get a specific student by studentId
+async function getStudent(studentId) {
+    const token = getAuthToken();
+
+    const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        if (response.status === 404) {
+            throw new Error('Student not found.');
+        }
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || `Failed to retrieve student: ${response.status}`);
+    }
+
+    const backendStudent = await response.json();
+    return toFrontendFormat(backendStudent);
+}
+
+// Delete a student record
+async function deleteStudent(studentId) {
+    const token = getAuthToken();
+
+    const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        if (response.status === 404) {
+            throw new Error(`Student with ID ${studentId} not found.`);
+        }
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || `Failed to delete student: ${response.status}`);
+    }
+
+    const successMessage = await response.text();
+    return successMessage;
+}
+
+// Get student transcript
+async function getTranscript(studentId) {
+    const token = getAuthToken();
+
+    const response = await fetch(`${API_BASE_URL}/students/${studentId}/transcript`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        if (response.status === 404) {
+            throw new Error('Student not found.');
+        }
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || `Failed to retrieve transcript: ${response.status}`);
+    }
+
+    const transcriptText = await response.text();
+    return transcriptText;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 const courseCatalog = curriculumData.courses ?? [];
 
 const gradePoints = {
@@ -43,105 +200,107 @@ const emptyStudent = {
     holds: []
 };
 
-const sampleStudents = [
-    {
-        code: '21P0052',
-        name: 'Youssef Samir',
-        email: 'youssef.samir@university.edu',
-        phone: '+20 100 345 6789',
-        militaryStatus: 'Completed',
-        address: 'Nasr City, Cairo',
-        majorId: 'CENG',
-        majorName: 'Computer Engineering',
-        nationalId: '30105230123456',
-        birthdate: '2001-05-23',
-        gradYear: 2025,
-        completedHours: 96,
-        fees: 4100,
-        status: 'Active',
-        cgpa: 3.42,
-        academicHistory: [
-            { code: 'CSE131', title: 'Computer Programming', credits: 3, grade: 'A', term: 'Fall 2021' },
-            { code: 'CSE231', title: 'Advanced Computer Programming', credits: 3, grade: 'A-', term: 'Spring 2022' },
-            { code: 'CSE334', title: 'Software Engineering', credits: 3, grade: 'A-', term: 'Spring 2022' },
-            { code: 'CSE331', title: 'Data Structures & Algorithms', credits: 3, grade: 'B+', term: 'Fall 2022' },
-            { code: 'CSE335', title: 'Operating Systems', credits: 3, grade: 'B+', term: 'Fall 2022' },
-            { code: 'CSE232', title: 'Advanced Software Engineering', credits: 3, grade: 'B', term: 'Spring 2023' },
-            { code: 'PHM013', title: 'Calculus III', credits: 3, grade: 'B', term: 'Fall 2021' },
-            { code: 'PHM111', title: 'Probability & Statistics', credits: 3, grade: 'A-', term: 'Spring 2022' },
-            { code: 'PHM113', title: 'Differential Equations', credits: 3, grade: 'B+', term: 'Fall 2021' }
-        ],
-        currentRegistrations: [
-            { code: 'CSE333', title: 'Database Systems', credits: 3 },
-            { code: 'CSE338', title: 'Software Testing, Validation & Verification', credits: 3 }
-        ],
-        notes: 'Eligible for exchange program; confirm IELTS score submission.',
-        holds: ['Library fines']
-    },
-    {
-        code: '22P0141',
-        name: 'Mariam El Shennawy',
-        email: 'mariam.shennawy@university.edu',
-        phone: '+20 114 222 1133',
-        militaryStatus: 'Exempted',
-        address: 'New Cairo, Cairo',
-        majorId: 'SENG',
-        majorName: 'Software Engineering',
-        nationalId: '30207250123451',
-        birthdate: '2002-07-25',
-        gradYear: 2026,
-        completedHours: 54,
-        fees: 2800,
-        status: 'Probation',
-        cgpa: 2.41,
-        academicHistory: [
-            { code: 'CSE131', title: 'Computer Programming', credits: 3, grade: 'B', term: 'Fall 2021' },
-            { code: 'CSE231', title: 'Advanced Computer Programming', credits: 3, grade: 'C+', term: 'Spring 2022' },
-            { code: 'CSE334', title: 'Software Engineering', credits: 3, grade: 'B-', term: 'Spring 2022' },
-            { code: 'CSE331', title: 'Data Structures & Algorithms', credits: 3, grade: 'C', term: 'Fall 2022' },
-            { code: 'PHM013', title: 'Calculus III', credits: 3, grade: 'C+', term: 'Fall 2021' },
-            { code: 'PHM111', title: 'Probability & Statistics', credits: 3, grade: 'C', term: 'Spring 2022' },
-            { code: 'ASU112', title: 'Report Writing & Communication Skills', credits: 2, grade: 'B', term: 'Spring 2022' },
-            { code: 'CSE335', title: 'Operating Systems', credits: 3, grade: 'IP', term: 'Fall 2023' }
-        ],
-        currentRegistrations: [
-            { code: 'CSE335', title: 'Operating Systems', credits: 3 }
-        ],
-        notes: 'Academic probation; schedule weekly advising touchpoint.'
-    },
-    {
-        code: '22P0232',
-        name: 'Ahmed Galal',
-        email: 'ahmed.galal@university.edu',
-        phone: '+20 122 551 9070',
-        militaryStatus: 'Completed',
-        address: 'Heliopolis, Cairo',
-        majorId: 'CSCI',
-        majorName: 'Computer Science',
-        nationalId: '29909120111223',
-        birthdate: '1999-09-12',
-        gradYear: 2023,
-        completedHours: 138,
-        fees: 0,
-        status: 'Graduated',
-        cgpa: 3.78,
-        academicHistory: [
-            { code: 'CSE131', title: 'Computer Programming', credits: 3, grade: 'A', term: 'Fall 2019' },
-            { code: 'CSE231', title: 'Advanced Computer Programming', credits: 3, grade: 'A', term: 'Spring 2020' },
-            { code: 'CSE331', title: 'Data Structures & Algorithms', credits: 3, grade: 'A', term: 'Fall 2020' },
-            { code: 'CSE332', title: 'Design & Analysis of Algorithms', credits: 3, grade: 'A-', term: 'Spring 2021' },
-            { code: 'CSE333', title: 'Database Systems', credits: 3, grade: 'A-', term: 'Spring 2021' },
-            { code: 'CSE351', title: 'Computer Networks', credits: 3, grade: 'A', term: 'Fall 2021' },
-            { code: 'CSE354', title: 'Distributed Computing', credits: 3, grade: 'A-', term: 'Spring 2022' },
-            { code: 'CSE451', title: 'Computer & Network Security', credits: 3, grade: 'A', term: 'Fall 2022' },
-            { code: 'CSE491', title: 'Graduation Project (1)', credits: 2, grade: 'A', term: 'Fall 2022' },
-            { code: 'CSE492', title: 'Graduation Project (2)', credits: 3, grade: 'A', term: 'Spring 2023' }
-        ],
-        currentRegistrations: [],
-        notes: 'Graduated Fall 2023. All clearance documents archived.',
-        holds: []
-    }
-];
+// Sample students data - kept as reference/fallback for development
+// Uncomment and use this if you need to test with sample data when backend is unavailable
+// const sampleStudents = [
+//     {
+//         code: '21P0052',
+//         name: 'Youssef Samir',
+//         email: 'youssef.samir@university.edu',
+//         phone: '+20 100 345 6789',
+//         militaryStatus: 'Completed',
+//         address: 'Nasr City, Cairo',
+//         majorId: 'CENG',
+//         majorName: 'Computer Engineering',
+//         nationalId: '30105230123456',
+//         birthdate: '2001-05-23',
+//         gradYear: 2025,
+//         completedHours: 96,
+//         fees: 4100,
+//         status: 'Active',
+//         cgpa: 3.42,
+//         academicHistory: [
+//             { code: 'CSE131', title: 'Computer Programming', credits: 3, grade: 'A', term: 'Fall 2021' },
+//             { code: 'CSE231', title: 'Advanced Computer Programming', credits: 3, grade: 'A-', term: 'Spring 2022' },
+//             { code: 'CSE334', title: 'Software Engineering', credits: 3, grade: 'A-', term: 'Spring 2022' },
+//             { code: 'CSE331', title: 'Data Structures & Algorithms', credits: 3, grade: 'B+', term: 'Fall 2022' },
+//             { code: 'CSE335', title: 'Operating Systems', credits: 3, grade: 'B+', term: 'Fall 2022' },
+//             { code: 'CSE232', title: 'Advanced Software Engineering', credits: 3, grade: 'B', term: 'Spring 2023' },
+//             { code: 'PHM013', title: 'Calculus III', credits: 3, grade: 'B', term: 'Fall 2021' },
+//             { code: 'PHM111', title: 'Probability & Statistics', credits: 3, grade: 'A-', term: 'Spring 2022' },
+//             { code: 'PHM113', title: 'Differential Equations', credits: 3, grade: 'B+', term: 'Fall 2021' }
+//         ],
+//         currentRegistrations: [
+//             { code: 'CSE333', title: 'Database Systems', credits: 3 },
+//             { code: 'CSE338', title: 'Software Testing, Validation & Verification', credits: 3 }
+//         ],
+//         notes: 'Eligible for exchange program; confirm IELTS score submission.',
+//         holds: ['Library fines']
+//     },
+//     {
+//         code: '22P0141',
+//         name: 'Mariam El Shennawy',
+//         email: 'mariam.shennawy@university.edu',
+//         phone: '+20 114 222 1133',
+//         militaryStatus: 'Exempted',
+//         address: 'New Cairo, Cairo',
+//         majorId: 'SENG',
+//         majorName: 'Software Engineering',
+//         nationalId: '30207250123451',
+//         birthdate: '2002-07-25',
+//         gradYear: 2026,
+//         completedHours: 54,
+//         fees: 2800,
+//         status: 'Probation',
+//         cgpa: 2.41,
+//         academicHistory: [
+//             { code: 'CSE131', title: 'Computer Programming', credits: 3, grade: 'B', term: 'Fall 2021' },
+//             { code: 'CSE231', title: 'Advanced Computer Programming', credits: 3, grade: 'C+', term: 'Spring 2022' },
+//             { code: 'CSE334', title: 'Software Engineering', credits: 3, grade: 'B-', term: 'Spring 2022' },
+//             { code: 'CSE331', title: 'Data Structures & Algorithms', credits: 3, grade: 'C', term: 'Fall 2022' },
+//             { code: 'PHM013', title: 'Calculus III', credits: 3, grade: 'C+', term: 'Fall 2021' },
+//             { code: 'PHM111', title: 'Probability & Statistics', credits: 3, grade: 'C', term: 'Spring 2022' },
+//             { code: 'ASU112', title: 'Report Writing & Communication Skills', credits: 2, grade: 'B', term: 'Spring 2022' },
+//             { code: 'CSE335', title: 'Operating Systems', credits: 3, grade: 'IP', term: 'Fall 2023' }
+//         ],
+//         currentRegistrations: [
+//             { code: 'CSE335', title: 'Operating Systems', credits: 3 }
+//         ],
+//         notes: 'Academic probation; schedule weekly advising touchpoint.'
+//     },
+//     {
+//         code: '22P0232',
+//         name: 'Ahmed Galal',
+//         email: 'ahmed.galal@university.edu',
+//         phone: '+20 122 551 9070',
+//         militaryStatus: 'Completed',
+//         address: 'Heliopolis, Cairo',
+//         majorId: 'CSCI',
+//         majorName: 'Computer Science',
+//         nationalId: '29909120111223',
+//         birthdate: '1999-09-12',
+//         gradYear: 2023,
+//         completedHours: 138,
+//         fees: 0,
+//         status: 'Graduated',
+//         cgpa: 3.78,
+//         academicHistory: [
+//             { code: 'CSE131', title: 'Computer Programming', credits: 3, grade: 'A', term: 'Fall 2019' },
+//             { code: 'CSE231', title: 'Advanced Computer Programming', credits: 3, grade: 'A', term: 'Spring 2020' },
+//             { code: 'CSE331', title: 'Data Structures & Algorithms', credits: 3, grade: 'A', term: 'Fall 2020' },
+//             { code: 'CSE332', title: 'Design & Analysis of Algorithms', credits: 3, grade: 'A-', term: 'Spring 2021' },
+//             { code: 'CSE333', title: 'Database Systems', credits: 3, grade: 'A-', term: 'Spring 2021' },
+//             { code: 'CSE351', title: 'Computer Networks', credits: 3, grade: 'A', term: 'Fall 2021' },
+//             { code: 'CSE354', title: 'Distributed Computing', credits: 3, grade: 'A-', term: 'Spring 2022' },
+//             { code: 'CSE451', title: 'Computer & Network Security', credits: 3, grade: 'A', term: 'Fall 2022' },
+//             { code: 'CSE491', title: 'Graduation Project (1)', credits: 2, grade: 'A', term: 'Fall 2022' },
+//             { code: 'CSE492', title: 'Graduation Project (2)', credits: 3, grade: 'A', term: 'Spring 2023' }
+//         ],
+//         currentRegistrations: [],
+//         notes: 'Graduated Fall 2023. All clearance documents archived.',
+//         holds: []
+//     }
+// ];
 const downloadBlob = (content, filename, mime) => {
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -301,12 +460,44 @@ const Icon = {
     ),
     close16: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m4 4 16 16M20 4 4 20" /></svg>
+    ),
+    spinner: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spinner">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
     )
 };
 
+// Loading Spinner Component
+const LoadingSpinner = ({ size = 'medium', message = 'Loading...' }) => (
+    <div className={`loading-spinner ${size}`}>
+        {Icon.spinner}
+        {message && <span>{message}</span>}
+    </div>
+);
+
+// Error Message Component
+const ErrorMessage = ({ error, onDismiss }) => {
+    if (!error) return null;
+    
+    return (
+        <div className="error-message" role="alert">
+            <div className="error-content">
+                <strong>Error:</strong> {error}
+            </div>
+            {onDismiss && (
+                <button type="button" className="ghost-btn" onClick={onDismiss} aria-label="Dismiss error">
+                    {Icon.close16}
+                </button>
+            )}
+        </div>
+    );
+};
+
 const AdminDashboard = () => {
-    const [students, setStudents] = useState(sampleStudents);
-    const [selectedCode, setSelectedCode] = useState(sampleStudents[0]?.code ?? null);
+    // Initialize with empty array - students will be loaded from backend
+    const [students, setStudents] = useState([]);
+    const [selectedCode, setSelectedCode] = useState(null);
     const [filters, setFilters] = useState({ query: '', status: 'all', major: 'all' });
     const [formMode, setFormMode] = useState(null);
     const [formData, setFormData] = useState(emptyStudent);
@@ -314,7 +505,63 @@ const AdminDashboard = () => {
     const [pendingRegistration, setPendingRegistration] = useState([]);
     const [notesDraft, setNotesDraft] = useState('');
     const [view, setView] = useState('home');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [transcriptModal, setTranscriptModal] = useState({ open: false, content: '', loading: false });
+    const [initialLoading, setInitialLoading] = useState(true);
     const isStudentView = view === 'students';
+
+    // Clear error when user retries operation
+    const clearError = () => setError(null);
+
+    // Fetch students on component mount
+    // Note: Backend currently doesn't have a GET /api/admin/students endpoint to fetch all students.
+    // This useEffect is prepared for when that endpoint becomes available.
+    // For now, it initializes with an empty array and students are loaded individually as needed.
+    useEffect(() => {
+        const fetchInitialStudents = async () => {
+            setInitialLoading(true);
+            clearError();
+            
+            try {
+                // TODO: Uncomment when backend implements GET /api/admin/students endpoint
+                // const token = getAuthToken();
+                // const response = await fetch(`${API_BASE_URL}/students`, {
+                //     method: 'GET',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //         'Authorization': `Bearer ${token}`
+                //     }
+                // });
+                
+                // if (!response.ok) {
+                //     throw new Error('Failed to fetch students');
+                // }
+                
+                // const backendStudents = await response.json();
+                // const frontendStudents = backendStudents.map(toFrontendFormat);
+                // setStudents(frontendStudents);
+                // if (frontendStudents.length > 0) {
+                //     setSelectedCode(frontendStudents[0].code);
+                // }
+                
+                // For now, initialize with empty array
+                // Students will be loaded as they are created or fetched individually
+                setStudents([]);
+                setSelectedCode(null);
+            } catch (err) {
+                // Fall back to empty array if fetch fails
+                console.error('Failed to load initial students:', err);
+                setError('Failed to load students. You can still add new students.');
+                setStudents([]);
+                setSelectedCode(null);
+            } finally {
+                setInitialLoading(false);
+            }
+        };
+
+        fetchInitialStudents();
+    }, []);
 
     const tiles = [
         {
@@ -336,7 +583,7 @@ const AdminDashboard = () => {
             sub: 'Review course structure and prerequisites',
             icon: Icon.analytics,
             accent: 'violet',
-            path: '/Curriculum'
+            path: '/admin/curriculum'
         },
         {
             title: 'Requests & Approvals',
@@ -506,8 +753,11 @@ const AdminDashboard = () => {
         }));
     };
 
-    const handleFormSubmit = (event) => {
+    const handleFormSubmit = async (event) => {
         event.preventDefault();
+        
+        // Clear error when user retries operation
+        clearError();
 
         const normalized = {
             ...formData,
@@ -545,12 +795,33 @@ const AdminDashboard = () => {
                 holds: []
             };
 
-            setStudents((prev) => [...prev, newStudent]);
-            setSelectedCode(newStudent.code);
-            setNotesDraft(newStudent.notes);
+            // Call backend API to create student
+            setLoading(true);
+            try {
+                await createStudent(newStudent);
+                
+                // Update local state only after successful API call
+                setStudents((prev) => [...prev, newStudent]);
+                setSelectedCode(newStudent.code);
+                setNotesDraft(newStudent.notes);
+                closeForm();
+            } catch (err) {
+                const errorMessage = err.message || 'Failed to create student';
+                setError(errorMessage);
+                setValidationError(errorMessage);
+            } finally {
+                setLoading(false);
+            }
+            return;
         }
 
         if (formMode === 'edit' && selectedStudent) {
+            // NOTE: Edit mode updates local state only.
+            // The backend Admin Controller does not currently provide a PUT endpoint for updating student records.
+            // Once a PUT endpoint is implemented (e.g., PUT /api/admin/students/{studentId}),
+            // this section should be updated to call an updateStudent API function similar to createStudent.
+            // Until then, edits are maintained in the frontend state only and will not persist across sessions.
+            
             setStudents((prev) =>
                 prev.map((student) =>
                     student.code === selectedStudent.code
@@ -567,19 +838,77 @@ const AdminDashboard = () => {
                 )
             );
             setNotesDraft(normalized.notes);
+            closeForm();
         }
-
-        closeForm();
     };
 
-    const handleDeleteStudent = (code) => {
+    const handleSelectStudent = async (studentId) => {
+        // If already selected, no need to fetch again
+        if (studentId === selectedCode) {
+            return;
+        }
+
+        // Clear error when user retries operation
+        clearError();
+        setLoading(true);
+        
+        try {
+            const fetchedStudent = await getStudent(studentId);
+            
+            // Update the students array with the fetched data
+            setStudents((prev) => {
+                const existingIndex = prev.findIndex(s => s.code === studentId);
+                if (existingIndex >= 0) {
+                    // Replace existing student with fetched data
+                    const updated = [...prev];
+                    updated[existingIndex] = fetchedStudent;
+                    return updated;
+                } else {
+                    // Add new student if not in local state
+                    return [...prev, fetchedStudent];
+                }
+            });
+            
+            // Set as selected
+            setSelectedCode(studentId);
+        } catch (err) {
+            const errorMessage = err.message || 'Failed to fetch student details';
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteStudent = async (code) => {
         const confirmation = window.confirm(
             `This will remove ${code} and their academic record from the dashboard. Continue?`
         );
         if (!confirmation) {
             return;
         }
-        setStudents((prev) => prev.filter((student) => student.code !== code));
+
+        // Clear error when user retries operation
+        clearError();
+        setLoading(true);
+
+        try {
+            // Call deleteStudent API function after user confirmation
+            const successMessage = await deleteStudent(code);
+            
+            // Update local students state only after successful deletion
+            setStudents((prev) => prev.filter((student) => student.code !== code));
+            
+            // If the deleted student was selected, clear selection
+            if (selectedCode === code) {
+                setSelectedCode(students.length > 1 ? students.find(s => s.code !== code)?.code : null);
+            }
+        } catch (err) {
+            // Handle case where student is not found or other errors
+            const errorMessage = err.message || 'Failed to delete student';
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleExport = (student, format) => {
@@ -700,6 +1029,37 @@ const AdminDashboard = () => {
         );
     };
 
+    const handleGenerateTranscript = async () => {
+        if (!selectedStudent) return;
+
+        // Clear error when user retries operation
+        clearError();
+        setTranscriptModal({ open: true, content: '', loading: true });
+
+        try {
+            const transcriptText = await getTranscript(selectedStudent.code);
+            setTranscriptModal({ open: true, content: transcriptText, loading: false });
+        } catch (err) {
+            const errorMessage = err.message || 'Failed to generate transcript';
+            setError(errorMessage);
+            setTranscriptModal({ open: false, content: '', loading: false });
+        }
+    };
+
+    const closeTranscriptModal = () => {
+        setTranscriptModal({ open: false, content: '', loading: false });
+    };
+
+    const downloadTranscript = () => {
+        if (!selectedStudent || !transcriptModal.content) return;
+        
+        downloadBlob(
+            transcriptModal.content,
+            `${selectedStudent.code}-transcript.txt`,
+            'text/plain'
+        );
+    };
+
     const studentGpaDisplay = (student) => {
         const snapshot = computeGPA(student.academicHistory);
         const fallback = typeof student.cgpa === 'number' ? student.cgpa : null;
@@ -794,6 +1154,15 @@ const AdminDashboard = () => {
                                     <button
                                         type="button"
                                         className="pill-btn"
+                                        onClick={handleGenerateTranscript}
+                                        disabled={loading || transcriptModal.loading}
+                                    >
+                                        {transcriptModal.loading ? Icon.spinner : Icon.download16}
+                                        <span>Generate Transcript</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="pill-btn"
                                         onClick={() => handleExport(selectedStudent, 'json')}
                                     >
                                         {Icon.download16}
@@ -815,11 +1184,12 @@ const AdminDashboard = () => {
 
                 {isStudentView && (
                     <section className="dashboard-content">
+                        {error && <ErrorMessage error={error} onDismiss={clearError} />}
                         <aside className="student-panel">
                             <header className="student-panel-header">
                                 <div className="student-panel-top">
                                     <h3>Students</h3>
-                                    <button type="button" className="primary-btn" onClick={openAddStudent}>
+                                    <button type="button" className="primary-btn" onClick={openAddStudent} disabled={initialLoading}>
                                         {Icon.plus16}
                                         <span>Add Student</span>
                                     </button>
@@ -835,6 +1205,7 @@ const AdminDashboard = () => {
                                                 query: event.target.value
                                             }))
                                         }
+                                        disabled={initialLoading}
                                     />
                                     <div className="filter-row">
                                         <select
@@ -845,6 +1216,7 @@ const AdminDashboard = () => {
                                                     major: event.target.value
                                                 }))
                                             }
+                                            disabled={initialLoading}
                                         >
                                             <option value="all">All majors</option>
                                             {majorOptions.map((major) => (
@@ -861,6 +1233,7 @@ const AdminDashboard = () => {
                                                     status: event.target.value
                                                 }))
                                             }
+                                            disabled={initialLoading}
                                         >
                                             <option value="all">All statuses</option>
                                             <option value="Active">Active</option>
@@ -873,20 +1246,29 @@ const AdminDashboard = () => {
                             </header>
 
                             <div className="student-list" role="list">
-                                {filteredStudents.length === 0 && (
+                                {initialLoading && (
                                     <div className="empty-state">
-                                        No students match the current filters.
+                                        <LoadingSpinner size="medium" message="Loading students..." />
                                     </div>
                                 )}
 
-                                {filteredStudents.map((student) => (
+                                {!initialLoading && filteredStudents.length === 0 && (
+                                    <div className="empty-state">
+                                        {students.length === 0 
+                                            ? 'No students found. Click "Add Student" to create a new student record.'
+                                            : 'No students match the current filters.'}
+                                    </div>
+                                )}
+
+                                {!initialLoading && filteredStudents.map((student) => (
                                     <button
                                         type="button"
                                         key={student.code}
                                         className={`student-card${
                                             student.code === selectedCode ? ' active' : ''
                                         }`}
-                                        onClick={() => setSelectedCode(student.code)}
+                                        onClick={() => handleSelectStudent(student.code)}
+                                        disabled={loading}
                                     >
                                         <div className="student-card-main">
                                             <h4>{student.name}</h4>
@@ -909,13 +1291,21 @@ const AdminDashboard = () => {
                             </div>
                         </aside>
                         <section className="detail-panel">
-                            {!selectedStudent && (
+                            {(loading || initialLoading) && (
                                 <div className="empty-state large">
-                                    Select a student to view their full record.
+                                    <LoadingSpinner size="large" message={initialLoading ? "Loading..." : "Loading student details..."} />
+                                </div>
+                            )}
+                            
+                            {!loading && !initialLoading && !selectedStudent && (
+                                <div className="empty-state large">
+                                    {students.length === 0 
+                                        ? 'No students available. Add a new student to get started.'
+                                        : 'Select a student to view their full record.'}
                                 </div>
                             )}
 
-                            {selectedStudent && (
+                            {!loading && selectedStudent && (
                                 <>
                                     <article className="detail-card">
                                         <header className="detail-card-header">
@@ -941,6 +1331,7 @@ const AdminDashboard = () => {
                                                     type="button"
                                                     className="ghost-btn"
                                                     onClick={() => openEditStudent(selectedStudent)}
+                                                    disabled={loading}
                                                 >
                                                     {Icon.edit16}
                                                     <span>Edit</span>
@@ -949,6 +1340,7 @@ const AdminDashboard = () => {
                                                     type="button"
                                                     className="ghost-btn danger"
                                                     onClick={() => handleDeleteStudent(selectedStudent.code)}
+                                                    disabled={loading}
                                                 >
                                                     {Icon.trash16}
                                                     <span>Delete</span>
@@ -1383,7 +1775,6 @@ const AdminDashboard = () => {
                                         onChange={handleFormChange}
                                         inputMode="numeric"
                                     />
-
                                 </label>
                                 <label>
                                     <span>Fees Due</span>
@@ -1436,15 +1827,68 @@ const AdminDashboard = () => {
                             )}
 
                             <footer className="modal-footer">
-                                <button type="button" className="ghost-btn" onClick={closeForm}>
+                                <button type="button" className="ghost-btn" onClick={closeForm} disabled={loading}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="primary-btn">
-                                    {Icon.check16}
-                                    <span>Save</span>
+                                <button type="submit" className="primary-btn" disabled={loading}>
+                                    {loading ? Icon.spinner : Icon.check16}
+                                    <span>{loading ? 'Saving...' : 'Save'}</span>
                                 </button>
                             </footer>
                         </form>
+                    </div>
+                </div>
+            )}
+            {transcriptModal.open && (
+                <div className="modal-backdrop" role="dialog" aria-modal="true">
+                    <div className="modal">
+                        <header className="modal-header">
+                            <h3>Student Transcript</h3>
+                            <button type="button" className="ghost-btn" onClick={closeTranscriptModal}>
+                                {Icon.close16}
+                                <span>Close</span>
+                            </button>
+                        </header>
+                        <div className="modal-body">
+                            {transcriptModal.loading ? (
+                                <div className="empty-state">
+                                    <LoadingSpinner size="medium" message="Generating transcript..." />
+                                </div>
+                            ) : (
+                                <pre style={{ 
+                                    whiteSpace: 'pre-wrap', 
+                                    fontFamily: 'monospace', 
+                                    fontSize: '14px',
+                                    lineHeight: '1.5',
+                                    padding: '1rem',
+                                    backgroundColor: '#f5f5f5',
+                                    borderRadius: '4px',
+                                    maxHeight: '500px',
+                                    overflow: 'auto'
+                                }}>
+                                    {transcriptModal.content}
+                                </pre>
+                            )}
+                            <footer className="modal-footer">
+                                <button 
+                                    type="button" 
+                                    className="ghost-btn" 
+                                    onClick={closeTranscriptModal}
+                                    disabled={transcriptModal.loading}
+                                >
+                                    Close
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="primary-btn" 
+                                    onClick={downloadTranscript}
+                                    disabled={transcriptModal.loading || !transcriptModal.content}
+                                >
+                                    {Icon.download16}
+                                    <span>Download</span>
+                                </button>
+                            </footer>
+                        </div>
                     </div>
                 </div>
             )}
