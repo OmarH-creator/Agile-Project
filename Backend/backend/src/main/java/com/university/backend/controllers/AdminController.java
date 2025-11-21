@@ -33,6 +33,31 @@ public class AdminController {
         studentRepository.save(student);
         return ResponseEntity.ok("Student created successfully.");
     }
+    
+ // --- REFINED: Updates specific fields of an existing student record ---
+    @PutMapping("/students/{studentId}")
+    public ResponseEntity<String> updateStudentRecord(@PathVariable String studentId, @RequestBody Student updatedStudent) {
+        Optional<Student> studentOpt = studentRepository.findByStudentId(studentId);
+
+        if (studentOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Error: Student with ID " + studentId + " not found.");
+        }
+
+        Student existingStudent = studentOpt.get();
+
+        // Update the fields based on the incoming JSON body
+        // We only update mutable fields like name, email, phone, etc.
+        existingStudent.setName(updatedStudent.getName());
+        existingStudent.setEmail(updatedStudent.getEmail());
+        existingStudent.setPhone(updatedStudent.getPhone());
+        existingStudent.setAddress(updatedStudent.getAddress());
+        existingStudent.setDateOfBirth(updatedStudent.getDateOfBirth());
+        existingStudent.setMilitaryStatus(updatedStudent.getMilitaryStatus());
+        // Note: Major and ID fields are usually handled separately or not updated via this endpoint.
+
+        studentRepository.save(existingStudent);
+        return ResponseEntity.ok("Student record updated successfully for ID " + studentId + ".");
+    }
 
     @GetMapping("/students/{studentId}")
     public ResponseEntity<?> getStudent(@PathVariable String studentId) {
@@ -98,6 +123,27 @@ public class AdminController {
         }
         return ResponseEntity.status(404).body("Professor not found.");
     }
+    
+ // --- REFINED: Updates specific fields of an existing professor record ---
+    @PutMapping("/professors/{professorId}")
+    public ResponseEntity<String> updateProfessorRecord(@PathVariable String professorId, @RequestBody Professor updatedProfessor) {
+        Optional<Professor> profOpt = professorRepository.findByProfessorId(professorId);
+
+        if (profOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Error: Professor with ID " + professorId + " not found.");
+        }
+
+        Professor existingProfessor = profOpt.get();
+
+        // Update the fields based on the incoming JSON body
+        existingProfessor.setProfessorName(updatedProfessor.getProfessorName());
+        existingProfessor.setProfessorEmail(updatedProfessor.getProfessorEmail());
+        existingProfessor.setProfessorDepartment(updatedProfessor.getProfessorDepartment());
+        // Note: ProfessorCourses list is managed by the assign-course endpoint or a separate update.
+
+        professorRepository.save(existingProfessor);
+        return ResponseEntity.ok("Professor record updated successfully for ID " + professorId + ".");
+    }
 
     @PutMapping("/professors/{professorId}/assign-course")
     public ResponseEntity<String> assignCourseToProfessor(
@@ -156,6 +202,33 @@ public class AdminController {
         } else {
             return ResponseEntity.badRequest().body("Booking failed: Time conflict.");
         }
+    }
+    
+ // --- REFINED: Updates capacity and/or name of an existing hall record ---
+    @PutMapping("/halls/{hallName}")
+    public ResponseEntity<String> updateHallRecord(@PathVariable String hallName, @RequestBody Hall updatedHall) {
+        Optional<Hall> existingHallOpt = hallRepository.findByHallName(hallName);
+        
+        if (existingHallOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Error: Hall '" + hallName + "' not found.");
+        }
+        
+        Hall existingHall = existingHallOpt.get();
+        
+        // Update the capacity
+        existingHall.setCapacity(updatedHall.getCapacity());
+        
+        // Allow updating the name as well
+        if (updatedHall.getHallName() != null && !updatedHall.getHallName().equals(existingHall.getHallName())) {
+            // Check if the new name is already taken by a different hall (important for unique constraints)
+            if (hallRepository.existsByHallName(updatedHall.getHallName())) {
+                 return ResponseEntity.badRequest().body("Error: New hall name '" + updatedHall.getHallName() + "' is already in use.");
+            }
+            existingHall.setHallName(updatedHall.getHallName()); 
+        }
+
+        hallRepository.save(existingHall);
+        return ResponseEntity.ok("Hall record updated successfully.");
     }
     
     /** NEW: Deletes a hall record by hallName **/
