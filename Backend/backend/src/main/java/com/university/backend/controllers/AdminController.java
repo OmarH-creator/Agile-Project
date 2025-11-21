@@ -67,6 +67,16 @@ public class AdminController {
         
         return ResponseEntity.ok(sb.toString());
     }
+    
+    @DeleteMapping("/students/{studentId}")
+    public ResponseEntity<String> deleteStudentRecord(@PathVariable String studentId) {
+        if (studentRepository.existsByStudentId(studentId)) {
+            // Use the new deleteByStudentId method
+            studentRepository.deleteByStudentId(studentId); 
+            return ResponseEntity.ok("Student with ID " + studentId + " removed successfully.");
+        }
+        return ResponseEntity.status(404).body("Student with ID " + studentId + " not found.");
+    }
 
     // --- Professor Management ---
 
@@ -105,7 +115,18 @@ public class AdminController {
         
         return ResponseEntity.ok("Success: Course '" + courseName + "' assigned to " + targetProf.getProfessorName());
     }
-
+    
+    /** NEW: Deletes a professor record by professorId **/
+    @DeleteMapping("/professors/{professorId}")
+    public ResponseEntity<String> deleteProfessorRecord(@PathVariable String professorId) {
+        if (professorRepository.existsByProfessorId(professorId)) {
+            // Use the new deleteByProfessorId method
+            professorRepository.deleteByProfessorId(professorId);
+            return ResponseEntity.ok("Professor with ID " + professorId + " removed successfully.");
+        }
+        return ResponseEntity.status(404).body("Professor with ID " + professorId + " not found.");
+    }
+    
     // --- Hall Management ---
 
     @PostMapping("/halls")
@@ -134,6 +155,17 @@ public class AdminController {
         } else {
             return ResponseEntity.badRequest().body("Booking failed: Time conflict.");
         }
+    }
+    
+    /** NEW: Deletes a hall record by hallName **/
+    @DeleteMapping("/halls/{hallName}")
+    public ResponseEntity<String> deleteHall(@PathVariable String hallName) {
+        if (hallRepository.existsByHallName(hallName)) {
+            // Use the new deleteByHallName method
+            hallRepository.deleteByHallName(hallName);
+            return ResponseEntity.ok("Hall '" + hallName + "' removed successfully.");
+        }
+        return ResponseEntity.status(404).body("Hall '" + hallName + "' not found.");
     }
 
     // Helper class for the booking JSON body
