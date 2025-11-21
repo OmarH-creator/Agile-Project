@@ -64,4 +64,3 @@ export const curriculumData = {
         { code: 'ASU113', title: 'Professional Ethics & Legislations', semester: 10, prerequisites: [] }
     ]
 };
-
