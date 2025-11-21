@@ -3,6 +3,8 @@ package com.university.backend.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.university.backend.entity.Student;
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional; // Import needed for deletion
+
 // T is Student, ID is String
 public interface StudentRepository extends JpaRepository<Student, Long> {
 // These methods MUST be defined here for the Controller to see them
@@ -14,4 +16,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     boolean existsByStudentId(String studentId);
     
     // Find by email
-    Optional<Student> findByEmail(String email);}
+    Optional<Student> findByEmail(String email);
+
+ // --- NEW: Deletion Method ---
+    @Transactional // Required for modifying operations
+    void deleteByStudentId(String studentId);
+}
