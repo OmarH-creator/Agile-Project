@@ -225,20 +225,12 @@ public class AdminController {
         if (updatedHall.getHallName() != null && !updatedHall.getHallName().equals(existingHall.getHallName())) {
             // Check if the new name is already taken by a different hall (important for unique constraints)
             if (hallRepository.existsByHallName(updatedHall.getHallName())) {
-                 return ResponseEntity.badRequest().body("Error: New hall name '" + updatedHall.getHallName() + "' is already in use.");
+                return ResponseEntity.badRequest().body("Error: New hall name '" + updatedHall.getHallName() + "' is already in use.");
             }
             existingHall.setHallName(updatedHall.getHallName());
         }
-
-    /** NEW: Deletes a hall record by hallName **/
-    @DeleteMapping("/halls/{hallName}")
-    public ResponseEntity<String> deleteHall(@PathVariable String hallName) {
-        if (hallRepository.existsByHallName(hallName)) {
-            // Use the new deleteByHallName method
-            hallRepository.deleteByHallName(hallName);
-            return ResponseEntity.ok("Hall '" + hallName + "' removed successfully.");
-        }
-        return ResponseEntity.status(404).body("Hall '" + hallName + "' not found.");
+        hallRepository.save(existingHall);
+        return ResponseEntity.ok("Hall record updated successfully.");
     }
 
     // --- Course Management --- ADDED THIS SECTION
@@ -328,11 +320,6 @@ public class AdminController {
             return ResponseEntity.ok(courseRepository.findAll());
         }
     }
-
-        hallRepository.save(existingHall);
-        return ResponseEntity.ok("Hall record updated successfully.");
-    }
-
 
     /** NEW: Deletes a hall record by hallName **/
     @DeleteMapping("/halls/{hallName}")

@@ -2,6 +2,9 @@ package com.university.backend.entity;
 
 import jakarta.persistence.*;
 import java.util.Date;
+import java.util.ArrayList;
+
+import java.util.List;
 
 import com.university.backend.repository.UniversityRepository;
 
@@ -106,7 +109,7 @@ public class Admin {
 
     // Add these methods to your Admin class
 
-    public String addCourse(String courseCode, String courseName, int creditHours) {
+    public String addCourse(String courseCode, String courseName, int creditHours,String semester) {
         // Check if course already exists
         Course existingCourse = UniversityRepository.courses.stream()
                 .filter(c -> c.getCourseCode().equals(courseCode))
@@ -118,7 +121,7 @@ public class Admin {
         }
 
         // Create and add new course
-        Course newCourse = new Course(courseCode, courseName, creditHours);
+        Course newCourse = new Course(courseCode, courseName, creditHours,semester);
         UniversityRepository.courses.add(newCourse);
         return "Success: Course '" + courseName + "' (" + courseCode + ") added successfully.";
     }
@@ -200,8 +203,6 @@ public class Admin {
     }
 
     // Getters and Setters for JPA
-    public Long getId() { return this.id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getAdminId() { return adminId; }
     public void setAdminId(String adminId) { this.adminId = adminId; }

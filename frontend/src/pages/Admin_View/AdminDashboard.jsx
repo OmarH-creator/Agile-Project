@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
-import { curriculumData } from '../../data/curriculumData';
+import { curriculumData } from '../../data/CurriculumData';
 
 // API Configuration
 const API_BASE_URL = 'http://localhost:8081/api/admin';
