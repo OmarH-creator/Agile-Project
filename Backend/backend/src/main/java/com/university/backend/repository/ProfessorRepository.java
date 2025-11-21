@@ -8,9 +8,9 @@ import org.springframework.transaction.annotation.Transactional; // Import neede
 public interface ProfessorRepository extends JpaRepository<Professor, String> {
     // Find by the business ID (e.g., "P-101")
     Optional<Professor> findByProfessorId(String professorId);
-
+    
     boolean existsByProfessorId(String professorId);
-
+    
     @Transactional // Required for modifying operations
     void deleteByProfessorId(String professorId);
 }

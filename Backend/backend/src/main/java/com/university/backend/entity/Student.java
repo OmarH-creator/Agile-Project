@@ -22,8 +22,8 @@ public class Student {
     @Column(unique = true, nullable = false, length = 255)
     private String email;
 
-    // FIXED: Cannot use @Column for an Entity. Must use @ManyToOne.
-    @ManyToOne
+    // Persist the Major when persisting a Student to avoid transient-major errors in tests
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "major_id", nullable = false)
     private Major major;
 

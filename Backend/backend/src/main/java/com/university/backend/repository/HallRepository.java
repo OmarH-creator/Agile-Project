@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional; // Import neede
 public interface HallRepository extends JpaRepository<Hall, Long> {
     // Find hall by its name (e.g., "Main Auditorium")
     Optional<Hall> findByHallName(String hallName);
-
-    // --- NEW: Deletion Method ---
+    
+ // --- NEW: Deletion Method ---
     @Transactional // Required for modifying operations
     void deleteByHallName(String hallName);
 }
