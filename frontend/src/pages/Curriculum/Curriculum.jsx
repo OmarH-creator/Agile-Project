@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import './Curriculum.css';
 import umsLogo from '../../assets/UMS Logo.png';
+import { Link } from 'react-router-dom';
 
 const curriculumData = {
     version: 'CESS-bylaw-2018',
@@ -9,63 +10,63 @@ const curriculumData = {
         "Electives (EL3/EL4) show 'varies' because prerequisites depend on the chosen course outline."
     ],
     courses: [
-        { code: 'CSE111', title: 'Logic Design', semester: 3, prerequisites: [] },
-        { code: 'CSE131', title: 'Computer Programming', semester: 3, prerequisites: [] },
-        { code: 'PHM113', title: 'Differential & Partial Differential Equations', semester: 3, prerequisites: ['PHM013'] },
-        { code: 'EPM118', title: 'Electrical & Electronic Circuits', semester: 3, prerequisites: ['PHM022'] },
-        { code: 'EPM211', title: 'Properties of Electrical Materials', semester: 3, prerequisites: ['PHM022'] },
-        { code: 'ASU112', title: 'Report Writing & Communication Skills', semester: 3, prerequisites: [] },
+        { code: 'CSE111', title: 'Logic Design', semester: 3, prerequisites: [] , creditHours: 3},
+        { code: 'CSE131', title: 'Computer Programming', semester: 3, prerequisites: [] , creditHours: 3},
+        { code: 'PHM113', title: 'Differential & Partial Differential Equations', semester: 3, prerequisites: ['PHM013'], creditHours: 3 },
+        { code: 'EPM118', title: 'Electrical & Electronic Circuits', semester: 3, prerequisites: ['PHM022'], creditHours: 3 },
+        { code: 'EPM211', title: 'Properties of Electrical Materials', semester: 3, prerequisites: ['PHM022'], creditHours: 3 },
+        { code: 'ASU112', title: 'Report Writing & Communication Skills', semester: 3, prerequisites: [], creditHours: 3 },
 
-        { code: 'CSE112', title: 'Computer Organization & Architecture', semester: 4, prerequisites: ['CSE111', 'CSE131'] },
-        { code: 'CSE231', title: 'Advanced Computer Programming', semester: 4, prerequisites: ['CSE131'] },
-        { code: 'CSE334', title: 'Software Engineering', semester: 4, prerequisites: ['CSE131'] },
-        { code: 'PHM111', title: 'Probability & Statistics', semester: 4, prerequisites: ['PHM013'] },
-        { code: 'PHM114', title: 'Numerical Analysis', semester: 4, prerequisites: ['PHM113'] },
-        { code: 'ASU-EL1', title: 'ASU Elective (1)', semester: 4, prerequisites: [] },
+        { code: 'CSE112', title: 'Computer Organization & Architecture', semester: 4, prerequisites: ['CSE111', 'CSE131'],creditHours: 3 },
+        { code: 'CSE231', title: 'Advanced Computer Programming', semester: 4, prerequisites: ['CSE131'],creditHours: 3 },
+        { code: 'CSE334', title: 'Software Engineering', semester: 4, prerequisites: ['CSE131'],creditHours: 3 },
+        { code: 'PHM111', title: 'Probability & Statistics', semester: 4, prerequisites: ['PHM013'], creditHours: 3 },
+        { code: 'PHM114', title: 'Numerical Analysis', semester: 4, prerequisites: ['PHM113'], creditHours: 3 },
+        { code: 'ASU-EL1', title: 'ASU Elective (1)', semester: 4, prerequisites: [],creditHours: 3 },
 
-        { code: 'CSE312', title: 'Electronic Design Automation', semester: 5, prerequisites: ['CSE112'] },
-        { code: 'CSE335', title: 'Operating Systems', semester: 5, prerequisites: ['CSE112'] },
-        { code: 'CSE232', title: 'Advanced Software Engineering', semester: 5, prerequisites: ['CSE334'] },
-        { code: 'CSE331', title: 'Data Structures & Algorithms', semester: 5, prerequisites: ['CSE231'] },
-        { code: 'PHM211', title: 'Discrete Mathematics', semester: 5, prerequisites: ['PHM111', 'PHM113'] },
-        { code: 'ECE251', title: 'Signals & Systems Fundamentals', semester: 5, prerequisites: ['PHM111', 'PHM113'] },
+        { code: 'CSE312', title: 'Electronic Design Automation', semester: 5, prerequisites: ['CSE112'],creditHours: 3 },
+        { code: 'CSE335', title: 'Operating Systems', semester: 5, prerequisites: ['CSE112'],creditHours: 3 },
+        { code: 'CSE232', title: 'Advanced Software Engineering', semester: 5, prerequisites: ['CSE334'],creditHours: 3 },
+        { code: 'CSE331', title: 'Data Structures & Algorithms', semester: 5, prerequisites: ['CSE231'],creditHours: 3 },
+        { code: 'PHM211', title: 'Discrete Mathematics', semester: 5, prerequisites: ['PHM111', 'PHM113'],creditHours: 3 },
+        { code: 'ECE251', title: 'Signals & Systems Fundamentals', semester: 5, prerequisites: ['PHM111', 'PHM113'],creditHours: 3 },
 
-        { code: 'CSE332', title: 'Design & Analysis of Algorithms', semester: 6, prerequisites: ['CSE331'] },
-        { code: 'CSE333', title: 'Database Systems', semester: 6, prerequisites: ['CSE331'] },
-        { code: 'CSE338', title: 'Software Testing, Validation & Verification', semester: 6, prerequisites: ['CSE232'] },
-        { code: 'CSE371', title: 'Control Engineering', semester: 6, prerequisites: ['ECE251'] },
-        { code: 'CSE439', title: 'Design of Compilers', semester: 6, prerequisites: ['CSE131'] },
-        { code: 'CSE472', title: 'Artificial Intelligence', semester: 6, prerequisites: ['CSE131', 'PHM211'] },
+        { code: 'CSE332', title: 'Design & Analysis of Algorithms', semester: 6, prerequisites: ['CSE331'],creditHours: 3 },
+        { code: 'CSE333', title: 'Database Systems', semester: 6, prerequisites: ['CSE331'],creditHours: 3 },
+        { code: 'CSE338', title: 'Software Testing, Validation & Verification', semester: 6, prerequisites: ['CSE232'],creditHours: 3 },
+        { code: 'CSE371', title: 'Control Engineering', semester: 6, prerequisites: ['ECE251'],creditHours: 3 },
+        { code: 'CSE439', title: 'Design of Compilers', semester: 6, prerequisites: ['CSE131'],creditHours: 3 },
+        { code: 'CSE472', title: 'Artificial Intelligence', semester: 6, prerequisites: ['CSE131', 'PHM211'] ,creditHours: 3},
 
-        { code: 'CSE211', title: 'Introduction to Embedded Systems', semester: 7, prerequisites: ['CSE131'] },
-        { code: 'CSE233', title: 'Agile Software Engineering', semester: 7, prerequisites: ['CSE232'] },
-        { code: 'CSE351', title: 'Computer Networks', semester: 7, prerequisites: ['CSE335'] },
-        { code: 'EL3-1', title: 'Level-3 Technical Elective (1)', semester: 7, prerequisites: ['varies'] },
-        { code: 'EPM119', title: 'Engineering Economy & Investments', semester: 7, prerequisites: [] },
-        { code: 'ASU114', title: 'Selected Topics in Contemporary Issues', semester: 7, prerequisites: [] },
-        { code: 'ASU-EL2', title: 'ASU Elective (2)', semester: 7, prerequisites: [] },
+        { code: 'CSE211', title: 'Introduction to Embedded Systems', semester: 7, prerequisites: ['CSE131'],creditHours: 3 },
+        { code: 'CSE233', title: 'Agile Software Engineering', semester: 7, prerequisites: ['CSE232'],creditHours: 3 },
+        { code: 'CSE351', title: 'Computer Networks', semester: 7, prerequisites: ['CSE335'],creditHours: 3 },
+        { code: 'EL3-1', title: 'Level-3 Technical Elective (1)', semester: 7, prerequisites: ['varies'],creditHours: 3 },
+        { code: 'EPM119', title: 'Engineering Economy & Investments', semester: 7, prerequisites: [],creditHours: 3 },
+        { code: 'ASU114', title: 'Selected Topics in Contemporary Issues', semester: 7, prerequisites: [],creditHours: 3 },
+        { code: 'ASU-EL2', title: 'ASU Elective (2)', semester: 7, prerequisites: [],creditHours: 3 },
 
-        { code: 'CSE341', title: 'Internet Programming', semester: 8, prerequisites: ['CSE231'] },
-        { code: 'CSE354', title: 'Distributed Computing', semester: 8, prerequisites: ['CSE231', 'CSE351'] },
-        { code: 'CSE411', title: 'Real-Time & Embedded Systems Design', semester: 8, prerequisites: ['CSE211'] },
-        { code: 'CSE432', title: 'Automata & Computability', semester: 8, prerequisites: ['CSE332'] },
-        { code: 'EL3-2', title: 'Level-3 Technical Elective (2)', semester: 8, prerequisites: ['varies'] },
-        { code: 'EL3-3', title: 'Level-3 Technical Elective (3)', semester: 8, prerequisites: ['varies'] },
-        { code: 'ASU111', title: 'Human Rights', semester: 8, prerequisites: [] },
+        { code: 'CSE341', title: 'Internet Programming', semester: 8, prerequisites: ['CSE231'],creditHours: 3 },
+        { code: 'CSE354', title: 'Distributed Computing', semester: 8, prerequisites: ['CSE231', 'CSE351'],creditHours: 3 },
+        { code: 'CSE411', title: 'Real-Time & Embedded Systems Design', semester: 8, prerequisites: ['CSE211'],creditHours: 3 },
+        { code: 'CSE432', title: 'Automata & Computability', semester: 8, prerequisites: ['CSE332'],creditHours: 3 },
+        { code: 'EL3-2', title: 'Level-3 Technical Elective (2)', semester: 8, prerequisites: ['varies'],creditHours: 3 },
+        { code: 'EL3-3', title: 'Level-3 Technical Elective (3)', semester: 8, prerequisites: ['varies'],creditHours: 3 },
+        { code: 'ASU111', title: 'Human Rights', semester: 8, prerequisites: [],creditHours: 3 },
 
-        { code: 'CSE336', title: 'Software Design Patterns', semester: 9, prerequisites: ['CSE232'] },
-        { code: 'CSE431', title: 'Mobile Programming', semester: 9, prerequisites: ['CSE341'] },
-        { code: 'CSE441', title: 'Software Project Management', semester: 9, prerequisites: ['CSE334'] },
-        { code: 'EL4-1', title: 'Level-4 Technical Elective (1)', semester: 9, prerequisites: ['varies'] },
-        { code: 'EL4-2', title: 'Level-4 Technical Elective (2)', semester: 9, prerequisites: ['varies'] },
-        { code: 'CSE491', title: 'Graduation Project (1)', semester: 9, prerequisites: ['standing>=130CH'] },
+        { code: 'CSE336', title: 'Software Design Patterns', semester: 9, prerequisites: ['CSE232'],creditHours: 3 },
+        { code: 'CSE431', title: 'Mobile Programming', semester: 9, prerequisites: ['CSE341'],creditHours: 3 },
+        { code: 'CSE441', title: 'Software Project Management', semester: 9, prerequisites: ['CSE334'],creditHours: 3 },
+        { code: 'EL4-1', title: 'Level-4 Technical Elective (1)', semester: 9, prerequisites: ['varies'],creditHours: 3 },
+        { code: 'EL4-2', title: 'Level-4 Technical Elective (2)', semester: 9, prerequisites: ['varies'] ,creditHours: 3},
+        { code: 'CSE491', title: 'Graduation Project (1)', semester: 9, prerequisites: ['standing>=130CH'],creditHours: 3 },
 
-        { code: 'CSE451', title: 'Computer & Network Security', semester: 10, prerequisites: ['CSE351'] },
-        { code: 'CSE455', title: 'High-Performance Computing', semester: 10, prerequisites: ['CSE112'] },
-        { code: 'EL4-3', title: 'Level-4 Technical Elective (3)', semester: 10, prerequisites: ['varies'] },
-        { code: 'EL4-4', title: 'Level-4 Technical Elective (4)', semester: 10, prerequisites: ['varies'] },
-        { code: 'CSE492', title: 'Graduation Project (2)', semester: 10, prerequisites: ['CSE491'] },
-        { code: 'ASU113', title: 'Professional Ethics & Legislations', semester: 10, prerequisites: [] }
+        { code: 'CSE451', title: 'Computer & Network Security', semester: 10, prerequisites: ['CSE351'],creditHours: 3 },
+        { code: 'CSE455', title: 'High-Performance Computing', semester: 10, prerequisites: ['CSE112'],creditHours: 3 },
+        { code: 'EL4-3', title: 'Level-4 Technical Elective (3)', semester: 10, prerequisites: ['varies'],creditHours: 3 },
+        { code: 'EL4-4', title: 'Level-4 Technical Elective (4)', semester: 10, prerequisites: ['varies'],creditHours: 3 },
+        { code: 'CSE492', title: 'Graduation Project (2)', semester: 10, prerequisites: ['CSE491'],creditHours: 3 },
+        { code: 'ASU113', title: 'Professional Ethics & Legislations', semester: 10, prerequisites: [],creditHours: 3 }
     ]
 };
 
@@ -140,7 +141,7 @@ const Curriculum = () => {
                         <img src={umsLogo} alt="UMS logo" className="mini-logo" />
                     </div>
                     <div>
-                        <p className="eyebrow">University Management � Admin</p>
+                        <p className="eyebrow">University Management – Admin</p>
                         <h1>Curriculum Roadmap</h1>
                         <p className="sub">Explore course progression, prerequisites, and elective pathways.</p>
                     </div>
@@ -163,6 +164,9 @@ const Curriculum = () => {
                         <option key={semester} value={semester}>Semester {semester}</option>
                     ))}
                 </select>
+                <Link to="/admin/curriculum/edit-courses" className="edit-course-btn">
+                    Edit Course
+                </Link>
             </section>
 
             <section className="curriculum-grid">
@@ -200,9 +204,12 @@ const Curriculum = () => {
                                             {course.prerequisites.length === 0 && <span className="prereq-badge none">No prerequisites</span>}
                                             {course.prerequisites.map((prerequisite) => (
                                                 <span key={prerequisite} className="prereq-badge">
-                          {highlight(formatPrerequisite(prerequisite))}
-                        </span>
+                                                    {highlight(formatPrerequisite(prerequisite))}
+                                                </span>
                                             ))}
+                                        </div>
+                                        <div className="course-credits">
+                                            {course.creditHours || 3} credits
                                         </div>
                                     </article>
                                 ))}
@@ -231,6 +238,10 @@ const Curriculum = () => {
                         <div>
                             <h3>Semester</h3>
                             <p>Semester {selectedCourse.semester}</p>
+                        </div>
+                        <div>
+                            <h3>Credits</h3>
+                            <p>{selectedCourse.creditHours || 3} credit hours</p>
                         </div>
                         <div>
                             <h3>Prerequisites</h3>

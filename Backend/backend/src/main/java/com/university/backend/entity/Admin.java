@@ -2,6 +2,8 @@ package com.university.backend.entity;
 
 import jakarta.persistence.*;
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.university.backend.repository.UniversityRepository;
 
@@ -11,7 +13,7 @@ public class Admin {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // <--- ADDED THIS FIELD. This fixes the error at the bottom.
+    private Long id;
 
     @Column(unique = true, nullable = false, length = 255)
     private String adminId;
@@ -106,6 +108,101 @@ public class Admin {
 
         targetProf.assignCourse(courseName);
         return "Success: Course '" + courseName + "' assigned to " + targetProf.getProfessorName();
+    }
+
+    // Add these methods to your Admin class
+
+    public String addCourse(String courseCode, String courseName, int creditHours) {
+        // Check if course already exists
+        Course existingCourse = UniversityRepository.courses.stream()
+                .filter(c -> c.getCourseCode().equals(courseCode))
+                .findFirst()
+                .orElse(null);
+
+        if (existingCourse != null) {
+            return "Error: Course with code " + courseCode + " already exists.";
+        }
+
+        // Create and add new course
+        Course newCourse = new Course(courseCode, courseName, creditHours);
+        UniversityRepository.courses.add(newCourse);
+        return "Success: Course '" + courseName + "' (" + courseCode + ") added successfully.";
+    }
+
+    public String removeCourse(String courseCode) {
+        // Find the course to remove
+        Course courseToRemove = UniversityRepository.courses.stream()
+                .filter(c -> c.getCourseCode().equals(courseCode))
+                .findFirst()
+                .orElse(null);
+
+        if (courseToRemove == null) {
+            return "Error: Course with code " + courseCode + " not found.";
+        }
+
+        // Check if course has any students enrolled (optional safety check)
+//        boolean hasEnrollments = UniversityRepository.students.stream()
+//                .anyMatch(student -> student.getCurrentCourses().stream()
+//                        .anyMatch(course -> course.getCourseCode().equals(courseCode)));
+//
+//        if (hasEnrollments) {
+//            return "Error: Cannot remove course " + courseCode + " because students are currently enrolled.";
+//        }
+
+        // Remove the course
+        UniversityRepository.courses.remove(courseToRemove);
+        return "Success: Course '" + courseToRemove.getCourseName() + "' (" + courseCode + ") removed successfully.";
+    }
+
+    // Method to get all courses
+    public List<Course> getAllCourses() {
+        return new ArrayList<>(UniversityRepository.courses);
+    }
+
+    // Method to find course by code
+    public Course getCourse(String courseCode) {
+        return UniversityRepository.courses.stream()
+                .filter(c -> c.getCourseCode().equals(courseCode))
+                .findFirst()
+                .orElse(null);
+    }
+
+    // Method to update course information
+    public String updateCourse(String courseCode, String newCourseName, Integer newCreditHours) {
+        Course courseToUpdate = getCourse(courseCode);
+
+        if (courseToUpdate == null) {
+            return "Error: Course with code " + courseCode + " not found.";
+        }
+
+        if (newCourseName != null && !newCourseName.trim().isEmpty()) {
+            courseToUpdate.setCourseName(newCourseName);
+        }
+
+        if (newCreditHours != null && newCreditHours > 0) {
+            courseToUpdate.setCreditHours(newCreditHours);
+        }
+
+        return "Success: Course " + courseCode + " updated successfully.";
+    }
+
+    // FIXED CORRUPTED METHOD - Removed duplicate datasource configurations and fixed structure
+    @Transient
+    private List<String> assignedCourses = new ArrayList<>();
+
+    public List<String> getAssignedCourses() {
+        return assignedCourses;
+    }
+
+    public void setAssignedCourses(List<String> assignedCourses) {
+        this.assignedCourses = assignedCourses;
+    }
+
+    public void addAssignedCourse(String courseCode) {
+        if (this.assignedCourses == null) {
+            this.assignedCourses = new ArrayList<>();
+        }
+        this.assignedCourses.add(courseCode); // Just add the string directly
     }
 
     // Getters and Setters for JPA
