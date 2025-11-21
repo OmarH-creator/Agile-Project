@@ -1,8 +1,13 @@
 package com.university.backend.repository;
 
-import university.entity.Hall;
-import university.entity.Student;
-import university.entity.Professor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.university.backend.entity.Student;
+import com.university.backend.entity.Hall;
+import com.university.backend.entity.Professor;
+import com.university.backend.entity.Admin;
+//import org.springframework.data.jpa.repository.JpaRepository; // (Keep this if it exists)
+//package com.university.backend.repository;
+
 
 import java.util.ArrayList;
 import java.util.List;
