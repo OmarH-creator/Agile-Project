@@ -11,7 +11,12 @@ import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@AutoConfigureTestDatabase(replace = Replace.NONE)
+@SpringBootTest
 public class StudentRepoTest {
 
     @Autowired
@@ -20,6 +25,7 @@ public class StudentRepoTest {
     private Major sampleMajor() {
         Major major = new Major();
         major.setMajorName("Engineering");
+        major.setMajorId("ENG");
         return major;
     }
 
