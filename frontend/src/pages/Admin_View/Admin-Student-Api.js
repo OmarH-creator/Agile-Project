@@ -253,7 +253,7 @@ export const isPrerequisiteSatisfied = (prerequisite, completedCodes, completedH
     if (normalized === 'varies') {
         return true;
     }
-
+// hamada by7eb 8ada
     if (normalized.startsWith('standing>=')) {
         const value = parseInt(normalized.replace('standing>=', ''), 10);
         return Number.isFinite(value) ? completedHours >= value : true;
