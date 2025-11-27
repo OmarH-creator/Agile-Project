@@ -1,16 +1,16 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect,useRef } from 'react';
 import './FacilitiesUI.css';
 import umsLogo from '../../assets/UMS Logo.png';
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 // API Configuration
 const API_BASE_URL = 'http://localhost:8081/api/admin';
 
-// Helper function to get authentication token from localStorage
 const getAuthToken = () => {
     return localStorage.getItem('token');
 };
 
-// Helper function to create request headers with auth token
 const createHeaders = () => {
     return {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ const hallAPI = {
         return await response.json();
     },
 
-    // UPDATE: Expects originalName for the URL, and hallData for the Body
+    // Expects originalName for the URL, and hallData for the Body
     updateHall: async (originalName, hallData) => {
         const response = await fetch(`${API_BASE_URL}/halls/${encodeURIComponent(originalName)}`, {
             method: 'PUT',
@@ -90,19 +90,15 @@ const hallAPI = {
     },
 };
 
-// --- DATE CONVERSION HELPERS (ROBUST) ---
-
-// 1. Frontend (Day/Time) -> Backend (Date Object)
+// --- DATE CONVERSION HELPERS ---
+// Frontend (Day/Time) -> Backend (Date Object)
 const convertToBackendDate = (day, time) => {
     const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5 };
     const today = new Date();
     const currentDay = today.getDay();
     const targetDay = dayMap[day] || 1;
 
-    // Calculate strict date difference
     let daysToAdd = targetDay - currentDay;
-    // Optional: Force it to be 'this week' or 'next week' if passed
-    // For generic scheduling, we just want the correct day of the week
     if (daysToAdd < 0) daysToAdd += 7;
 
     const targetDate = new Date(today);
@@ -116,21 +112,18 @@ const convertToBackendDate = (day, time) => {
     return targetDate;
 };
 
-// 2. Backend (ISO String) -> Frontend (Day/Time)
+// Backend (ISO String) -> Frontend (Day/Time)
 const parseBackendDate = (isoString) => {
     if (!isoString) return { day: 'Mon', time: '00:00' };
 
     const date = new Date(isoString);
 
-    // Get Day
     const day = date.toLocaleDateString('en-US', { weekday: 'short' });
 
-    // Get Time (Force 24h format HH:mm)
-    // We use local time methods to match the browser's timezone
+    // Get Time in 24h format (HH:mm) using local timezone
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
-    // CRITICAL: Return clean 24h string (e.g., "13:00" for 1 PM)
     const time = `${hours}:${minutes}`;
 
     return { day, time };
@@ -157,13 +150,12 @@ const bookingAPI = {
         }
         return await response.text();
     },
-// --- UPDATE (Connected) ---
     updateBooking: async (id, bookingData) => {
         const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
             method: 'PUT',
             headers: createHeaders(),
             body: JSON.stringify({
-                hallName: bookingData.hallName, // "219" sent here
+                hallName: bookingData.hallName,
                 start: bookingData.start,
                 end: bookingData.end,
                 purpose: bookingData.purpose,
@@ -174,7 +166,6 @@ const bookingAPI = {
         return await response.text();
     },
 
-    // --- DELETE (Connected) ---
     deleteBooking: async (id) => {
         const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
             method: 'DELETE',
@@ -183,7 +174,6 @@ const bookingAPI = {
         if (!response.ok) throw new Error(await response.text());
         return await response.text();
     },
-    // --- NEW: Fetch All Bookings ---
     fetchBookings: async () => {
         const response = await fetch(`${API_BASE_URL}/bookings`, {
             method: 'GET',
@@ -348,6 +338,23 @@ const Facilities = () => {
 
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
+    const scheduleRef = useRef(null);
+
+    const exportScheduleAsPDF = async () => {
+        if (!scheduleRef.current) return;
+
+        const element = scheduleRef.current;
+
+        const canvas = await html2canvas(element, { scale: 2 });
+        const imgData = canvas.toDataURL("image/png");
+
+        const pdf = new jsPDF("landscape", "mm", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.save("schedule.pdf");
+    };
 
     const handleAPICall = async (apiFunction, successCallback) => {
         setLoading(true);
@@ -374,7 +381,7 @@ const Facilities = () => {
 
     // Helper to map backend hall object to frontend structure
     const mapBackendHall = (h) => ({
-        // FIX: Use a stable ID fallback (hallName) instead of Math.random() to prevent React key errors
+        // Use a stable ID fallback (hallName) to prevent React key errors
         id: h.hallId || h.id || `hall-${h.hallName || h.name || 'unknown'}`,
         name: h.hallName || h.name,
         capacity: h.capacity,
@@ -402,12 +409,11 @@ const Facilities = () => {
             day: startInfo.day,
             start: startInfo.time,
             end: endInfo.time,
-            // Keep raw Reservation ID for updates if needed later
+            // Keep raw Reservation ID for updates
             reservationId: b.reservationId
         };
     };
 
-    // Reusable function to fetch all halls
     const loadAllHalls = async () => {
         await handleAPICall(
             () => hallAPI.fetchHalls(),
@@ -419,28 +425,22 @@ const Facilities = () => {
         );
     };
 
-    // Reusable function to fetch all bookings (Schedule)
-    // Reusable function to fetch all bookings (Schedule)
     const loadAllBookings = async () => {
         await handleAPICall(
             () => bookingAPI.fetchBookings(),
             (data) => {
-                console.log("Raw Bookings from DB:", data); // <--- Add this check
                 const list = Array.isArray(data) ? data : [];
                 const formatted = list.map(mapBackendBooking);
-                console.log("Formatted for UI:", formatted); // <--- Add this check
                 setSchedule(formatted);
             }
         );
     };
 
-    // --- 1. UseEffect to load data on Mount ---
     useEffect(() => {
         loadAllHalls();
-        loadAllBookings(); // <--- Now loads bookings too!
+        loadAllBookings();
     }, []);
 
-    // --- 2. Search Handler using gethall API ---
     const handleSearch = async (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -564,7 +564,6 @@ const Facilities = () => {
         const payload = {
             name: hallModal.form.name.trim(),
             capacity: Number(hallModal.form.capacity),
-            // ... other fields
         };
 
         if (!payload.name || payload.capacity <= 0) {
@@ -573,15 +572,11 @@ const Facilities = () => {
         }
 
         if (hallModal.mode === 'edit' && hallModal.id) {
-            // --- EDIT MODE ---
-
-            // 1. Find the ORIGINAL name using the ID
-            // (We need this because the user might have typed a NEW name in the form)
+            // Find the original hall name, as the user might have changed it in the form.
             const originalHall = halls.find(h => h.id === hallModal.id);
             const originalName = originalHall ? originalHall.name : payload.name;
 
             await handleAPICall(
-                // 2. Pass originalName to URL, payload to Body
                 () => hallAPI.updateHall(originalName, payload),
                 () => {
                     loadAllHalls();
@@ -589,7 +584,6 @@ const Facilities = () => {
                 }
             );
         } else {
-            // --- CREATE MODE ---
             await handleAPICall(
                 () => hallAPI.createHall(payload),
                 () => {
@@ -646,7 +640,6 @@ const Facilities = () => {
             await handleAPICall(
                 () => bookingAPI.createBooking(backendBookingData),
                 (result) => {
-                    // Reload bookings to ensure UI syncs with actual DB IDs
                     loadAllBookings();
 
                     setRequests((prev) => prev.map((req) =>
@@ -681,12 +674,10 @@ const Facilities = () => {
         }
     };
 
-    // --- SUBMIT BOOKING (CREATE / UPDATE) ---
     const submitBooking = async (e) => {
         e.preventDefault();
         const payload = bookingModal.form;
 
-        // 1. Time Validation
         const startM = toMinutes(payload.start);
         const endM = toMinutes(payload.end);
         if (endM <= startM) {
@@ -694,8 +685,7 @@ const Facilities = () => {
             return;
         }
 
-        // 2. Conflict Check
-        // We use the UI ID (bookingModal.editing) to exclude self from conflict check
+        // Exclude self from conflict check
         const conflictCheckId = bookingModal.editing || 'temp-new';
         const conflict = hasConflict({ ...payload, id: conflictCheckId }, schedule);
 
@@ -704,7 +694,6 @@ const Facilities = () => {
             if (!proceed) return;
         }
 
-        // 3. Prepare Backend Data
         const startDate = convertToBackendDate(payload.day, payload.start);
         const endDate = convertToBackendDate(payload.day, payload.end);
 
@@ -722,9 +711,7 @@ const Facilities = () => {
         };
 
         if (bookingModal.editing) {
-            // --- UPDATE PATH ---
-
-            // FIX: Look up the real DB ID from the schedule array
+            // Look up the real DB ID from the schedule array
             const originalBooking = schedule.find(b => b.id === bookingModal.editing);
 
             if (!originalBooking || !originalBooking.reservationId) {
@@ -742,7 +729,6 @@ const Facilities = () => {
                 }
             );
         } else {
-            // --- CREATE PATH ---
             await handleAPICall(
                 () => bookingAPI.createBooking({ ...backendData, reservationId: null }),
                 () => {
@@ -753,24 +739,19 @@ const Facilities = () => {
         }
     };
 
-    // --- DELETE BOOKING ---
     const deleteBooking = async () => {
         if (!bookingModal.editing) return;
 
-        // 1. Find the full booking object in our state using the UI ID (e.g. "SCH-5")
+        // Find the full booking object in state using the UI ID
         const bookingToDelete = schedule.find(b => b.id === bookingModal.editing);
 
-        // Safety Check: Does it exist?
         if (!bookingToDelete) {
             console.error("Could not find booking object in state");
             return;
         }
 
-        // 2. Grab the REAL database ID (e.g. 5)
+        // Grab the real database ID
         const rawId = bookingToDelete.reservationId;
-
-        // Debugging: Check your console to see exactly what ID is being sent
-        console.log("Attempting to delete Booking DB ID:", rawId);
 
         if (!rawId) {
             alert("Error: Cannot delete a booking that hasn't been saved to the DB yet.");
@@ -780,7 +761,7 @@ const Facilities = () => {
         await handleAPICall(
             () => bookingAPI.deleteBooking(rawId),
             () => {
-                loadAllBookings(); // Refresh from DB
+                loadAllBookings();
                 setBookingModal({ open: false, editing: null, form: defaultBooking });
             }
         );
@@ -806,7 +787,6 @@ const Facilities = () => {
                     <div>
                         <p className="eyebrow">University Management - Admin</p>
                         <h1>Facilities Command Center</h1>
-                        <p className="sub">Manage halls, approvals, and schedules in one glassy surface.</p>
                     </div>
                 </div>
                 <button className="ghost-btn" onClick={() => openHallModal()}>
@@ -1029,8 +1009,7 @@ const Facilities = () => {
                         </select>
                         <button className="ghost-btn" onClick={() => openBookingModal()}>Assign Hall</button>
                         <div className="export">
-                            <button onClick={() => exportSchedule('PDF')}>Export PDF</button>
-                            <button onClick={() => exportSchedule('Excel')}>Export Excel</button>
+                            <button onClick={exportScheduleAsPDF}>Export PDF</button>
                         </div>
                     </div>
                 </header>
@@ -1041,8 +1020,8 @@ const Facilities = () => {
                     <span><i className="dot conflict" />Conflict</span>
                 </div>
 
-                <div className="schedule-grid" role="grid">
-                    <div className="schedule-grid-head" role="row">
+                <div className="schedule-grid" role="grid" ref={scheduleRef}>
+                <div className="schedule-grid-head" role="row">
                         <div className="time-column head" role="columnheader">Time</div>
                         {daysOfWeek.map((day) => (
                             <div className="day-column head" key={day} role="columnheader">{day}</div>
@@ -1050,7 +1029,6 @@ const Facilities = () => {
                     </div>
 
                     <div className="schedule-grid-body" style={{height: `${timelineHeight}px`, position: 'relative'}}>
-                        {/* Background Grid Lines */}
                         <div className="time-column" aria-hidden="true">
                             {timelineSlots.slice(0, -1).map((slot) => (
                                 <div className="time-slot" key={slot.time} style={{height: `${SLOT_PIXEL_HEIGHT}px`}}>
@@ -1062,10 +1040,8 @@ const Facilities = () => {
                             </div>
                         </div>
 
-                        {/* Day Columns */}
                         {daysOfWeek.map((day) => (
                             <div className="day-column" key={day} role="gridcell" style={{position: 'relative'}}>
-                                {/* Background Stripes */}
                                 <div className="slot-stripes" aria-hidden="true">
                                     {timelineSlots.slice(0, -1).map((slot, index) => (
                                         <span
@@ -1076,7 +1052,6 @@ const Facilities = () => {
                                     ))}
                                 </div>
 
-                                {/* Events */}
                                 {(eventsByDay[day] || []).map((event) => {
                                     const layout = event.layout;
                                     if (!layout) return null;
@@ -1089,7 +1064,7 @@ const Facilities = () => {
                                     const computedLeft = `calc(${leftPercent}% + ${inset}px)`;
                                     const computedWidth = `calc(${widthPercent}% - ${inset * 2 + spacing}px)`;
 
-                                    // RED COLOR FOR CONFLICTS
+                                    // Style events with conflicts differently
                                     const backgroundStyle = event.conflict
                                         ? `linear-gradient(135deg, #fee2e2 0%, #ef4444 100%)`
                                         : `linear-gradient(145deg, rgba(255,255,255,0.9), ${getEventColor(event.hall)})`;
@@ -1103,7 +1078,7 @@ const Facilities = () => {
                                             className="calendar-event"
                                             data-conflict={event.conflict}
                                             style={{
-                                                position: 'absolute', // Forces exact placement
+                                                position: 'absolute',
                                                 top: `${layout.top}%`,
                                                 height: `${layout.height}%`,
                                                 left: computedLeft,
@@ -1147,7 +1122,7 @@ const Facilities = () => {
                                 value={hallModal.form.name}
                                 onChange={(e) => setHallModal((prev) => ({ ...prev, form: { ...prev.form, name: e.target.value } }))}
                                 required
-                                /* --- THE FIX: Disable if editing --- */
+                                /* Disable name changes on edit to protect the primary key */
                                 disabled={hallModal.mode === 'edit'}
                             />
                         </label>
