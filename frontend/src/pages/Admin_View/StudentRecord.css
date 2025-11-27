@@ -1,0 +1,238 @@
+:root {
+    --neo-text: #1c2340;
+    --neo-muted: #6b7294;
+    --neo-accent: #6a7dff;
+    --neo-accent-strong: #4e63ff;
+    --danger: #d24c5f;
+    --card-bg: #ffffff;
+    --sub-card-bg: #f8fafc;
+}
+
+/* Wrapper for the whole view */
+.detail-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-bottom: 40px;
+}
+
+/* --- Shared Card Styles --- */
+.detail-card,
+.history-card,
+.registration-card {
+    background: var(--card-bg);
+    padding: 26px;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 6px 6px 20px rgba(180, 188, 210, 0.15);
+}
+
+/* --- Header Section --- */
+.detail-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.detail-ident {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.detail-logo-shell {
+    width: 64px;
+    height: 64px;
+    padding: 10px;
+    background: var(--sub-card-bg);
+    border-radius: 20px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.detail-logo-shell img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.detail-ident h2 {
+    margin: 0 0 4px 0;
+    font-size: 22px;
+    color: var(--neo-text);
+}
+
+.detail-ident p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--neo-muted);
+    line-height: 1.4;
+}
+
+/* --- Actions & Buttons --- */
+.detail-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.ghost-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: var(--neo-accent-strong);
+    transition: all 0.2s ease;
+}
+
+.ghost-btn:hover {
+    background: #f1f5f9;
+    transform: translateY(-2px);
+}
+
+.ghost-btn.danger {
+    color: var(--danger);
+    border-color: rgba(210, 76, 95, 0.2);
+}
+
+.ghost-btn.danger:hover {
+    background: rgba(210, 76, 95, 0.05);
+}
+
+/* --- KPI Grid (Stats) --- */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.kpi-card {
+    background: var(--sub-card-bg);
+    padding: 18px;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.kpi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    color: var(--neo-muted);
+}
+
+.kpi-card strong {
+    font-size: 20px;
+    color: var(--neo-text);
+}
+
+/* --- Meta Info Grid --- */
+.meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.meta-label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--neo-muted);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.meta-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--neo-text);
+}
+
+/* --- Tables (History) --- */
+.history-card header,
+.registration-card header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.history-card h3,
+.registration-card h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.history-table-wrapper {
+    overflow-x: auto;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.history-table th {
+    text-align: left;
+    padding: 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--neo-muted);
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.history-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--neo-text);
+}
+
+.history-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- Registration List --- */
+.registration-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.registration-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--sub-card-bg);
+    border-radius: 14px;
+    border: 1px solid transparent;
+}
+
+.registration-item strong {
+    font-size: 14px;
+    color: var(--neo-text);
+}
+
+.empty-state {
+    padding: 20px;
+    text-align: center;
+    color: var(--neo-muted);
+    font-size: 13px;
+    font-style: italic;
+    background: var(--sub-card-bg);
+    border-radius: 14px;
+}

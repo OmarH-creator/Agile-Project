@@ -4,6 +4,7 @@ import AdminDashboard from '../pages/Admin_View/AdminDashboard';
 import FacilitiesUI from '../pages/Facilities/FacilitiesUI';
 import Curriculum from '../pages/Curriculum/Curriculum';
 import EditCourses from '../pages/EditCourses/EditCourses';
+import StudentServices from "../pages/Admin_View/StudentServices";
 
 function AppRoutes() {
   return (
@@ -11,11 +12,13 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Login />} />
         {/*<Route path="/login" element={<Login />} />*/}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/facilities" element={<FacilitiesUI />} />
-        <Route path="/admin/curriculum" element={<Curriculum />} />
-          <Route path="/admin/curriculum/edit-courses" element={<EditCourses />} />
-        <Route path="/student" />
+        <Route path="/Admin" element={<AdminDashboard />} />
+        <Route path="/Admin/Students" element={<StudentServices/>}/>
+        <Route path="/Admin/Facilities" element={<FacilitiesUI />} />
+        <Route path="/Admin/Curriculum" element={<Curriculum />} />
+        <Route path="/Admin/Curriculum/Edit-courses" element={<EditCourses />} />
+
+        <Route path="/Student" />
       </Routes>
     </Router>
   );
