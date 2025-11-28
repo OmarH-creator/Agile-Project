@@ -1,5 +1,5 @@
 // API Configuration
-import {curriculumData} from "../../data/CurriculumData";
+import {curriculumData} from "../../data/curriculumData";
 
 const API_BASE_URL = 'http://localhost:8081/api/admin';
 
@@ -111,6 +111,34 @@ export async function getStudent(studentId) {
     // RETURN RAW JSON. No adapter needed.
     return await response.json();
 }
+
+export const getAllStudents = async (page = 0, size = 10, search = '') => {
+    try {
+        // use URL constructor to handle parameters safely
+        const url = new URL(`${API_BASE_URL}/students`);
+
+        url.searchParams.append("page", page);
+        url.searchParams.append("size", size);
+
+        // Only append search if it's not empty
+        if (search) {
+            url.searchParams.append("search", search);
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            // Log the error to see if it's a 404 or 500
+            console.error("Server Error:", response.status);
+            throw new Error("Failed to fetch students");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("API Call Failed:", error);
+        throw error;
+    }
+};
 
 // Delete a student record
 export async function deleteStudent(studentId) {

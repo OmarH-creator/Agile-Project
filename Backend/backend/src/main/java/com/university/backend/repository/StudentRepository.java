@@ -4,6 +4,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.university.backend.entity.Student;
 import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional; // Import needed for deletion
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 // T is Student, ID is String
 public interface StudentRepository extends JpaRepository<Student, String> {
@@ -18,6 +21,7 @@ public interface StudentRepository extends JpaRepository<Student, String> {
     // Find by email
     Optional<Student> findByEmail(String email);
 
+    Page<Student> findByStudentIdStartingWith(String prefix, Pageable pageable);
  // --- NEW: Deletion Method ---
     @Transactional // Required for modifying operations
     void deleteByStudentId(String studentId);

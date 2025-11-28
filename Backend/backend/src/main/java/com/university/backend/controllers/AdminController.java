@@ -5,6 +5,10 @@ import com.university.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.Date;
 import java.util.List;
@@ -142,6 +146,26 @@ public class AdminController {
         }
         return ResponseEntity.status(404).body("Student not found.");
     }
+
+    // GET ALL STUDENTS (With Pagination)
+    // Usage: GET /api/admin/students?page=0&size=10
+    @GetMapping("/students")
+    public ResponseEntity<Page<Student>> getAllStudents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "studentId") String sortBy,
+            @RequestParam(required = false) String search) { // Optional Search PARAMETER
+
+        // 1. Create a Pageable object (Page number, Size per page, Sorting)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        // If search is present, filter by ID Prefix. Otherwise, return all.
+        if (search != null && !search.trim().isEmpty()) {
+            return ResponseEntity.ok(studentRepository.findByStudentIdStartingWith(search, pageable));
+        } else {
+            return ResponseEntity.ok(studentRepository.findAll(pageable));
+        }
+    }
+
 
     @GetMapping("/students/{studentId}/transcript")
     public ResponseEntity<String> generateTranscript(@PathVariable String studentId) {

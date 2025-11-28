@@ -117,3 +117,82 @@
     .student-panel { height: auto; max-height: 400px; }
     .registration-grid { grid-template-columns: 1fr; }
 }
+
+.student-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.student-list {
+    flex: 1; /* Takes remaining space */
+    overflow-y: auto; /* Scrollable if list is long */
+}
+
+.pagination-footer {
+    padding: 10px;
+    background: #f8f9fa;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.page-btn:hover {
+    background: #eee;
+}
+
+.page-btn.active-page {
+    background: #007bff; /* Or your theme color */
+    color: white;
+    border-color: #007bff;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Container to align input and button */
+.search-group {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Space between input and button */
+    width: 100%;
+}
+
+/* Make the input take available space */
+.search-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+/* Style the search button */
+.search-btn {
+    background-color: #f0f2f5;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    height: 35px; /* Match input height roughly */
+    width: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.search-btn:hover {
+    background-color: #e4e6eb;
+}

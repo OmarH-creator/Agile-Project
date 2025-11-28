@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
-import { curriculumData } from '../../data/CurriculumData';
+import { curriculumData } from '../../data/curriculumData';
 import {
     courseCatalog,
     createStudent,
