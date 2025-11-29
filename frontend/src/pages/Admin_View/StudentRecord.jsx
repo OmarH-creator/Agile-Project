@@ -255,14 +255,6 @@ const StudentRecord = ({student}) => {
                             <p>{student.email}</p>
                         </div>
                     </div>
-                    <div className="detail-actions">
-                        <button type="button" className="ghost-btn" onClick={() => openEditStudent(student)}>
-                            {Icon.edit16} <span>Edit</span>
-                        </button>
-                        <button type="button" className="ghost-btn danger" onClick={() => handleDeleteStudent(student.studentId)}>
-                            {Icon.trash16} <span>Delete</span>
-                        </button>
-                    </div>
                 </header>
 
                 <div className="kpi-grid">

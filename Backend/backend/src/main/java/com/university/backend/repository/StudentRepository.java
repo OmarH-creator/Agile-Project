@@ -21,6 +21,9 @@ public interface StudentRepository extends JpaRepository<Student, String> {
     // Find by email
     Optional<Student> findByEmail(String email);
 
+    // ADDED THIS to check for unique phone numbers
+    Optional<Student> findByPhone(String phone);
+
     Page<Student> findByStudentIdStartingWith(String prefix, Pageable pageable);
  // --- NEW: Deletion Method ---
     @Transactional // Required for modifying operations

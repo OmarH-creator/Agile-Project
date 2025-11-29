@@ -107,8 +107,28 @@ public class AdminController {
         try {
             // 2. Update simple fields
             if (payload.containsKey("name")) student.setName((String) payload.get("name"));
-            if (payload.containsKey("email")) student.setEmail((String) payload.get("email"));
-            if (payload.containsKey("phone")) student.setPhone((String) payload.get("phone"));
+            //Checks Email uniqueness
+            if (payload.containsKey("email")) {
+                String newEmail = (String) payload.get("email");
+                Optional<Student> emailOwner = studentRepository.findByEmail(newEmail);
+
+                // If a student exists with this email, AND their ID is not the ID of the student we are currently editing
+                if (emailOwner.isPresent() && !emailOwner.get().getStudentId().equals(id)) {
+                    return ResponseEntity.badRequest().body("Error: The email '" + newEmail + "' is already used by another student.");
+                }
+                student.setEmail(newEmail);
+            }
+            // Check Phone Uniqueness
+            if (payload.containsKey("phone")) {
+                String newPhone = (String) payload.get("phone");
+                Optional<Student> phoneOwner = studentRepository.findByPhone(newPhone);
+
+                // If phone exists AND belongs to someone else (different ID)
+                if (phoneOwner.isPresent() && !phoneOwner.get().getStudentId().equals(id)) {
+                    return ResponseEntity.badRequest().body("Error: The phone number '" + newPhone + "' is already used by another student.");
+                }
+                student.setPhone(newPhone);
+            }
             if (payload.containsKey("address")) student.setAddress((String) payload.get("address"));
             if (payload.containsKey("militaryStatus")) student.setMilitaryStatus((String) payload.get("militaryStatus"));
 //            if (payload.containsKey("status")) student.setStatus((String) payload.get("status"));
@@ -134,8 +154,12 @@ public class AdminController {
             studentRepository.save(student);
             return ResponseEntity.ok("Student updated successfully.");
 
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // This is the "Safety Net" catch block
+            // If we missed a check above, this catches the ugly DB error and makes it readable
+            return ResponseEntity.badRequest().body("Error: Duplicate entry detected. Please check Email, Phone, or ID.");
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error updating student: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("System Error: " + e.getMessage());
         }
     }
     @GetMapping("/students/{studentId}")

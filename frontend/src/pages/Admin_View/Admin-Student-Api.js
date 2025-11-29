@@ -31,6 +31,30 @@ export async function createStudent(studentData) {
     return await response.text();
 }
 
+// [NEW] Update an existing student record
+export async function updateStudent(studentId, studentData) {
+    const token = getAuthToken();
+
+    const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(studentData)
+    });
+
+    if (!response.ok) {
+        if (response.status === 404) {
+            throw new Error(`Student with ID ${studentId} not found.`);
+        }
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || `Failed to update student: ${response.status}`);
+    }
+
+    return await response.text();
+}
+
 // Get a specific student by studentId
 export async function getStudent(studentId) {
     const token = getAuthToken();
