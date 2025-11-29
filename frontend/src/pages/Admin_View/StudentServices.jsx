@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react'; // Added useEffect
 import { Link } from 'react-router-dom';
 import StudentRecord from './StudentRecord'; // Importing the child component
-import { getStudent, getAllStudents } from './Admin-Student-Api'; // Importing functions from the Admin-Student-Api file
+import {
+    getStudent,
+    getAllStudents,
+    getTranscript,
+    downloadBlob,
+    emptyStudent,
+    sumCredits, deleteStudent, createStudent, buildStudentSnapshot
+} from './Admin-Student-Api'; // Importing functions from the Admin-Student-Api file
 import { Icon } from './Admin-Student-Api'; // Assuming you have an Icons file
 import './StudentServices.css';
 import umsLogo from "../../assets/UMS Logo.png";
@@ -12,17 +19,29 @@ const StudentServices = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [formMode, setFormMode] = useState(null);
+    const [formData, setFormData] = useState(emptyStudent);
+    const [validationError, setValidationError] = useState('');
+    const [selectedCode, setSelectedCode] = useState(null);
+    const [filters, setFilters] = useState({ query: '', status: 'all', major: 'all' });
+    const [pendingRegistration, setPendingRegistration] = useState([]);
+    const [notesDraft, setNotesDraft] = useState('');
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const pageSize = 10;
 
+    const clearError = () => setError(null);
+
     // --- INITIAL LOAD ---
     useEffect(() => {
         // Load ALL students initially
         triggerSearch(0, '');
     }, []);
+
+
 
     // --- THE SEARCH FUNCTION ---
     const triggerSearch = async (page, query) => {
@@ -70,13 +89,38 @@ const StudentServices = () => {
         triggerSearch(pageNum, searchQuery);
     };
 
+
+    useEffect(() => {
+        if (students.length === 0) {
+            setSelectedStudent(null);
+        }
+    }, [students]);
+
     return (
         <div className="shell">
-            {/* Header omitted for brevity, keep your existing header */}
             <header className="topbar" role="banner">
                 <div className="topbar-left">
-                    <button className="icon-btn">{Icon.menu16}</button>
-                    <span className="brand-text">Admin</span>
+                    <button className="icon-btn" aria-label="Menu" title="Menu">
+                        {Icon.menu16}
+                    </button>
+                    <div className="brand-mini">
+                        <div className="brand-logo-shell">
+                            <img src={String(umsLogo)} alt="UMS logo" className="mini-logo"/>
+                        </div>
+                        <span className="brand-text brand-title">
+                            University Management - Admin
+                        </span>
+                    </div>
+                </div>
+                <div className="topbar-right">
+                    <div className="sidebar-user">
+                        <div className="avatar" aria-hidden="true">
+                            <span className="avatar-ico">{Icon.user16}</span>
+                        </div>
+                        <div className="user-meta">
+                            <div className="user-name">Admin User</div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -117,7 +161,7 @@ const StudentServices = () => {
                         {/* LIST */}
                         <div className="student-list">
                             {loading ? (
-                                <div style={{padding:'20px'}}>Loading...</div>
+                                <div style={{padding: '20px'}}>Loading...</div>
                             ) : students.length > 0 ? (
                                 students.map(student => (
                                     <button
@@ -135,6 +179,7 @@ const StudentServices = () => {
                                 <div style={{padding: '1rem', color: '#666'}}>
                                     No students start with "{searchQuery}"
                                 </div>
+
                             )}
                         </div>
 
@@ -147,7 +192,7 @@ const StudentServices = () => {
                             >
                                 &lt;
                             </button>
-                            <span style={{fontSize:'0.8rem'}}>
+                            <span style={{fontSize: '0.8rem'}}>
                                 {currentPage + 1} / {totalPages || 1}
                             </span>
                             <button
@@ -162,7 +207,7 @@ const StudentServices = () => {
 
                     <section className="detail-panel">
                         {selectedStudent ? (
-                            <StudentRecord student={selectedStudent} />
+                            <StudentRecord student={selectedStudent}/>
                         ) : (
                             <div className="empty-state large">Select a student</div>
                         )}

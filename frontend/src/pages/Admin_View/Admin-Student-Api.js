@@ -1,5 +1,4 @@
 // API Configuration
-import {curriculumData} from "../../data/curriculumData";
 
 const API_BASE_URL = 'http://localhost:8081/api/admin';
 
@@ -7,68 +6,13 @@ const API_BASE_URL = 'http://localhost:8081/api/admin';
 const getAuthToken = () => {
     return localStorage.getItem('token');
 };
-
-
-// Transform frontend student data to backend format
-const toBackendFormat = (student) => {
-    return {
-        studentId: student.code,
-        name: student.name,
-        email: student.email,
-        phone: student.phone,
-        militaryStatus: student.militaryStatus,
-        address: student.address,
-        majorId: student.majorId,
-        majorName: student.majorName,
-        nationalId: student.nationalId,
-        birthdate: student.birthdate,
-        gradYear: student.gradYear,
-        completedHours: student.completedHours,
-        fees: student.fees,
-        status: student.status,
-        gpa: student.cgpa,
-        completedCourses: student.academicHistory || [],
-        currentRegistrations: student.currentRegistrations || []
-    };
-};
-
-// Transform backend student data to frontend format
-const toFrontendFormat = (backendStudent) => {
-    return {
-        code: backendStudent.studentId || backendStudent.code || '', // Fallback for ID
-        name: backendStudent.name || 'Unknown',
-        email: backendStudent.email || '',
-        phone: backendStudent.phone || '',
-        militaryStatus: backendStudent.militaryStatus || 'Not Specified',
-        address: backendStudent.address || '',
-
-        // Handle nested major object if your backend sends it as an object
-        majorId: backendStudent.major?.majorId || '',
-        majorName: backendStudent.major?.majorName || backendStudent.majorName || '',
-
-        nationalId: backendStudent.nationalId || '',
-        birthdate: backendStudent.birthdate || '',
-        gradYear: backendStudent.gradYear || '',
-        completedHours: backendStudent.completedHours || 0,
-        fees: backendStudent.fees || 0,
-
-        // CRITICAL FIX: Default status to 'Active' if missing to prevent .toLowerCase() crash
-        status: backendStudent.status || 'Active',
-
-        cgpa: backendStudent.gpa || 0,
-        academicHistory: backendStudent.completedCourses || [],
-        currentRegistrations: backendStudent.currentRegistrations || [],
-        notes: backendStudent.notes || '',
-        holds: backendStudent.holds || []
-    };
-};
-
-
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// API-FUNCTIONS-FOR-ADMIN-STUDENT-RELATED-SERVICES //////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Create a new student record
 export async function createStudent(studentData) {
     const token = getAuthToken();
-    const backendData = toBackendFormat(studentData);
+    // const backendData = toBackendFormat(studentData);
 
     const response = await fetch(`${API_BASE_URL}/students`, {
         method: 'POST',
@@ -76,7 +20,7 @@ export async function createStudent(studentData) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(backendData)
+        body: JSON.stringify(studentData)
     });
 
     if (!response.ok) {
@@ -84,8 +28,7 @@ export async function createStudent(studentData) {
         throw new Error(errorMessage || `Failed to create student: ${response.status}`);
     }
 
-    const successMessage = await response.text();
-    return successMessage;
+    return await response.text();
 }
 
 // Get a specific student by studentId
@@ -160,8 +103,7 @@ export async function deleteStudent(studentId) {
         throw new Error(errorMessage || `Failed to delete student: ${response.status}`);
     }
 
-    const successMessage = await response.text();
-    return successMessage;
+    return await response.text();
 }
 
 // Get student transcript
@@ -184,28 +126,16 @@ export async function getTranscript(studentId) {
         throw new Error(errorMessage || `Failed to retrieve transcript: ${response.status}`);
     }
 
-    const transcriptText = await response.text();
-    return transcriptText;
+    return await response.text();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// API-FUNCTIONS-FOR-ADMIN-STUDENT-RELATED-SERVICES //////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-export const courseCatalog = curriculumData.courses ?? [];
+//-----------------------------------------------------------------------------------------------//
 
-export const gradePoints = {
-    'A+': 4.0,
-    A: 4.0,
-    'A-': 3.7,
-    'B+': 3.3,
-    B: 3.0,
-    'B-': 2.7,
-    'C+': 2.3,
-    C: 2.0,
-    'C-': 1.7,
-    D: 1.0,
-    F: 0,
-    IP: 0
-};
-
+/////////////////////// EMPTY-STUDENT-DATA-MODEL //////////////////////////
 export const emptyStudent = {
     code: '',
     name: '',
@@ -227,6 +157,7 @@ export const emptyStudent = {
     notes: '',
     holds: []
 };
+/////////////////////// EMPTY-STUDENT-DATA-MODEL //////////////////////////
 
 export const downloadBlob = (content, filename, mime) => {
     const blob = new Blob([content], { type: mime });
@@ -240,55 +171,6 @@ export const downloadBlob = (content, filename, mime) => {
 
 export const sumCredits = (records) =>
     records.reduce((total, record) => total + (record.credits ?? 3), 0);
-
-export const computeGPA = (records) => {
-    const { points, credits } = records.reduce(
-        (acc, record) => {
-            const creditHours = record.credits ?? 3;
-            const gradePoint = gradePoints[record.grade] ?? 0;
-            acc.points += creditHours * gradePoint;
-            acc.credits += creditHours;
-            return acc;
-        },
-        { points: 0, credits: 0 }
-    );
-
-    if (!credits) {
-        return null;
-    }
-
-    return Number((points / credits).toFixed(2));
-};
-
-export const formatCurrency = (value) =>
-    new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EGP',
-        minimumFractionDigits: 0
-    }).format(value ?? 0);
-
-export const getStandingLabel = (completedHours) => {
-    if (completedHours >= 130) return 'Senior';
-    if (completedHours >= 95) return 'Junior';
-    if (completedHours >= 60) return 'Sophomore';
-    return 'Freshman';
-};
-
-export const isPrerequisiteSatisfied = (prerequisite, completedCodes, completedHours) => {
-    if (!prerequisite) return true;
-    const normalized = prerequisite.trim().toLowerCase();
-
-    if (normalized === 'varies') {
-        return true;
-    }
-// hamada by7eb 8ada
-    if (normalized.startsWith('standing>=')) {
-        const value = parseInt(normalized.replace('standing>=', ''), 10);
-        return Number.isFinite(value) ? completedHours >= value : true;
-    }
-
-    return completedCodes.has(prerequisite);
-};
 
 // Updated to read BACKEND keys (studentId, gpa, completedCourses)
 export const buildStudentSnapshot = (student) => {
@@ -399,5 +281,38 @@ export const Icon = {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spinner">
             <path d="M21 12a9 9 0 1 1-6.219-8.56" />
         </svg>
-    )
+    ),
+    search16: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="16.65" y1="16.65" x2="21" y2="21" />
+        </svg>
+    ),
+
 };
+
+export const LoadingSpinner = ({ size = 'medium', message = 'Loading...' }) => (
+    <div className={`loading-spinner ${size}`}>
+        {Icon.spinner}
+        {message && <span>{message}</span>}
+    </div>
+);
+
+export const ErrorMessage = ({ error, onDismiss }) => {
+    if (!error) return null;
+
+    return (
+        <div className="error-message" role="alert">
+            <div className="error-content">
+                <strong>Error:</strong> {error}
+            </div>
+            {onDismiss && (
+                <button type="button" className="ghost-btn" onClick={onDismiss} aria-label="Dismiss error">
+                    {Icon.close16}
+                </button>
+            )}
+        </div>
+    );
+};
+
