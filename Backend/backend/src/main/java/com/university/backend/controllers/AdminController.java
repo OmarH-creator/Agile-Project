@@ -238,6 +238,30 @@ public class AdminController {
         return ResponseEntity.ok("Professor created successfully.");
     }
 
+    // GET ALL PROFESSORS (With Pagination and Search)
+    // Usage: GET /api/admin/professors?page=0&size=10&search=P-1
+    @GetMapping("/professors")
+    public ResponseEntity<Page<Professor>> getAllProfessors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "professorId") String sortBy,
+            @RequestParam(required = false) String search) {
+
+        // 1. Create Pageable object
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+
+        // 2. Filter or Return All
+        if (search != null && !search.trim().isEmpty()) {
+            // Searches for professors whose ID starts with the search string
+            return ResponseEntity.ok(professorRepository.findByProfessorIdStartingWith(search, pageable));
+
+            // Note: If you decided to search by Name instead (in Step 1), use this line:
+            // return ResponseEntity.ok(professorRepository.findByProfessorNameContainingIgnoreCase(search, pageable));
+        } else {
+            return ResponseEntity.ok(professorRepository.findAll(pageable));
+        }
+    }
+
     @GetMapping("/professors/{professorId}")
     public ResponseEntity<?> getProfessor(@PathVariable String professorId) {
         Optional<Professor> prof = professorRepository.findByProfessorId(professorId);
