@@ -9,6 +9,22 @@ const getAuthToken = () => {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// API-FUNCTIONS-FOR-ADMIN-STUDENT-RELATED-SERVICES //////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// fetch admin name
+export async function getAdmin(email) {
+    const token = await getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/${email}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`,
+        }
+    });
+    if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || `Failed to create student: ${response.status}`);
+    }
+    return await response.text();
+}
 // Create a new student record
 export async function createStudent(studentData) {
     const token = getAuthToken();

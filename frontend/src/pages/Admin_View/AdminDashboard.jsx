@@ -1,11 +1,25 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import { Link } from 'react-router-dom';
 import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
-import {Icon} from './Admin-Student-Api'
+import {getAdmin, Icon} from './Admin-Student-Api'
+import  {jwtDecode} from "jwt-decode";
 
 const AdminDashboard = () => {
-    // Initialize with empty array - students will be loaded from backend
+    const [admin, setAdmin] = useState("");
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const decoded = jwtDecode(token);
+        const email = decoded.sub;
+        console.log("Admin data from token decoded:", decoded);
+
+        async function fetchName() {
+            const response = await getAdmin(email);
+            setAdmin(response);
+        }
+        fetchName();
+    }, []);
 
     const tiles = [
         {
@@ -47,20 +61,21 @@ const AdminDashboard = () => {
                     </button>
                     <div className="brand-mini">
                         <div className="brand-logo-shell">
-                            <img src={String(umsLogo)} alt="UMS logo" className="mini-logo" />
+                            <img src={String(umsLogo)} alt="UMS logo" className="mini-logo"/>
                         </div>
                         <span className="brand-text brand-title">
                             University Management - Admin
                         </span>
+
                     </div>
                 </div>
                 <div className="topbar-right">
                     <div className="sidebar-user">
-                        <div className="avatar" aria-hidden="true">
+                    <div className="avatar" aria-hidden="true">
                             <span className="avatar-ico">{Icon.user16}</span>
                         </div>
                         <div className="user-meta">
-                            <div className="user-name">Admin User</div>
+                            <div className="user-name"> {admin ? `Welcome, ${admin}` : "Welcome"}</div>
                         </div>
                     </div>
                 </div>

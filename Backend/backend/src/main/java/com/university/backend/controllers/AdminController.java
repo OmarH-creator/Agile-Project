@@ -3,6 +3,7 @@ package com.university.backend.controllers;
 import com.university.backend.entity.*;
 import com.university.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,9 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
+
+    @Autowired
+    private AdminRepository adminRepository;
 
     @Autowired
     private StudentRepository studentRepository;
@@ -39,6 +43,16 @@ public class AdminController {
     @Autowired
     private BookingRepository bookingRepository; // ADDED
 
+    @GetMapping("/{email}")
+    public ResponseEntity<String> fetchAdminByEmail(@PathVariable String email) {
+        Optional<Admin> admin = adminRepository.findByEmail(email);
+
+        if (admin.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
+        }
+        return ResponseEntity.ok(admin.get().getName());
+
+    }
     // --- Student Management ---
 
     // CREATE STUDENT
