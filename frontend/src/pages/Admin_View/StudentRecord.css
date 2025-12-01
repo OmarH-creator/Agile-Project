@@ -77,36 +77,99 @@
     display: flex;
     gap: 10px;
 }
+/* --- BUTTONS: Glass & Neomorphic Style --- */
 
-.ghost-btn {
+/* 1. Shared Base Styles (Shape & Animation) */
+.primary-btn, .secondary-btn, .danger-btn, .ghost-btn {
     display: inline-flex;
-    align-items: center;
     gap: 8px;
-    padding: 8px 16px;
-    border-radius: 12px;
+    align-items: center;
+    justify-content: center;
+
+    /* Your requested shape */
+    border-radius: 18px;
+    padding: 10px 20px;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
-    border: 1px solid #e2e8f0;
-    background: white;
-    color: var(--neo-accent-strong);
-    transition: all 0.2s ease;
+    border: none;
+
+    /* Smooth hover lift */
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 2. PRIMARY (Add, Save) - Your provided style */
+.primary-btn {
+    background: linear-gradient(145deg, rgba(106, 125, 255, 0.92), rgba(94, 110, 255, 0.75));
+    color: #fff;
+    box-shadow: 6px 6px 16px rgba(106, 125, 255, 0.35);
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 8px 8px 20px rgba(106, 125, 255, 0.45);
+}
+
+.primary-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 3. SECONDARY (Edit, Transcript) - Glassy White */
+.secondary-btn {
+    /* Glassy look to match your theme */
+    background: linear-gradient(145deg, rgba(106, 125, 255, 0.92), rgba(94, 110, 255, 0.75));
+    backdrop-filter: blur(4px);
+
+    color: #FFFFFF; /* Muted Slate Blue */
+    border: 1px solid rgba(255, 255, 255, 0.6);
+
+    /* Soft shadow for depth */
+    box-shadow: 4px 4px 10px rgba(183, 190, 208, 0.15);
+}
+
+.secondary-btn:hover {
+    background: #ffffff;
+    color: #334155;
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 14px rgba(183, 190, 208, 0.25);
+}
+
+/* 4. DANGER (Delete) - Glassy Red */
+.danger-btn {
+    background: rgba(255, 241, 242, 0.7); /* Very pale red glass */
+    color: #e11d48; /* Rose Red */
+    border: 1px solid rgba(254, 205, 211, 0.6);
+    box-shadow: 4px 4px 10px rgba(225, 29, 72, 0.1);
+}
+
+.danger-btn:hover {
+    background: #fff;
+    color: #be123c;
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 14px rgba(225, 29, 72, 0.2);
+}
+
+/* 5. GHOST (Cancel) - Your provided style */
+.ghost-btn {
+    background: rgba(255, 255, 255, 0.6);
+    color: #64748b; /* Fallback if var(--neo-accent-strong) is undefined */
+    border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .ghost-btn:hover {
-    background: #f1f5f9;
-    transform: translateY(-2px);
+    background: #fff;
+    color: #334155;
 }
 
-.ghost-btn.danger {
-    color: var(--danger);
-    border-color: rgba(210, 76, 95, 0.2);
+/* Toolbar Alignment update */
+.action-toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    justify-content: flex-end;
 }
-
-.ghost-btn.danger:hover {
-    background: rgba(210, 76, 95, 0.05);
-}
-
 /* --- KPI Grid (Stats) --- */
 .kpi-grid {
     display: grid;

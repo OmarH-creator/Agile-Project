@@ -1,18 +1,14 @@
-import React, { useState, useEffect } from 'react'; // Added useEffect
-import { Link } from 'react-router-dom';
-import StudentRecord from './StudentRecord'; // Importing the child component
+import React, { useState, useEffect } from 'react';
+import StudentRecord from './StudentRecord'; // Visualization Component
 import {
-    getStudent,
     getAllStudents,
+    createStudent, // IMPORTED
     updateStudent, // IMPORTED
     deleteStudent, // IMPORTED
-    getTranscript,
-    downloadBlob,
     emptyStudent,
-    sumCredits, createStudent, buildStudentSnapshot
-} from './Admin-Student-Api'; // Importing functions from the Admin-Student-Api file
-import { Icon } from './Admin-Student-Api'; // Assuming you have an Icons file
-import './StudentServices.css';
+} from './Admin-Student-Api';
+import { Icon } from './Admin-Student-Api';
+import './StudentServices.css'; // Ensure you have the CSS from previous steps
 import umsLogo from "../../assets/UMS Logo.png";
 
 const StudentServices = () => {
@@ -22,14 +18,9 @@ const StudentServices = () => {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [validationError, setValidationError] = useState('');
-    const [selectedCode, setSelectedCode] = useState(null);
-    const [filters, setFilters] = useState({ query: '', status: 'all', major: 'all' });
-    const [pendingRegistration, setPendingRegistration] = useState([]);
-    const [notesDraft, setNotesDraft] = useState('');
 
-    // Edit/Form State
-    const [formMode, setFormMode] = useState('view'); // 'view', 'edit'
+    // Form State (View | Edit | Add)
+    const [formMode, setFormMode] = useState('view');
     const [formData, setFormData] = useState(emptyStudent);
 
     // Pagination
@@ -37,148 +28,187 @@ const StudentServices = () => {
     const [totalPages, setTotalPages] = useState(0);
     const pageSize = 10;
 
-    const clearError = () => setError(null);
-
     // --- INITIAL LOAD ---
     useEffect(() => {
-        // Load ALL students initially
         triggerSearch(0, '');
     }, []);
 
-
-
-    // --- THE SEARCH FUNCTION ---
+    // --- API & LIST HANDLING ---
     const triggerSearch = async (page, query) => {
         setLoading(true);
         try {
-            // The API returns ONLY matches if 'query' is not empty
             const data = await getAllStudents(page, pageSize, query);
-
-            // This REPLACES the entire list.
-            // Non-matching students effectively "disappear" from the UI.
             setStudents(data.content);
             setTotalPages(data.totalPages);
-
         } catch (err) {
             console.error(err);
+            setError("Failed to load students.");
         } finally {
             setLoading(false);
         }
     };
 
-    // --- HANDLERS ---
+    // --- VIEW HANDLERS ---
+    const handleInputChange = (e) => setSearchQuery(e.target.value);
 
-    // 1. Typing just updates the text box state
-    const handleInputChange = (e) => {
-        setSearchQuery(e.target.value);
-    };
-
-    // 2. Pressing Enter triggers the filtering
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
-            setCurrentPage(0); // Always reset to page 1 for new search
+            setCurrentPage(0);
             triggerSearch(0, searchQuery);
         }
     };
 
-    // 3. Clicking Search Icon triggers the filtering
     const handleSearchClick = () => {
         setCurrentPage(0);
         triggerSearch(0, searchQuery);
     };
 
-    // 4. Pagination (Keeps the current search active)
     const handlePageChange = (pageNum) => {
         setCurrentPage(pageNum);
         triggerSearch(pageNum, searchQuery);
     };
 
-    // --- EDIT & UPDATE HANDLERS (NEW) ---
-
     const handleSelectStudent = (student) => {
+        if (formMode !== 'view' && !window.confirm("Unsaved changes will be lost. Continue?")) return;
         setSelectedStudent(student);
-        setFormMode('view'); // Always reset to view when clicking a new student
-        setError(null);
-    };
-
-    const handleEditClick = () => {
-        // Prepare data for the form
-        // Backend expects 'majorId', but raw student data might have a nested major object
-        const preparedData = {
-            ...selectedStudent,
-            // Safety check: if major is an object, get id, else assume it's missing
-            majorId: selectedStudent.major?.majorId || '',
-            majorName: selectedStudent.major?.majorName || ''
-        };
-        setFormData(preparedData);
-        setFormMode('edit');
-    };
-
-    const handleFormChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleCancelEdit = () => {
         setFormMode('view');
         setError(null);
     };
 
-    const handleSaveUpdate = async (e) => {
+    // --- ADD / EDIT / DELETE ACTIONS ---
+
+    // 1. OPEN ADD FORM
+    const handleAddClick = () => {
+        setSelectedStudent(null); // Deselect current
+        setFormData(emptyStudent); // Clear form
+        setFormMode('add');
+        setError(null);
+    };
+
+    // 2. OPEN EDIT FORM
+    const handleEditClick = () => {
+        if (!selectedStudent) return;
+
+        // Prepare data: flatten nested objects if necessary for the form
+        const preparedData = {
+            ...selectedStudent,
+            code: selectedStudent.studentId || selectedStudent.code,
+            majorId: selectedStudent.major?.majorId || selectedStudent.majorId || '',
+            majorName: selectedStudent.major?.majorName || selectedStudent.majorName || '',
+            // Ensure numbers
+            completedHours: selectedStudent.completedHours || 0,
+            cgpa: selectedStudent.gpa || selectedStudent.cgpa || 0,
+            fees: selectedStudent.fees || 0
+        };
+
+        setFormData(preparedData);
+        setFormMode('edit');
+        setError(null);
+    };
+
+    // 3. HANDLE FORM INPUT
+    const handleFormChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: (name === 'code' || name === 'majorId') ? value.toUpperCase() : value
+        }));
+    };
+
+    // 4. SUBMIT (CREATE OR UPDATE)
+    const handleFormSubmit = async (e) => {
         e.preventDefault();
-        //setLoading(true);
-        //setError(null);
+        setLoading(true);
+        setError(null);
+
+        const payload = {
+            ...formData,
+            // VITAL FIX: Send 'studentId' explicitly so Spring Boot maps it to the @Id field
+            studentId: formData.code ? formData.code.trim().toUpperCase() : null,
+
+            // Map other fields
+            name: formData.name.trim(),
+            email: formData.email?.trim(),
+            phone: formData.phone?.trim(),
+            address: formData.address?.trim(),
+            majorId: formData.majorId?.trim(),
+            majorName: formData.majorName?.trim(),
+            militaryStatus: formData.militaryStatus,
+            notes: (formData.notes ?? '').trim(),
+
+            // Ensure numbers are actual numbers
+            completedHours: Number(formData.completedHours) || 0,
+            fees: Number(formData.fees) || 0,
+            cgpa: Number(formData.cgpa) || 0,
+            gradYear: formData.gradYear ? Number(formData.gradYear) : null
+        };
 
         try {
-            // Call API
-            await updateStudent(formData.studentId, formData);
+            if (formMode === 'add') {
+                // ... rest of your add logic
+                await createStudent(payload);
+                alert('Student Created Successfully!');
 
-            // Update local list to reflect changes immediately
-            const updatedStudents = students.map(s =>
-                s.studentId === formData.studentId ? { ...s, ...formData } : s
-            );
-            setStudents(updatedStudents);
+                // Refresh list and select the new student (optional)
+                triggerSearch(0, searchQuery);
+                setFormMode('view');
+                // Ideally, we'd select the new student here if the API returns the full object
+            } else if (formMode === 'edit') {
+                // --- UPDATE ---
+                const id = formData.studentId || formData.code;
+                await updateStudent(id, payload);
 
-            // Update selected view
-            setSelectedStudent({ ...selectedStudent, ...formData });
+                // Optimistically update local list
+                const updatedList = students.map(s =>
+                    (s.studentId === id || s.code === id) ? { ...s, ...payload } : s
+                );
+                setStudents(updatedList);
+                setSelectedStudent({ ...selectedStudent, ...payload });
 
-            setFormMode('view');
-            alert('Student updated successfully!');
+                alert('Student Updated Successfully!');
+                setFormMode('view');
+            }
         } catch (err) {
             console.error(err);
-            setError(err.message);
+            setError(err.message || "Operation failed.");
         } finally {
             setLoading(false);
         }
     };
 
+    // 5. DELETE
     const handleDeleteClick = async () => {
-        if(!window.confirm(`Are you sure you want to delete ${selectedStudent.name}?`)) return;
+        if (!selectedStudent) return;
+        const id = selectedStudent.studentId || selectedStudent.code;
+
+        if (!window.confirm(`Are you sure you want to delete ${selectedStudent.name}?`)) return;
 
         try {
-            await deleteStudent(selectedStudent.studentId);
-            // Remove from list
-            setStudents(prev => prev.filter(s => s.studentId !== selectedStudent.studentId));
+            await deleteStudent(id);
+            // Remove from local list
+            setStudents(prev => prev.filter(s => s.studentId !== id && s.code !== id));
             setSelectedStudent(null);
             setFormMode('view');
+            alert("Student deleted.");
         } catch (err) {
-            alert(err.message);
+            setError(err.message);
         }
     };
 
-    useEffect(() => {
-        if (students.length === 0) {
+    const handleCancelForm = () => {
+        if (selectedStudent) {
+            setFormMode('view');
+        } else {
+            // If we were adding and canceled, just go back to empty view
+            setFormMode('view');
             setSelectedStudent(null);
         }
-    }, [students]);
+        setError(null);
+    };
 
     return (
         <div className="shell">
             <header className="topbar" role="banner">
-                {/* ... Topbar code remains the same ... */}
                 <div className="topbar-left">
                     <button className="icon-btn">{Icon.menu16}</button>
                     <div className="brand-mini">
@@ -194,12 +224,14 @@ const StudentServices = () => {
                 </div>
 
                 <section className="dashboard-content">
-                    {/* LEFT PANEL: LIST */}
+                    {/* --- LEFT PANEL: LIST --- */}
                     <aside className="student-panel">
                         <header className="student-panel-header">
                             <div className="student-panel-top">
                                 <h3>Students</h3>
-                                <button className="primary-btn">{Icon.plus16} Add</button>
+                                <button className="primary-btn" onClick={handleAddClick}>
+                                    {Icon.plus16 || '+'} Add
+                                </button>
                             </div>
                             <div className="student-filters">
                                 <div className="search-group">
@@ -220,26 +252,25 @@ const StudentServices = () => {
 
                         <div className="student-list">
                             {loading && students.length === 0 ? (
-                                <div style={{padding: '20px'}}>Loading...</div>
+                                <div style={{padding: '20px', textAlign:'center'}}>Loading...</div>
                             ) : students.length > 0 ? (
                                 students.map(student => (
                                     <button
-                                        key={student.studentId}
+                                        key={student.studentId || student.code}
                                         className={`student-card ${selectedStudent?.studentId === student.studentId ? 'active' : ''}`}
                                         onClick={() => handleSelectStudent(student)}
                                     >
                                         <div className="student-card-main">
                                             <h4>{student.name}</h4>
-                                            <span className="student-code">{student.studentId}</span>
+                                            <span className="student-code">{student.studentId || student.code}</span>
                                         </div>
                                     </button>
                                 ))
                             ) : (
-                                <div style={{padding: '1rem', color: '#666'}}>No students found</div>
+                                <div style={{padding: '1rem', color: '#666', textAlign:'center'}}>No students found</div>
                             )}
                         </div>
 
-                        {/* Pagination Footer remains the same */}
                         <div className="pagination-footer">
                             <button disabled={currentPage === 0} onClick={() => handlePageChange(currentPage - 1)} className="page-btn">&lt;</button>
                             <span>{currentPage + 1} / {totalPages || 1}</span>
@@ -247,83 +278,142 @@ const StudentServices = () => {
                         </div>
                     </aside>
 
-                    {/* RIGHT PANEL: DETAIL OR EDIT FORM */}
+                    {/* --- RIGHT PANEL: DETAILS OR FORM --- */}
                     <section className="detail-panel">
                         {error && <div className="error-banner" style={{background: '#ffebee', color: '#c62828', padding: '10px', marginBottom: '10px', borderRadius: '4px'}}>{error}</div>}
 
-                        {!selectedStudent ? (
-                            <div className="empty-state large">Select a student</div>
+                        {/* CASE 1: NO SELECTION & NOT ADDING */}
+                        {!selectedStudent && formMode === 'view' ? (
+                            <div className="empty-state large">
+                                <div style={{marginBottom:'10px', fontSize:'2rem', color:'#ccc'}}>{Icon.user || '👤'}</div>
+                                Select a student to view details or click "Add" to create a new one.
+                            </div>
                         ) : formMode === 'view' ? (
-                            // --- VIEW MODE ---
+
+                            // --- CASE 2: VIEW MODE (Uses StudentRecord Component) ---
                             <div className="view-container">
-                                {/* Toolbar for View Mode */}
                                 <div className="action-toolbar" style={{display: 'flex', gap: '10px', marginBottom: '20px', justifyContent: 'flex-end'}}>
                                     <button className="secondary-btn" onClick={handleEditClick}>
-                                        {Icon.edit16} Edit
+                                        {Icon.edit16} Edit Record
                                     </button>
-                                    <button className="danger-btn" style={{background: '#fee', color: 'red', border: 'none', padding: '8px 12px', borderRadius:'4px', cursor: 'pointer'}} onClick={handleDeleteClick}>
+                                    <button className="danger-btn" style={{background: '#fee', color: 'red', border: '1px solid #fdd', padding: '8px 12px', borderRadius:'4px', cursor: 'pointer'}} onClick={handleDeleteClick}>
                                         {Icon.trash16} Delete
                                     </button>
                                 </div>
-                                {/* Use the existing component */}
                                 <StudentRecord student={selectedStudent}/>
                             </div>
+
                         ) : (
-                            // --- EDIT MODE ---
-                            <div className="edit-form-container" style={{padding: '20px', background: 'white', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)'}}>
-                                <h3>Edit Student: {formData.studentId}</h3>
-                                <form onSubmit={handleSaveUpdate} className="student-form">
 
-                                    <div className="form-group">
-                                        <label>Full Name</label>
-                                        <input type="text" name="name" value={formData.name || ''} onChange={handleFormChange} required />
+                            // --- CASE 3: ADD / EDIT FORM MODE ---
+                            <div className="edit-form-container" style={{padding: '30px', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)'}}>
+                                <h3 style={{borderBottom:'1px solid #eee', paddingBottom:'15px', marginBottom:'20px'}}>
+                                    {formMode === 'add' ? 'Add New Student' : `Edit Student: ${formData.studentId || formData.code}`}
+                                </h3>
+
+                                <form onSubmit={handleFormSubmit} className="student-form">
+                                    <div className="form-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
+
+                                        {/* Row 1 */}
+                                        <div className="form-group">
+                                            <label>Student ID / Code</label>
+                                            <input
+                                                type="text"
+                                                name="code"
+                                                value={formData.code || ''}
+                                                onChange={handleFormChange}
+                                                required
+                                                disabled={formMode === 'edit'} // ID usually immutable on edit
+                                                placeholder="e.g. 2023001"
+                                            />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Full Name</label>
+                                            <input type="text" name="name" value={formData.name || ''} onChange={handleFormChange} required />
+                                        </div>
+
+                                        {/* Row 2 */}
+                                        <div className="form-group">
+                                            <label>Email</label>
+                                            <input type="email" name="email" value={formData.email || ''} onChange={handleFormChange} required />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Phone</label>
+                                            <input type="text" name="phone" value={formData.phone || ''} onChange={handleFormChange} />
+                                        </div>
+
+                                        {/* Row 3 - Academic */}
+                                        <div className="form-group">
+                                            <label>Major ID</label>
+                                            <input
+                                                type="text"
+                                                name="majorId"
+                                                value={formData.majorId || ''}
+                                                onChange={handleFormChange}
+                                                placeholder="e.g. CS-001"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Major Name</label>
+                                            <input name="majorName" value={formData.majorName || ''} onChange={handleFormChange} />
+                                        </div>
+
+                                        {/* Row 4 - Status */}
+                                        <div className="form-group">
+                                            <label>Status</label>
+                                            <select name="status" value={formData.status || 'Active'} onChange={handleFormChange}>
+                                                <option value="Active">Active</option>
+                                                <option value="Probation">Probation</option>
+                                                <option value="Suspended">Suspended</option>
+                                                <option value="Graduated">Graduated</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Military Status</label>
+                                            <select name="militaryStatus" value={formData.militaryStatus || ''} onChange={handleFormChange}>
+                                                <option value="">Select...</option>
+                                                <option value="Exempted">Exempted</option>
+                                                <option value="Completed">Completed</option>
+                                                <option value="Postponed">Postponed</option>
+                                                <option value="Not Applicable">Not Applicable</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Row 5 - Numeric */}
+                                        <div className="form-group">
+                                            <label>CGPA</label>
+                                            <input name="cgpa" type="number" step="0.01" value={formData.cgpa || 0} onChange={handleFormChange} />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Completed Hours</label>
+                                            <input name="completedHours" type="number" value={formData.completedHours || 0} onChange={handleFormChange} />
+                                        </div>
+
+                                        <div className="form-group full-width" style={{gridColumn:'1 / -1'}}>
+                                            <label>Address</label>
+                                            <input type="text" name="address" value={formData.address || ''} onChange={handleFormChange} />
+                                        </div>
+
+                                        <div className="form-group full-width" style={{gridColumn:'1 / -1'}}>
+                                            <label>Notes</label>
+                                            <textarea name="notes" value={formData.notes || ''} onChange={handleFormChange} rows="3" />
+                                        </div>
+
                                     </div>
 
-                                    <div className="form-group">
-                                        <label>Email</label>
-                                        <input type="email" name="email" value={formData.email || ''} onChange={handleFormChange} required />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label>Phone</label>
-                                        <input type="text" name="phone" value={formData.phone || ''} onChange={handleFormChange} />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label>Address</label>
-                                        <input type="text" name="address" value={formData.address || ''} onChange={handleFormChange} />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label>Military Status</label>
-                                        <select name="militaryStatus" value={formData.militaryStatus || ''} onChange={handleFormChange}>
-                                            <option value="">Select...</option>
-                                            <option value="Exempted">Exempted</option>
-                                            <option value="Completed">Completed</option>
-                                            <option value="Postponed">Postponed</option>
-                                            <option value="Not Applicable">Not Applicable</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label>Major ID (Required)</label>
-                                        <input
-                                            type="text"
-                                            name="majorId"
-                                            value={formData.majorId || ''}
-                                            onChange={handleFormChange}
-                                            placeholder="e.g. CS-001"
-                                            required
-                                        />
-                                        <small style={{color: '#666'}}>Must match an existing Major ID in the database.</small>
-                                    </div>
-
-                                    <div className="form-actions" style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
-                                        <button type="submit" className="primary-btn" disabled={loading}>
-                                            {loading ? 'Saving...' : 'Save Changes'}
-                                        </button>
-                                        <button type="button" className="ghost-btn" onClick={handleCancelEdit}>
+                                    <div className="form-actions" style={{marginTop: '30px', display: 'flex', gap: '15px', justifyContent:'flex-end', borderTop:'1px solid #eee', paddingTop:'20px'}}>
+                                        <button type="button" className="ghost-btn" onClick={handleCancelForm} disabled={loading}>
                                             Cancel
+                                        </button>
+                                        <button type="submit" className="primary-btn" disabled={loading}>
+                                            {loading ? (Icon.spinner || '...') : (Icon.check16 || 'Save')}
+                                            <span>{loading ? ' Saving...' : ' Save Record'}</span>
                                         </button>
                                     </div>
                                 </form>
