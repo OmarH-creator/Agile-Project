@@ -189,9 +189,9 @@ const bookingAPI = {
 
 const hallTypes = ['Lecture Hall', 'Classroom', 'Auditorium', 'Grand Auditorium', 'Lab'];
 const hallStatuses = ['Available', 'Reserved', 'Under Maintenance'];
-const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+const daysOfWeek = ['Sat','Mon', 'Tue', 'Wed', 'Thu'];
 const SCHEDULE_START = '08:00';
-const SCHEDULE_END = '18:00';
+const SCHEDULE_END = '19:00';
 const SCHEDULE_STEP = 30;
 const MIN_EVENT_DISPLAY_MINUTES = 30;
 const SLOT_PIXEL_HEIGHT = 64;
@@ -339,6 +339,14 @@ const Facilities = () => {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const scheduleRef = useRef(null);
+
+    const to12Hour = (time24) => {
+        if (!time24) return "";
+        let [hour, minute] = time24.split(":").map(Number);
+        const ampm = hour >= 12 ? "PM" : "AM";
+        hour = hour % 12 || 12;
+        return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
+    };
 
     const exportScheduleAsPDF = async () => {
         if (!scheduleRef.current) return;
@@ -1032,11 +1040,11 @@ const Facilities = () => {
                         <div className="time-column" aria-hidden="true">
                             {timelineSlots.slice(0, -1).map((slot) => (
                                 <div className="time-slot" key={slot.time} style={{height: `${SLOT_PIXEL_HEIGHT}px`}}>
-                                    {slot.label ? <span>{slot.label}</span> : <span className="time-tick"/>}
+                                    {slot.label ? <span>{to12Hour(slot.label)}</span> : <span className="time-tick"/>}
                                 </div>
                             ))}
                             <div className="time-slot time-slot-end">
-                                <span>{timelineSlots[timelineSlots.length - 1]?.time}</span>
+                                <span>{to12Hour(timelineSlots[timelineSlots.length - 1]?.time)}</span>
                             </div>
                         </div>
 
@@ -1285,7 +1293,7 @@ const Facilities = () => {
                                 <button type="button" className="danger" onClick={deleteBooking} disabled={loading}>Remove</button>
                             )}
                             <button type="button" className="ghost" onClick={() => setBookingModal({ open: false, editing: null, form: defaultBooking })} disabled={loading}>Cancel</button>
-                            <button type="submit" disabled={loading} onClick={submitBooking}>
+                            <button type="submit" disabled={loading}>
                                 {loading ? 'Saving...' : 'Save Booking'}
                             </button>
                         </div>
