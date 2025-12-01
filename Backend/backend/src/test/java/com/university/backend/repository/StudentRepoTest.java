@@ -10,10 +10,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.Rollback;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,68 +25,123 @@ public class StudentRepoTest {
     @Autowired
     private MajorRepository majorRepository;
 
+    private final Random random = new Random();
+
+    // --- DATA POOLS FOR GENERATION ---
+    private final String[] FIRST_NAMES = {
+            "James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda",
+            "David", "Elizabeth", "William", "Barbara", "Richard", "Susan", "Joseph", "Jessica",
+            "Thomas", "Sarah", "Charles", "Karen", "Christopher", "Nancy", "Daniel", "Lisa",
+            "Matthew", "Betty", "Anthony", "Margaret", "Mark", "Sandra"
+    };
+
+    private final String[] LAST_NAMES = {
+            "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+            "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson",
+            "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson",
+            "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson"
+    };
+
+    private final String[] STREETS = {
+            "Maple Ave", "Oak St", "Washington Blvd", "Lakeview Dr", "Cedar Ln", "Park Place",
+            "Sunset Blvd", "Broadway", "Main St", "Highland Ave"
+    };
+
+    // Realistic Course Catalog with Codes
+    private final String[][] COURSE_CATALOG = {
+            {"CS101", "Intro to Computer Science"}, {"CS102", "Data Structures"}, {"CS201", "Algorithms"},
+            {"CS305", "Database Systems"}, {"CS310", "Operating Systems"}, {"CS400", "AI Fundamentals"},
+            {"MATH101", "Calculus I"}, {"MATH102", "Calculus II"}, {"MATH201", "Linear Algebra"},
+            {"MATH300", "Discrete Math"}, {"PHY101", "General Physics I"}, {"PHY102", "General Physics II"},
+            {"ENG101", "Academic Writing"}, {"HIST100", "World History"}, {"PSY101", "Intro to Psychology"},
+            {"ECO101", "Microeconomics"}, {"ECO102", "Macroeconomics"}, {"ART100", "Art Appreciation"},
+            {"CHEM101", "General Chemistry"}, {"BIO101", "Intro to Biology"}, {"STAT200", "Statistics"},
+            {"PHIL101", "Intro to Philosophy"}, {"SOC101", "Intro to Sociology"}, {"MGT101", "Business Mgmt"}
+    };
+
+    private final String[] SEMESTERS = {"Fall 2021", "Spring 2022", "Fall 2022", "Spring 2023", "Fall 2023", "Spring 2024"};
+    private final double[] GRADES = {4.0, 3.7, 3.3, 3.0, 2.7, 2.3, 2.0, 1.7}; // A to C-
+    private final String[] MILITARY_STATUS = {"Exempt", "Completed", "Postponed", "Not Applicable"};
+
     @Test
-    void populateRichStudentData() {
-        // --- 1. Setup Majors ---
-        // We need majors first because of the Foreign Key constraint
-        Major cs = new Major("CS", "Computer Science");
-        Major ee = new Major("EE", "Electrical Engineering");
-        Major ba = new Major("BA", "Business Administration");
-        Major arch = new Major("ARCH", "Architecture");
+    void populateMassiveStudentData() {
+        System.out.println("--- STARTING DATA POPULATION ---");
 
-        majorRepository.saveAll(Arrays.asList(cs, ee, ba, arch));
+        // 1. Create Majors
+        List<Major> majors = new ArrayList<>();
+        majors.add(new Major("CS", "Computer Science"));
+        majors.add(new Major("ENG", "Engineering"));
+        majors.add(new Major("BUS", "Business Admin"));
+        majors.add(new Major("ART", "Fine Arts"));
+        majors.add(new Major("SCI", "Data Science"));
 
-        // --- 2. Create Multiple Students ---
+        majorRepository.saveAll(majors);
+        System.out.println("--> Saved 5 Majors");
 
-        // Student 1: CS Student, Senior, High GPA
-        Student s1 = new Student(
-                "S-101", "Alice Smith", "alice@uni.edu", cs,
-                "555-0001", "123 Tech Ave", new Date(), "Exempt"
-        );
-        s1.addCompletedCourse("CS101", 4.0, 3,"Fall 2024");
-        s1.addCompletedCourse("MATH201", 3.8, 3,"Fall 2025");
-        s1.enrollCourse("CS300 - Algorithms");
+        List<Student> studentsToSave = new ArrayList<>();
 
-        // Student 2: EE Student, Freshman
-        Student s2 = new Student(
-                "S-102", "Bob Jones", "bob@uni.edu", ee,
-                "555-0002", "456 Circuit Rd", new Date(), "Completed"
-        );
-        s2.addCompletedCourse("PHY101", 3.5, 4,"Fall 2024");
-        s2.enrollCourse("EE110 - Intro to Circuits");
+        // 2. Generate 25 Students
+        for (int i = 1; i <= 25; i++) {
+            // Pick Random Major
+            Major randomMajor = majors.get(random.nextInt(majors.size()));
 
-        // Student 3: Business Student, Probation
-        Student s3 = new Student(
-                "S-103", "Charlie Brown", "charlie@uni.edu", ba,
-                "555-0003", "789 Market St", new Date(), "Postponed"
-        );
-        s3.addCompletedCourse("MGT101", 2.0, 3,"Spring 2024"); // Low grade
-        s3.enrollCourse("ACC200 - Accounting");
+            // Generate Name
+            String fName = FIRST_NAMES[random.nextInt(FIRST_NAMES.length)];
+            String lName = LAST_NAMES[random.nextInt(LAST_NAMES.length)];
+            String fullName = fName + " " + lName;
 
-        // Student 4: Architecture, International
-        Student s4 = new Student(
-                "S-104", "Diana Prince", "diana@uni.edu", arch,
-                "555-0004", "321 Design Blvd", new Date(), "Not Applicable"
-        );
-        s4.addCompletedCourse("ART101", 4.0, 2,"Fall 2023");
-        s4.addCompletedCourse("ARCH100", 3.9, 4,"Fall 2023");
+            // Generate ID (e.g., 2023001, 2023002...)
+            String studentId = String.format("2023%03d", i);
+            String email = fName.toLowerCase() + "." + lName.toLowerCase() + i + "@uni.edu";
+            String phone = "555-" + String.format("%04d", random.nextInt(10000));
+            String address = (random.nextInt(900) + 100) + " " + STREETS[random.nextInt(STREETS.length)];
+            String milStatus = MILITARY_STATUS[random.nextInt(MILITARY_STATUS.length)];
 
-        // Student 5: CS Student, Transfer
-        Student s5 = new Student(
-                "S-105", "Evan Wright", "evan@uni.edu", cs,
-                "555-0005", "654 Code Ln", new Date(), "Exempt"
-        );
-        // No completed courses yet at this uni
+            Student s = new Student(studentId, fullName, email, randomMajor, phone, address, new Date(), milStatus);
 
-        // --- 3. Save All to Database ---
-        List<Student> students = Arrays.asList(s1, s2, s3, s4, s5);
-        studentRepository.saveAll(students);
+            // 3. Add 15 to 20 Completed Courses for each student
+            int coursesCount = random.nextInt(6) + 15; // Generates 15 to 20
 
-        System.out.println("--- Data Population Complete: Added " + students.size() + " students. ---");
+            // Use a Set to avoid adding the same course twice for one student
+            Set<Integer> usedCourseIndices = new HashSet<>();
 
-        // --- 4. Assertions (Just to keep it a valid test) ---
-        assertEquals(5, studentRepository.count());
-        assertTrue(studentRepository.existsByStudentId("S-103"));
+            for (int j = 0; j < coursesCount; j++) {
+                int courseIdx;
+                // Find a unique course they haven't taken yet
+                do {
+                    courseIdx = random.nextInt(COURSE_CATALOG.length);
+                } while (usedCourseIndices.contains(courseIdx));
+
+                usedCourseIndices.add(courseIdx);
+
+                String[] courseData = COURSE_CATALOG[courseIdx];
+                String courseCode = courseData[0];
+                // We append the title to the code or handle it however your entity expects.
+                // Assuming addCompletedCourse takes (code, grade, credits, term)
+                // If your entity stores title inside the record, adjust accordingly.
+
+                double gpa = GRADES[random.nextInt(GRADES.length)];
+                int credits = (courseCode.startsWith("CS") || courseCode.startsWith("MATH")) ? 4 : 3;
+                String semester = SEMESTERS[random.nextInt(SEMESTERS.length)];
+
+                // Add to student entity
+                // NOTE: I am adding the Course Title into the 'code' string for visibility
+                // if your backend requires title separately, update your addCompletedCourse method signature.
+                // Here I assume standard signature: addCompletedCourse(code, grade, credits, semester)
+                // If your method allows title, pass courseData[1] as well.
+                s.addCompletedCourse(courseCode + " - " + courseData[1], gpa, credits, semester);
+            }
+
+            // 4. Enroll in 2 current courses
+            s.enrollCourse("CS499 - Senior Project");
+            s.enrollCourse("ETHICS101 - Professional Ethics");
+
+            studentsToSave.add(s);
+        }
+
+        studentRepository.saveAll(studentsToSave);
+
+        System.out.println("--- FINISHED: Added " + studentsToSave.size() + " students with full academic history. ---");
     }
 
     @Test
