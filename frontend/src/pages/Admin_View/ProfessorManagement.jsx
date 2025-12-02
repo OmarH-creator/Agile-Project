@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ProfessorRecord from './ProfessorRecords'; // The component you created earlier
-import { getAllProfessors, createProfessor } from './Admin-Professor-Api';
+import { getAllProfessors, createProfessor, deleteProfessor, updateProfessor } from './Admin-Professor-Api';
 import { Icon, LoadingSpinner, ErrorMessage } from './Admin-Student-Api'; // Reusing UI helpers
 import './ProfessorRecord.css'; // Reusing the same CSS
 
@@ -9,10 +9,21 @@ const ProfessorsManagement = () => {
     const [selectedProfessor, setSelectedProfessor] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+
+    // --- MODAL STATES ---
     const [isAddModalOpen, setAddModalOpen] = useState(false);
+    const [isEditModalOpen, setEditModalOpen] = useState(false);
 
     // New Professor Form State
     const [newProfData, setNewProfData] = useState({
+        professorId: '',
+        professorName: '',
+        professorEmail: '',
+        professorDepartment: ''
+    });
+
+    const [editProfData, setEditProfData] = useState({
         professorId: '',
         professorName: '',
         professorEmail: '',
@@ -43,15 +54,22 @@ const ProfessorsManagement = () => {
     };
     // 2. Refresh wrapper to pass to child
     const handleRefresh = async () => {
+        // 1. Refresh the main list
         await fetchProfessors();
-        // If we have a selected professor, we need to update their object in the selection too
+
+        // 2. If a specific professor is open, refresh their details too
         if (selectedProfessor) {
-            const updatedList = await getAllProfessors();
-            const updatedProf = updatedList.find(p => p.professorId === selectedProfessor.professorId);
+            const data = await getAllProfessors();
+
+            // FIX: Extract the array from the pagination object
+            const fullList = data.content ? data.content : data;
+
+            // Now 'fullList' is an array, so .find() will work
+            const updatedProf = fullList.find(p => p.professorId === selectedProfessor.professorId);
+
             setSelectedProfessor(updatedProf || null);
         }
     };
-
     const handleCreateSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -64,20 +82,61 @@ const ProfessorsManagement = () => {
         }
     };
 
+    // --- EDIT HANDLERS ---
+    const openEditModal = (prof, e) => {
+        e.stopPropagation(); // Prevent opening the Detail View
+        setEditProfData({
+            professorId: prof.professorId,
+            professorName: prof.professorName,
+            professorEmail: prof.professorEmail,
+            professorDepartment: prof.professorDepartment
+        });
+        setEditModalOpen(true);
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            // We use editProfData.professorId to identify which one to update
+            await updateProfessor(editProfData.professorId, editProfData);
+            setEditModalOpen(false);
+            fetchProfessors(); // Refresh list
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // --- DELETE HANDLER ---
+    const handleDeleteClick = async (profId, profName, e) => {
+        e.stopPropagation(); // Prevent opening the Detail View
+
+        if (!window.confirm(`Are you sure you want to permanently delete ${profName}?`)) {
+            return;
+        }
+
+        try {
+            await deleteProfessor(profId);
+            // If the deleted professor was currently open in detail view, close it
+            if (selectedProfessor && selectedProfessor.professorId === profId) {
+                setSelectedProfessor(null);
+            }
+            fetchProfessors(); // Refresh list
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
     // --- RENDER ---
 
-    // If a professor is selected, show the Detail View (ProfessorRecord)
+    // Detail View
     if (selectedProfessor) {
         return (
             <div>
-                {/* Back Button Header */}
                 <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <button className="ghost-btn" onClick={() => setSelectedProfessor(null)}>
                         ← Back to List
                     </button>
                 </div>
-
-                {/* The Component I gave you earlier */}
                 <ProfessorRecord
                     professor={selectedProfessor}
                     onRefresh={handleRefresh}
@@ -87,6 +146,7 @@ const ProfessorsManagement = () => {
     }
 
     // Otherwise, show the List View (Table)
+    // List View
     return (
         <div className="detail-panel-content">
             <article className="detail-card">
@@ -114,7 +174,7 @@ const ProfessorsManagement = () => {
                                 <th>Department</th>
                                 <th>Email</th>
                                 <th>Courses</th>
-                                <th>Action</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -123,24 +183,48 @@ const ProfessorsManagement = () => {
                                     <td style={{ fontWeight: 'bold' }}>{prof.professorId}</td>
                                     <td>{prof.professorName}</td>
                                     <td>
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                borderRadius: '8px',
-                                                background: 'var(--sub-card-bg)',
-                                                fontSize: '12px'
-                                            }}>
-                                                {prof.professorDepartment}
-                                            </span>
+                                        <span style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '8px',
+                                            background: 'var(--sub-card-bg)',
+                                            fontSize: '12px'
+                                        }}>
+                                            {prof.professorDepartment}
+                                        </span>
                                     </td>
                                     <td>{prof.professorEmail}</td>
                                     <td>{prof.professorCourses?.length || 0}</td>
-                                    <td>
-                                        <button className="ghost-btn" onClick={(e) => {
-                                            e.stopPropagation(); // Prevent row click
-                                            setSelectedProfessor(prof);
-                                        }}>
-                                            View
-                                        </button>
+
+                                    {/* --- ACTION BUTTONS --- */}
+                                    <td style={{ textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+
+                                            {/* Edit Button */}
+                                            <button
+                                                className="ghost-btn"
+                                                title="Edit Details"
+                                                onClick={(e) => openEditModal(prof, e)}
+                                            >
+                                                {Icon.edit16}
+                                            </button>
+
+                                            {/* Delete Button */}
+                                            <button
+                                                className="ghost-btn danger"
+                                                title="Delete Professor"
+                                                onClick={(e) => handleDeleteClick(prof.professorId, prof.professorName, e)}
+                                            >
+                                                {Icon.trash16}
+                                            </button>
+
+                                            {/* View Button (Optional, since row is clickable) */}
+                                            <button className="ghost-btn" onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedProfessor(prof);
+                                            }}>
+                                                View
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -188,6 +272,62 @@ const ProfessorsManagement = () => {
                         <footer className="modal-footer">
                             <button className="ghost-btn" onClick={() => setAddModalOpen(false)}>Cancel</button>
                             <button className="primary-btn" type="submit" form="addProfForm">Create</button>
+                        </footer>
+                    </div>
+                </div>
+            )}
+
+            {/* --- EDIT PROFESSOR MODAL --- */}
+            {isEditModalOpen && (
+                <div className="modal-backdrop">
+                    <div className="modal">
+                        <header className="modal-header">
+                            <h3>Edit Professor</h3>
+                            <button className="close-btn" onClick={() => setEditModalOpen(false)}>{Icon.close16}</button>
+                        </header>
+                        <div className="modal-body">
+                            <form id="editProfListForm" onSubmit={handleEditSubmit}>
+                                <div className="form-grid">
+                                    {/* ID is usually not editable, so we make it disabled or read-only */}
+                                    <label>
+                                        <span>ID (Read Only)</span>
+                                        <input
+                                            value={editProfData.professorId}
+                                            disabled
+                                            style={{ background: '#f1f5f9', color: '#64748b' }}
+                                        />
+                                    </label>
+                                    <label>
+                                        <span>Full Name</span>
+                                        <input
+                                            required
+                                            value={editProfData.professorName}
+                                            onChange={e => setEditProfData({...editProfData, professorName: e.target.value})}
+                                        />
+                                    </label>
+                                    <label>
+                                        <span>Email</span>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={editProfData.professorEmail}
+                                            onChange={e => setEditProfData({...editProfData, professorEmail: e.target.value})}
+                                        />
+                                    </label>
+                                    <label>
+                                        <span>Department</span>
+                                        <input
+                                            required
+                                            value={editProfData.professorDepartment}
+                                            onChange={e => setEditProfData({...editProfData, professorDepartment: e.target.value})}
+                                        />
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                        <footer className="modal-footer">
+                            <button className="ghost-btn" onClick={() => setEditModalOpen(false)}>Cancel</button>
+                            <button className="primary-btn" type="submit" form="editProfListForm">Save Changes</button>
                         </footer>
                     </div>
                 </div>
