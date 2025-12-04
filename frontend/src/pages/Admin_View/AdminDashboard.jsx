@@ -49,6 +49,14 @@ const AdminDashboard = () => {
             icon: Icon.requests,
             accent: 'citrus',
             path: '/Admin/Requests'
+        },
+        // --- Professor BUTTON ADDED BELOW ---
+        {
+            title: 'Professors',
+            sub: 'Manage faculty assignments and staff',
+            icon: Icon.professor, /* Make sure to add 'professor' to your Icon export in Admin-Student-Api */
+            accent: 'emerald',
+            path: '/Admin/Professors'
         }
     ];
 

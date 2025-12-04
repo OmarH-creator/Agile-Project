@@ -1,0 +1,196 @@
+/* Inherits root variables from global or StudentRecord.css if imported together */
+
+/* --- Layout Wrappers --- */
+.detail-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-bottom: 40px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Course Chips (Specific to Professor View) --- */
+/* Since professors have a List<String>, we use chips instead of a table */
+.course-chips-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 10px 0;
+}
+
+.course-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--sub-card-bg);
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.course-chip:hover {
+    background: #fff;
+    border-color: var(--neo-accent);
+    box-shadow: 0 4px 12px rgba(106, 125, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.chip-icon {
+    color: var(--neo-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chip-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.chip-text {
+    font-weight: 600;
+    color: var(--neo-text);
+    font-size: 14px;
+}
+
+/* --- Reusing Modal Styles --- */
+/* Ensure these match StudentRecord.css */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(28, 35, 64, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: var(--card-bg);
+    width: 90%;
+    max-width: 500px; /* Slightly wider for ease */
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    padding: 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--neo-text);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--neo-muted);
+    padding: 4px;
+    border-radius: 8px;
+    display: flex;
+}
+
+.close-btn:hover {
+    background: #f1f5f9;
+    color: var(--danger);
+}
+
+.modal-body {
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 24px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* --- Form Elements --- */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+label span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--neo-muted);
+    text-transform: uppercase;
+}
+
+input, select {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    font-size: 14px;
+    color: var(--neo-text);
+    transition: all 0.2s;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--neo-accent);
+    box-shadow: 0 0 0 3px rgba(106, 125, 255, 0.1);
+}
+
+/* --- Buttons --- */
+.primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--neo-accent-strong);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.primary-btn:hover {
+    background: #3d50e0;
+    transform: translateY(-1px);
+}
+
+.primary-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

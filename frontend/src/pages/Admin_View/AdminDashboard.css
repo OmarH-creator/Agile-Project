@@ -254,3 +254,5 @@ body {
 .card[data-accent='aqua'] { --card-accent: #b4f0ff; --card-accent-strong: #3bc5f2; --card-glow: rgba(59, 197, 242, 0.28); }
 .card[data-accent='violet'] { --card-accent: #c7d6ff; --card-accent-strong: #5b7cfe; --card-glow: rgba(91, 124, 254, 0.3); }
 .card[data-accent='citrus'] { --card-accent: #ffe8b8; --card-accent-strong: #ffb347; --card-glow: rgba(255, 179, 71, 0.3); }
+/* NEW ACCENT */
+.card[data-accent='emerald'] { --card-accent: #b0f2c2; --card-accent-strong: #00b862; --card-glow: rgba(0, 184, 98, 0.25); }
