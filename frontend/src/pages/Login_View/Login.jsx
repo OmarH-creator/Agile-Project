@@ -35,9 +35,9 @@ function Login() {
     const handleLogin = async (event) => {
         event.preventDefault();
         setIsLoading(true);
-        setError(""); // clear old errors
+        setError("");
+
         try {
-            await new Promise(res => setTimeout(res, 1000));
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
             if (!email || !password) {
@@ -51,16 +51,31 @@ function Login() {
                 return;
             }
 
+            // 1. Call the API
             const data = await login(email, password);
+
             if (!data.token) {
                 setError("Invalid credentials. Please try again.");
                 setIsLoading(false);
                 return;
             }
+
+            // 2. Store Critical Data in LocalStorage
+            // The backend MUST return 'userId' and 'role' in the JSON response
             localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.role);
+
+            // This is crucial: Stores "PROF-001" or "1" depending on who logged in
+            if (data.userId) {
+                localStorage.setItem("userId", data.userId);
+            }
+
             confetti({ particleCount: 200, spread: 150, origin: { y: 0.6 } });
+
+            // 3. Redirect based on Role
+            // Ensure these paths match your Router paths in App.js
             if(data.role === "ADMIN"){
-                navigate("/Admin");
+                navigate("/admin"); // Updated to match likely router path
             }
             else if(data.role === "STUDENT"){
                 navigate("/student");
@@ -68,13 +83,17 @@ function Login() {
             else if(data.role === "PROFESSOR"){
                 navigate("/professor");
             }
+            else {
+                // Fallback if role is undefined
+                setError("User role not recognized.");
+            }
+
         } catch (err) {
             setError(err.message || "Login failed. Please try again.");
         } finally {
             setIsLoading(false);
         }
     };
-
     return (
         <div className="login-shell">
             <div className="login-card">
