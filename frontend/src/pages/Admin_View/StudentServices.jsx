@@ -13,6 +13,8 @@ import umsLogo from "../../assets/UMS Logo.png";
 
 const StudentServices = () => {
     // --- STATE ---
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [studentToDelete, setStudentToDelete] = useState(null);
     const [students, setStudents] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -177,22 +179,47 @@ const StudentServices = () => {
     };
 
     // 5. DELETE
-    const handleDeleteClick = async () => {
+    const handleDeleteClick = () => {
         if (!selectedStudent) return;
-        const id = selectedStudent.studentId || selectedStudent.code;
+        setStudentToDelete(selectedStudent);
+        setShowDeleteModal(true);
+    };
 
-        if (!window.confirm(`Are you sure you want to delete ${selectedStudent.name}?`)) return;
+    const handleConfirmDelete = async () => {
+        if (!studentToDelete) return;
+
+        const id = studentToDelete.studentId || studentToDelete.code;
+        setLoading(true);
+        setError(null);
 
         try {
             await deleteStudent(id);
+
             // Remove from local list
-            setStudents(prev => prev.filter(s => s.studentId !== id && s.code !== id));
-            setSelectedStudent(null);
-            setFormMode('view');
-            alert("Student deleted.");
+            setStudents(prev => prev.filter(s =>
+                s.studentId !== id && s.code !== id
+            ));
+
+            // Clear selection if we deleted the selected student
+            if (selectedStudent && (selectedStudent.studentId === id || selectedStudent.code === id)) {
+                setSelectedStudent(null);
+                setFormMode('view');
+            }
+
+
+
         } catch (err) {
-            setError(err.message);
+            setError(err.message || 'Failed to delete student');
+        } finally {
+            setLoading(false);
+            setShowDeleteModal(false);
+            setStudentToDelete(null);
         }
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
+        setStudentToDelete(null);
     };
 
     const handleCancelForm = () => {
@@ -416,6 +443,39 @@ const StudentServices = () => {
                                         </button>
                                     </div>
                                 </form>
+                            </div>
+                        )}
+                        {/* ... all your existing JSX ... */}
+
+                        {/* Delete Confirmation Modal */}
+                        {showDeleteModal && studentToDelete && (
+                            <div className="modal-backdrop" onClick={handleCancelDelete}>
+                                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                    <div className="modal-header">
+                                        <h3>Confirm Deletion</h3>
+                                    </div>
+                                    <div className="modal-body">
+                                        <p>Are you sure you want to delete <strong>{studentToDelete.name}</strong> ({studentToDelete.studentId || studentToDelete.code})?</p>
+                                        <p style={{color: '#d24c5f', marginTop: '10px'}}>This action cannot be undone.</p>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button
+                                            className="ghost-btn"
+                                            onClick={handleCancelDelete}
+                                            disabled={loading}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            className="primary-btn danger"
+                                            onClick={handleConfirmDelete}
+                                            disabled={loading}
+                                            style={{background: '#d24c5f'}}
+                                        >
+                                            {loading ? 'Deleting...' : 'Delete Student'}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </section>

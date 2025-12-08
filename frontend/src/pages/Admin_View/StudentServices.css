@@ -237,3 +237,40 @@
 }
 .ghost-btn:hover { background: #fff; }
 .ghost-btn.danger { color: #d24c5f; }
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 9999 !important;
+}
+
+.modal {
+    background: white;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10000 !important;
+
+    /* Force positioning */
+    position: relative !important;
+    margin: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+}
