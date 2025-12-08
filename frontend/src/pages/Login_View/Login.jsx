@@ -70,7 +70,6 @@ function Login() {
                 localStorage.setItem("userId", data.userId);
             }
 
-            confetti({ particleCount: 200, spread: 150, origin: { y: 0.6 } });
 
             // 3. Redirect based on Role
             // Ensure these paths match your Router paths in App.js

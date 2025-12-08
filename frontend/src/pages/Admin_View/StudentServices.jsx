@@ -210,7 +210,6 @@ const StudentServices = () => {
         <div className="shell">
             <header className="topbar" role="banner">
                 <div className="topbar-left">
-                    <button className="icon-btn">{Icon.menu16}</button>
                     <div className="brand-mini">
                         <div className="brand-logo-shell"><img src={String(umsLogo)} alt="UMS" className="mini-logo"/></div>
                         <span className="brand-text brand-title">Admin Console</span>

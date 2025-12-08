@@ -43,13 +43,6 @@ const AdminDashboard = () => {
             accent: 'violet',
             path: '/Admin/Curriculum'
         },
-        {
-            title: 'Requests & Approvals',
-            sub: 'Track pending requests and actions',
-            icon: Icon.requests,
-            accent: 'citrus',
-            path: '/Admin/Requests'
-        },
         // --- Professor BUTTON ADDED BELOW ---
         {
             title: 'Professors',
@@ -64,9 +57,6 @@ const AdminDashboard = () => {
         <div className="shell">
             <header className="topbar" role="banner">
                 <div className="topbar-left">
-                    <button className="icon-btn" aria-label="Menu" title="Menu">
-                        {Icon.menu16}
-                    </button>
                     <div className="brand-mini">
                         <div className="brand-logo-shell">
                             <img src={String(umsLogo)} alt="UMS logo" className="mini-logo"/>
