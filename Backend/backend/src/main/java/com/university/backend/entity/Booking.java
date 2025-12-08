@@ -24,6 +24,9 @@ public class Booking {
     @Column(length = 255)
     private String purpose;
 
+    @Column(name = "status")
+    private String status;
+
     
     // staffId is now mandatory to link the Professor or Admin who made the booking
     @Column(nullable = false)
@@ -52,6 +55,16 @@ public class Booking {
         this.reservationId = reservationId;
         this.staffId = staffId;
         this.hall = hall;
+        this.status = "PENDING";
+    }
+    public Booking(Date startTime, Date endTime, String purpose, long reservationId, String staffId, Hall hall, String status) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.purpose = purpose;
+        this.reservationId = reservationId;
+        this.staffId = staffId;
+        this.hall = hall;
+        this.status = status;
     }
 
     // Logic preserved
@@ -86,6 +99,27 @@ public class Booking {
 
     public void setHallName(String hallName) {
         this.hallName = hallName;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    // Helper methods for status
+    public boolean isPending() {
+        return "PENDING".equalsIgnoreCase(status);
+    }
+
+    public boolean isApproved() {
+        return "APPROVED".equalsIgnoreCase(status);
+    }
+
+    public boolean isRejected() {
+        return "REJECTED".equalsIgnoreCase(status);
     }
 
 }

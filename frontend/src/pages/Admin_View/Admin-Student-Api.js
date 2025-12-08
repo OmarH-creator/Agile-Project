@@ -50,7 +50,9 @@ export async function createStudent(studentData) {
 // [NEW] Update an existing student record
 export async function updateStudent(studentId, studentData) {
     const token = getAuthToken();
-
+    console.log('🚀 Sending update request for:', studentId);
+    console.log('🚀 Full update data:', JSON.stringify(studentData, null, 2));
+    console.log('🚀 URL:', `${API_BASE_URL}/students/${studentId}`);
     const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {
         method: 'PUT',
         headers: {
@@ -59,10 +61,12 @@ export async function updateStudent(studentId, studentData) {
         },
         body: JSON.stringify(studentData)
     });
-
+    console.log('📡 Response status:', response.status);
+    console.log('📡 Response status text:', response.statusText);
     if (!response.ok) {
         if (response.status === 404) {
             throw new Error(`Student with ID ${studentId} not found.`);
+
         }
         const errorMessage = await response.text();
         throw new Error(errorMessage || `Failed to update student: ${response.status}`);
@@ -355,4 +359,22 @@ export const ErrorMessage = ({ error, onDismiss }) => {
         </div>
     );
 };
+
+export default function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
+    if (!open) return null;
+
+    return (
+        <div className="neo-modal-overlay">
+            <div className="neo-modal">
+                <h3>{title}</h3>
+                <p>{message}</p>
+
+                <div className="neo-modal-actions">
+                    <button className="ghost-btn" onClick={onCancel}>Cancel</button>
+                    <button className="ghost-btn danger" onClick={onConfirm}>Delete</button>
+                </div>
+            </div>
+        </div>
+    );
+}
 

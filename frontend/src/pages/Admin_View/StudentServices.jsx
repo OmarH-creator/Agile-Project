@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'; // Added useEffect
 import { Link } from 'react-router-dom';
 import StudentRecord from './StudentRecord'; // Importing the child component
-import {
+import ConfirmModal, {
     getStudent,
     getAllStudents,
     updateStudent, // IMPORTED
@@ -154,8 +154,30 @@ const StudentServices = () => {
             setLoading(false);
         }
     };
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const handleDeleteClick = () => {
+        setConfirmOpen(true);
+    };
+    const confirmDelete = async () => {
+        try {
+            await deleteStudent(selectedStudent.studentId);
 
-    const handleDeleteClick = async () => {
+            setStudents(prev => prev.filter(
+                s => s.studentId !== selectedStudent.studentId
+            ));
+
+            setSelectedStudent(null);
+            setFormMode('view');
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setConfirmOpen(false);
+        }
+    };
+
+
+
+    {/*const handleDeleteClick = async () => {
         if(!window.confirm(`Are you sure you want to delete ${selectedStudent.name}?`)) return;
 
         try {
@@ -167,7 +189,7 @@ const StudentServices = () => {
         } catch (err) {
             alert(err.message);
         }
-    };
+    };*/}
 
     useEffect(() => {
         if (students.length === 0) {
@@ -325,6 +347,8 @@ const StudentServices = () => {
                                         <button type="button" className="ghost-btn" onClick={handleCancelEdit}>
                                             Cancel
                                         </button>
+
+
                                     </div>
                                 </form>
                             </div>

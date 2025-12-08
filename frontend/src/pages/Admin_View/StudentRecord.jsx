@@ -160,7 +160,7 @@ const StudentRecord = ({student}) => {
         }
     };
 
-    const handleDeleteStudent = async (code) => {
+    {/*  const handleDeleteStudent = async (code) => {
         const confirmation = window.confirm(
             `This will remove ${code} and their academic record from the dashboard. Continue?`
         );
@@ -186,7 +186,7 @@ const StudentRecord = ({student}) => {
         } finally {
             setLoading(false);
         }
-    };
+    };*/}
 
     const handleExport = (student, format) => {
         const snapshot = buildStudentSnapshot(student);

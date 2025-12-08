@@ -254,3 +254,41 @@ body {
 .card[data-accent='aqua'] { --card-accent: #b4f0ff; --card-accent-strong: #3bc5f2; --card-glow: rgba(59, 197, 242, 0.28); }
 .card[data-accent='violet'] { --card-accent: #c7d6ff; --card-accent-strong: #5b7cfe; --card-glow: rgba(91, 124, 254, 0.3); }
 .card[data-accent='citrus'] { --card-accent: #ffe8b8; --card-accent-strong: #ffb347; --card-glow: rgba(255, 179, 71, 0.3); }
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 9999 !important;
+}
+
+.modal {
+    background: white;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10000 !important;
+
+    /* Force positioning */
+    position: relative !important;
+    margin: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+}
+
