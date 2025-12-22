@@ -1,0 +1,429 @@
+/* --- 1. SCOPED THEME VARIABLES (Midnight Teal / Dark Mode) --- */
+.student-theme {
+    /* Background: Deep Night Blue/Grey */
+    --neo-bg: #0f172a;
+
+    /* Surface: Lighter slate, not white */
+    --neo-surface: rgba(30, 41, 59, 0.95);
+
+    /* Text: Light/White for dark mode */
+    --neo-text: #e2e8f0;
+    --neo-muted: #94a3b8;
+
+    /* Accents: Glowing Teal */
+    --neo-accent: #2dd4bf;
+    --neo-accent-strong: #14b8a6;
+
+    /* Shadows: Deep black for depth, faint white for rim light */
+    --neo-shadow-dark: rgba(0, 0, 0, 0.45);
+    --neo-shadow-light: rgba(255, 255, 255, 0.07);
+}
+
+/* Ensure the wrapper sets the base dark color */
+.student-theme {
+    color: var(--neo-text);
+    background-color: var(--neo-bg);
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    /* Fallback color if theme class isn't present */
+    color: #1c2340;
+}
+
+/* --- 2. THE SHELL (Grid Layout & Dark Gradient) --- */
+.shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 80px 1fr;
+    gap: 24px;
+    padding: 28px;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* Apply Dark Gradient ONLY when student-theme is present */
+.student-theme.shell {
+    background: radial-gradient(circle at 15% 20%, #1e293b 0%, #0f172a 60%, #020617 100%);
+}
+
+/* --- 3. TOPBAR --- */
+.topbar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    border-radius: 28px;
+    backdrop-filter: blur(24px);
+
+    /* Default (Admin) styles - overwritten below for Student */
+    background: rgba(255, 255, 255, 0.8);
+}
+
+/* Dark Topbar for Student */
+.student-theme .topbar {
+    background: linear-gradient(125deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 90%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 12px 12px 26px var(--neo-shadow-dark), -12px -12px 22px var(--neo-shadow-light);
+}
+
+.topbar-left, .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* --- USER PILL & AVATAR --- */
+.student-theme .sidebar-user {
+    padding: 6px 16px;
+    gap: 10px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+
+    /* Dark pill background */
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.student-theme .avatar {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    /* Glowing teal bg */
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.2), rgba(20, 184, 166, 0.3));
+    color: var(--neo-accent);
+}
+
+.student-theme .user-name {
+    line-height: 1;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--neo-accent);
+}
+
+/* --- BRANDING --- */
+.brand-mini {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+.brand-logo-shell {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    padding: 5px;
+    background: #fff; /* Keep logo white for visibility */
+}
+/* Darken logo shell background for Student Theme only */
+.student-theme .brand-logo-shell {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.mini-logo { width: 100%; height: 100%; object-fit: contain; }
+.brand-text { font-weight: 600; font-size: 16px; }
+
+/* --- 4. MAIN CONTENT AREA --- */
+.main {
+    grid-column: 1/-1;
+    grid-row: 2;
+    border-radius: 36px;
+    padding: 34px;
+    overflow: auto;
+}
+
+/* Dark Main Area for Student */
+.student-theme .main {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 20px 20px 40px var(--neo-shadow-dark), -20px -20px 40px var(--neo-shadow-light);
+}
+
+/* --- 5. PAGE HEADER --- */
+.page-header {
+    border-radius: 28px;
+    padding: 24px 30px;
+    margin-bottom: 28px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+/* Dark Page Header */
+.student-theme .page-header {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 4px 4px 20px rgba(0,0,0,0.2);
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.student-theme .page-title-ico {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    color: var(--neo-accent);
+    /* Darker icon bg */
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.1), rgba(20, 184, 166, 0.2));
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.3), -4px -4px 10px rgba(255,255,255,0.05);
+}
+
+.page-header h2 { margin: 0; font-size: 24px; font-weight: 700; color: var(--neo-text); }
+.page-sub { margin: 4px 0 0; font-size: 14px; color: var(--neo-muted); }
+
+/* --- 6. ICON BUTTONS (Menu, etc) --- */
+.student-theme .icon-btn {
+    width: 42px; height: 42px; border-radius: 16px; border: none;
+    display: grid; place-items: center; cursor: pointer;
+    transition: all 0.2s;
+
+    /* Dark Button Style */
+    background: linear-gradient(145deg, rgba(51, 65, 85, 0.9), rgba(30, 41, 59, 0.9));
+    box-shadow: 5px 5px 10px rgba(0,0,0,0.3), -5px -5px 10px rgba(255,255,255,0.05);
+    color: var(--neo-accent);
+}
+.student-theme .icon-btn:hover { transform: translateY(-2px); color: #fff; }
+
+/* --- 7. GRID & CARDS --- */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 26px;
+}
+
+.student-theme .card {
+    position: relative;
+    overflow: hidden;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 32px;
+    min-height: 180px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+    /* Dark Card Base */
+    background: linear-gradient(145deg, rgba(51, 65, 85, 0.8), rgba(30, 41, 59, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 18px 18px 30px rgba(0, 0, 0, 0.3), -18px -18px 30px rgba(255, 255, 255, 0.03);
+
+    /* Default Dynamic Variables (overridden below) */
+    --card-accent: rgba(45, 212, 191, 0.4);
+    --card-accent-strong: var(--neo-accent-strong);
+    --card-glow: rgba(45, 212, 191, 0.2);
+}
+
+.student-theme .card:hover {
+    transform: translateY(-8px);
+    /* Lighter hover state */
+    background: linear-gradient(145deg, rgba(51, 65, 85, 1), rgba(30, 41, 59, 1));
+    border-color: var(--neo-accent);
+    box-shadow: 22px 22px 40px rgba(0,0,0,0.5), -22px -22px 40px rgba(255,255,255,0.05);
+}
+
+.card-title {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px; height: 100%; box-sizing: border-box;
+}
+
+.student-theme .card-heading { font-size: 20px; font-weight: 600; color: var(--neo-text); }
+.student-theme .card-sub { margin-top: 6px; color: var(--neo-muted); font-size: 14px; }
+
+.student-theme .card-icon {
+    width: 60px; height: 60px; border-radius: 20px;
+    display: grid; place-items: center;
+
+    color: var(--card-accent-strong);
+    background: radial-gradient(circle at 25% 30%, rgba(255, 255, 255, 0.1), transparent 60%),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.05), var(--card-accent));
+
+    box-shadow: 0 0 15px var(--card-glow);
+}
+.card-icon svg { width: 30px; height: 30px; }
+
+/* --- 8. ACCENT COLORS (Dark Mode Palettes) --- */
+/* Violet -> Indigo */
+.student-theme .card[data-accent='violet'] {
+    --card-accent: rgba(99, 102, 241, 0.3);
+    --card-accent-strong: #818cf8;
+    --card-glow: rgba(99, 102, 241, 0.4);
+}
+
+/* Sunrise -> Amber */
+.student-theme .card[data-accent='sunrise'] {
+    --card-accent: rgba(245, 158, 11, 0.3);
+    --card-accent-strong: #fbbf24;
+    --card-glow: rgba(245, 158, 11, 0.4);
+}
+
+/* Aqua -> Sky */
+.student-theme .card[data-accent='aqua'] {
+    --card-accent: rgba(14, 165, 233, 0.3);
+    --card-accent-strong: #38bdf8;
+    --card-glow: rgba(14, 165, 233, 0.4);
+}
+
+/* Emerald -> Teal (Main) */
+.student-theme .card[data-accent='emerald'] {
+    --card-accent: rgba(20, 184, 166, 0.3);
+    --card-accent-strong: #2dd4bf;
+    --card-glow: rgba(20, 184, 166, 0.4);
+}
+
+/* Citrus -> Rose */
+.student-theme .card[data-accent='citrus'] {
+    --card-accent: rgba(244, 63, 94, 0.3);
+    --card-accent-strong: #fb7185;
+    --card-glow: rgba(244, 63, 94, 0.4);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 1100px) {
+    .shell { grid-template-columns: 80px 1fr; }
+    .sidebar { padding: 20px 10px; align-items: center; }
+    .nav-item span { display: none; }
+}
+@media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 16px; }
+    .sidebar { display: none; }
+    .topbar { padding: 0 16px; }
+}
+
+/* --- REGISTRATION TABLE STYLES --- */
+
+.table-container {
+    background: var(--neo-surface);
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    overflow-x: auto;
+}
+
+.reg-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--neo-text);
+}
+
+.reg-table th {
+    text-align: left;
+    padding: 14px 16px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    color: var(--neo-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reg-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.95rem;
+}
+
+.font-bold { font-weight: 600; }
+
+/* --- CONDITIONAL ROW STYLES --- */
+
+/* 1. Red Row (Prerequisite Missing) */
+.row-red {
+    background: rgba(239, 68, 68, 0.15); /* Red tint */
+    color: #fca5a5; /* Light red text */
+}
+.row-red:hover { background: rgba(239, 68, 68, 0.2); }
+
+/* 2. Grey Row (Wrong Major) */
+.row-grey {
+    background: rgba(0, 0, 0, 0.2); /* Darken */
+    color: #64748b; /* Dim text */
+    opacity: 0.7;
+}
+
+/* 3. Green Row (Currently Registered) */
+.row-green {
+    background: rgba(20, 184, 166, 0.15); /* Teal tint */
+}
+
+/* 4. Done Row (Already Completed) */
+.row-done {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+/* --- BADGES (Tags) --- */
+.tag {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.tag-red { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+.tag-grey { background: rgba(71, 85, 105, 0.5); color: #cbd5e1; border: 1px solid rgba(239, 68, 68, 0.3);}
+.tag-green { background: rgba(20, 184, 166, 0.2); color: #5eead4; border: 1px solid rgba(20, 184, 166, 0.3); }
+.tag-blue-outline { border: 1px solid var(--neo-muted); color: var(--neo-muted); }
+
+/* --- BUTTONS --- */
+.reg-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-add {
+    background: var(--neo-accent-strong);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.btn-add:hover { background: var(--neo-accent); transform: translateY(-2px); }
+
+.btn-drop {
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+.btn-drop:hover { background: #ef4444; color: white; }
+
+.btn-disabled {
+    background: transparent;
+    color: var(--neo-muted);
+    cursor: not-allowed;
+    opacity: 0.5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-pill {
+    background: var(--neo-accent);
+    color: #000;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.90rem;
+    animation: fadein 0.3s ease;
+}
+
+@keyframes fadein { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+.status-pill.status-error {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+.status-pill.status-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
