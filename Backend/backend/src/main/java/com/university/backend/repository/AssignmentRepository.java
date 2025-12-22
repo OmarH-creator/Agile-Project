@@ -19,8 +19,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     @Query("SELECT a FROM Assignment a " +
             "LEFT JOIN FETCH a.values v " +
             "LEFT JOIN FETCH v.attribute " +
-            "WHERE a.AssignmentId = :id")
+            "WHERE a.assignmentId = :id")
     Optional<Assignment> findFullAssignmentById(@Param("id") Long id);
 
-    List<Assignment> findByCourseName(String courseName);
 }
