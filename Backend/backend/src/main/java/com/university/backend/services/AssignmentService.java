@@ -1,48 +1,63 @@
-package com.university.backend.service;
+package com.university.backend.services;
 
-import com.university.backend.dto.AssignmentResponseDTO; // Assumes you created this DTO from the previous step
-import com.university.backend.entity.Assignment;
-import com.university.backend.entity.AssignmentAttributes;
-import com.university.backend.entity.AssignmentValue;
+import com.university.backend.dto.AssignmentResponseDTO;
+import com.university.backend.entity.*;
 import com.university.backend.repository.AssignmentRepository;
+import com.university.backend.repository.CourseRepository;
+import com.university.backend.repository.ProfessorRepository; // Or UserRepository
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
+    private final CourseRepository courseRepository;
+    private final ProfessorRepository professorRepository;
 
     @Autowired
-    public AssignmentService(AssignmentRepository assignmentRepository) {
+    public AssignmentService(AssignmentRepository assignmentRepository,
+                             CourseRepository courseRepository,
+                             ProfessorRepository professorRepository) {
         this.assignmentRepository = assignmentRepository;
+        this.courseRepository = courseRepository;
+        this.professorRepository = professorRepository;
     }
 
     /**
-     * FETCH: Retrieves the full EAV structure and flattens it into a simple JSON DTO.
+     * FETCH: Retrieves the full structure (Static Columns + EAV) and flattens it.
      */
     @Transactional(readOnly = true)
     public AssignmentResponseDTO getAssignmentById(Long id) {
-        // 1. Fetch optimized data using the custom Repository Query
+        // 1. Fetch optimized data
         Assignment assignment = assignmentRepository.findFullAssignmentById(id)
                 .orElseThrow(() -> new RuntimeException("Assignment not found with ID: " + id));
 
-        // 2. Initialize the clean DTO
+        // 2. Initialize DTO
         AssignmentResponseDTO response = new AssignmentResponseDTO(assignment.getId());
 
-        // 3. Map the sparse 'Value' rows into the flat DTO map
+        // 3. Map STATIC fields (From main table)
+        response.addField("Title", assignment.getTitle());
+
+        // Ensure you use the correct getter names for your Entities
+        // e.g., getCourseCode() vs getCourseId() depending on your Course entity
+        if (assignment.getCourse() != null) {
+            response.addField("Course_Id", assignment.getCourse().getCourseCode());
+        }
+        if (assignment.getProfessor() != null) {
+            response.addField("Professor_Id", assignment.getProfessor().getProfessorId());
+        }
+
+        // 4. Map DYNAMIC EAV fields (From attributes table)
         for (AssignmentValue val : assignment.getValues()) {
             String key = val.getAttribute().getAttributeName();
-            Object value = extractValue(val); // Helper method below
+            Object value = extractValue(val);
             response.addField(key, value);
         }
 
@@ -50,52 +65,65 @@ public class AssignmentService {
     }
 
     /**
-     * CREATE: Accepts a flat Map (JSON) and distributes data into the EAV tables.
-     * Example Input: { "Title": "Math 101", "Deadline": "2023-12-01" }
+     * CREATE: Handles both Static Columns and Dynamic Attributes from one JSON payload.
      */
     @Transactional
     public AssignmentResponseDTO createAssignment(Map<String, Object> payload) {
-        // 1. Create new Entity (Constructor automatically generates the empty Attribute rows)
-        Assignment assignment = new Assignment();
 
-        // 2. Save immediately to generate IDs for the Assignment and its Attributes
+        // 1. Extract and Validate Static Keys
+        String title = (String) payload.get("Title");
+        String courseId = (String) payload.get("Course_Id");
+        Object profIdObj = payload.get("Professor_Id");
+
+        if (title == null || courseId == null || profIdObj == null) {
+            throw new RuntimeException("Missing required fields: Title, Course_Id, or Professor_Id");
+        }
+
+        // 2. Fetch Real Entities for Foreign Keys
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found: " + courseId));
+
+        // Handle Professor ID (Assuming it might come as String or Integer from JSON)
+        String professorId = String.valueOf(profIdObj);
+        Professor professor = professorRepository.findById(professorId)
+                .orElseThrow(() -> new RuntimeException("Professor not found: " + professorId));
+
+        // 3. Create Assignment with Static Links
+        Assignment assignment = new Assignment(title, course, professor);
+
+        // 4. Save to generate IDs (triggers default attribute creation)
         assignment = assignmentRepository.save(assignment);
 
-        // 3. Create a quick lookup map for attributes: "Title" -> AttributeEntity
-        // This prevents us from looping inside a loop.
+        // 5. Create Map for Attribute Lookup
         Map<String, AssignmentAttributes> attributeMap = assignment.getAttributes().stream()
                 .collect(Collectors.toMap(AssignmentAttributes::getAttributeName, attr -> attr));
 
-        // 4. Iterate over the incoming JSON payload
+        // 6. Loop through Payload for DYNAMIC attributes
         for (Map.Entry<String, Object> entry : payload.entrySet()) {
-            String inputKey = entry.getKey();      // e.g., "Title"
-            Object inputValue = entry.getValue();  // e.g., "Math HW"
+            String key = entry.getKey();
+            Object value = entry.getValue();
 
-            // Check if this Assignment actually defines this attribute
-            if (attributeMap.containsKey(inputKey)) {
-                AssignmentAttributes targetAttr = attributeMap.get(inputKey);
+            // Skip static keys we already processed
+            if (key.equals("Title") || key.equals("Course_Id") || key.equals("Professor_Id")) {
+                continue;
+            }
 
-                // Create the Value row linking Assignment + Attribute + Data
-                AssignmentValue newValue = createValueEntity(assignment, targetAttr, inputValue);
+            // Process matches
+            if (attributeMap.containsKey(key)) {
+                AssignmentAttributes targetAttr = attributeMap.get(key);
+                AssignmentValue newValue = createValueEntity(assignment, targetAttr, value);
                 assignment.getValues().add(newValue);
-            } else {
-                // Optional: Log warning if user sends data that isn't defined in the constructor
-                System.out.println("Warning: Attribute '" + inputKey + "' is not defined for Assignments.");
             }
         }
 
-        // 5. Update the assignment with the new values attached
+        // 7. Update with new values
         assignmentRepository.save(assignment);
 
-        // 6. Return the formatted DTO
         return getAssignmentById(assignment.getId());
     }
 
     // --- HELPER METHODS ---
 
-    /**
-     * Extracts the correct non-null value from the sparse columns.
-     */
     private Object extractValue(AssignmentValue val) {
         if (val.getValString() != null) return val.getValString();
         if (val.getValInt() != null) return val.getValInt();
@@ -105,9 +133,6 @@ public class AssignmentService {
         return null;
     }
 
-    /**
-     * Creates a Value entity and populates the correct column based on input type.
-     */
     private AssignmentValue createValueEntity(Assignment asm, AssignmentAttributes attr, Object value) {
         AssignmentValue valEntity = new AssignmentValue();
         valEntity.setAssignment(asm);
@@ -131,7 +156,6 @@ public class AssignmentService {
                     valEntity.setValBool(Boolean.parseBoolean(String.valueOf(value)));
                     break;
                 case "DATE":
-                    // Assumes date comes in as String. You might need a formatter.
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                     valEntity.setValDate(sdf.parse(String.valueOf(value)));
                     break;
@@ -141,7 +165,6 @@ public class AssignmentService {
         } catch (ParseException | NumberFormatException e) {
             throw new RuntimeException("Error parsing value for attribute " + attr.getAttributeName() + ": " + e.getMessage());
         }
-
         return valEntity;
     }
 }

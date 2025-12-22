@@ -7,9 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.CrossOrigin; // <--- Make sure this is imported
 import com.university.backend.dto.AssignmentResponseDTO;
-import com.university.backend.service.AssignmentService;
+import com.university.backend.services.AssignmentService;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -141,11 +142,11 @@ public class ProfessorController {
      * 4b. View all assignments created for a specific course.
      * Endpoint: GET /api/professor/assignment/{courseName}
      */
-    @GetMapping("/assignment/{courseName}")
-    public ResponseEntity<List<Assignment>> getAssignmentsByCourse(@PathVariable String courseName) {
-        List<Assignment> assignments = assignmentRepository.findByCourseName(courseName);
-        return ResponseEntity.ok(assignments);
-    }
+//    @GetMapping("/assignment/{courseName}")
+//    public ResponseEntity<List<Assignment>> getAssignmentsByCourse(@PathVariable String courseName) {
+//        List<Assignment> assignments = assignmentRepository.findByCourseName(courseName);
+//        return ResponseEntity.ok(assignments);
+//    }
     // ------------------------------------------------------------
     // GET: Student views a specific assignment
     // URL: http://localhost:8080/api/assignments/1
@@ -157,6 +158,14 @@ public class ProfessorController {
 
         // 2. Return the clean JSON with 200 OK status
         return ResponseEntity.ok(assignmentDto);
+    }
+
+    // 2. POST: Create Assignment (NEW)
+    @PostMapping("/create")
+    public ResponseEntity<AssignmentResponseDTO> createAssignment(@RequestBody Map<String, Object> payload) {
+        // payload matches the JSON structure: { "Title": "...", "Course_Id": "...", ... }
+        AssignmentResponseDTO newAssignment = assignmentService.createAssignment(payload);
+        return ResponseEntity.ok(newAssignment);
     }
     /**
      * 5. Grade a specific student's assignment.
