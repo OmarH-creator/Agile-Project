@@ -2,6 +2,10 @@ package com.university.backend.controllers;
 
 import com.university.backend.dto.LoginRequest;
 import com.university.backend.entity.User;
+import com.university.backend.entity.Professor;
+import com.university.backend.entity.Student;
+import com.university.backend.repository.ProfessorRepository;
+import com.university.backend.repository.StudentRepository;
 import com.university.backend.repository.UserRepository;
 import com.university.backend.utils.JwtUtil;
 
@@ -21,29 +25,62 @@ public class AuthController {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ProfessorRepository professorRepository;
+
+    @Autowired
+    private StudentRepository studentRepository;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
+        //1. find user in the user table ya 7elw
         Optional<User> userOpt = userRepository.findByEmail(req.getEmail());
 
         if (userOpt.isEmpty()){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("user not present in database!");
         }
+        User user = userOpt.get();
+        //2. validate password (efta7 ya semsem)
+        if (user.getPassword().equals(req.getPassword())) {
+            // 3. Resolve the Business ID based on Role
+            String businessId = null;
+            String role = user.getRole().toUpperCase(); // Ensure case consistency
+            if ("PROFESSOR".equals(role)) {
+                Optional<Professor> prof = professorRepository.findByProfessorEmail(user.getEmail());
+                if (prof.isPresent()) {
+                    businessId = prof.get().getProfessorId(); // e.g., "P-101"
+                } else {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Professor profile not linked to this account.");
+                }
+            }
+            else if ("STUDENT".equals(role)) {
+                Optional<Student> student = studentRepository.findByEmail(user.getEmail());
+                if (student.isPresent()) {
+                    businessId = student.get().getStudentId(); // e.g., "S-450"
+                } else {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Student profile not linked to this account.");
+                }
+            }
+            else if ("ADMIN".equals(role)) {
+                businessId = "ADMIN";
+            }
 
-        if (userOpt.get().getPassword().equals(req.getPassword())) {
-            User user = userOpt.get();
+            // 4. Generate Token
             Map<String, Object> claims = new HashMap<>();
             claims.put("userId", user.getId());
-            claims.put("role", user.getRole()); // add role or other claims as needed
+            claims.put("role", role);
+            claims.put("businessId", businessId); // Optional: Add ID inside token claims too
+
             String token = JwtUtil.generateToken(user.getEmail(), claims);
 
-            // Include role in response as well
-            return ResponseEntity.ok().body(
-                    Map.of(
-                            "token", token,
-                            "role", claims.get("role")
-                    )
-            );
+            // 5. Return Response with Token, Role, AND Business ID
+            // We use a HashMap instead of Map.of() to ensure we can handle null values if necessary
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("role", role);
+            response.put("businessId", businessId);
+
+            return ResponseEntity.ok(response);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials!");
     }

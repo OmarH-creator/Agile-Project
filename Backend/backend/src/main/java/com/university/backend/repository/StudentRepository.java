@@ -32,13 +32,15 @@ public interface StudentRepository extends JpaRepository<Student, String> {
 
     // Check for unique phone numbers
     Optional<Student> findByPhone(String phone);
-
+    //FOR Parent View
+    List<Student> findByStudentIdIn(List<String> studentIds);
     // --- SEARCH & PAGINATION (For Admin View) ---
     Page<Student> findByStudentIdStartingWith(String prefix, Pageable pageable);
 
     // --- MAINTENANCE ---
     @Transactional
     void deleteByStudentId(String studentId);
- //FOR Parent View
-    List<Student> findByStudentIdIn(List<String> studentIds);
+
+    // NEW: Find students where the 'currentCourses' collection contains the specific course name
+    List<Student> findByCurrentCoursesContaining(String courseName);
 }
