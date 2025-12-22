@@ -2,6 +2,8 @@ package com.university.backend.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.university.backend.entity.Student;
+
+import java.util.List;
 import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional; // Import needed for deletion
 import org.springframework.data.domain.Page;
@@ -28,4 +30,7 @@ public interface StudentRepository extends JpaRepository<Student, String> {
  // --- NEW: Deletion Method ---
     @Transactional // Required for modifying operations
     void deleteByStudentId(String studentId);
+
+    // NEW: Find students where the 'currentCourses' collection contains the specific course name
+    List<Student> findByCurrentCoursesContaining(String courseName);
 }
