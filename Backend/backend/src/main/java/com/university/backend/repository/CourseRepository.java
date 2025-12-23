@@ -2,28 +2,38 @@ package com.university.backend.repository;
 
 import com.university.backend.entity.Course;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 import java.util.Optional;
-import java.util.List;
-import java.util.ArrayList; // Add this import
-import java.util.List;
 
+// ID is String (e.g., "CS101")
 public interface CourseRepository extends JpaRepository<Course, String> {
 
-    // Custom finder to search by business key (courseCode)
+    // --- ESSENTIAL FOR REGISTRATION ---
+    // Note: 'findById' is provided by JpaRepository automatically.
+    // We use it in the controller as: courseRepository.findById(courseId)
+
+    // --- LOOKUPS ---
+
+    // Custom finder if 'courseCode' is different from the @Id
     Optional<Course> findByCourseCode(String courseCode);
 
-    // Check if course exists by business key
+    // Check if course exists
     boolean existsByCourseCode(String courseCode);
 
-    // Find by course name
+    // Find by exact Name
     Optional<Course> findByCourseName(String courseName);
 
-    // Check if course exists by course name
     boolean existsByCourseName(String courseName);
 
-    // NEW METHODS ADDED for viewing courses:
+    // --- ADVANCED SEARCH (For Course Catalog Filtering) ---
+
+    // Search by name (case insensitive, e.g., "intro")
     List<Course> findByCourseNameContainingIgnoreCase(String courseName);
+
+    // Filter by Credits (e.g., 3-4 credits)
     List<Course> findByCreditHoursBetween(int minCredits, int maxCredits);
+
     List<Course> findByCreditHoursGreaterThanEqual(int minCredits);
+
     List<Course> findByCreditHoursLessThanEqual(int maxCredits);
 }
