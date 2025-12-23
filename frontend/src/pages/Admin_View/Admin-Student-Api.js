@@ -143,7 +143,12 @@ export async function deleteStudent(studentId) {
         throw new Error(errorMessage || `Failed to delete student: ${response.status}`);
     }
 
-    return await response.text();
+    try {
+        const text = await response.text();
+        return text || 'Student deleted successfully';
+    } catch {
+        return 'Student deleted successfully';
+    }
 }
 
 // Get student transcript
