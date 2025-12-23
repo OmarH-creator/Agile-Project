@@ -1,6 +1,8 @@
 package com.university.backend.controllers;
 
 import com.university.backend.entity.*;
+import com.university.backend.entity.Assignment.Assignment;
+import com.university.backend.entity.AssignmentSubmissions.AssignmentSubmission;
 import com.university.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

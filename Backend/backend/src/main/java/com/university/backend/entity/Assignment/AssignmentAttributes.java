@@ -1,4 +1,4 @@
-package com.university.backend.entity;
+package com.university.backend.entity.Assignment;
 
 import jakarta.persistence.*;
 

@@ -1,6 +1,6 @@
 //package com.university.backend.repository;
 //
-//import com.university.backend.entity.AssignmentAttributes;
+//import com.university.backend.entity.Assignment.AssignmentAttributes;
 //import org.springframework.data.jpa.repository.JpaRepository;
 //import java.util.Optional;
 //

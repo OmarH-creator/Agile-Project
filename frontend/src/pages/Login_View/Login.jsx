@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import Illust from "../../assets/loginimage.png";
 import umsLogo from "../../assets/UMS Logo.png";
+import confetti from "canvas-confetti";
 import { login } from "../../auth/login";
 import { login, checkStatus, SetPassword } from "../../auth/login";
 
@@ -117,6 +118,7 @@ function Login() {
                 setIsLoading(false);
                 return;
             }
+            // 1. Store Token
 
             // 2. Store Critical Data in LocalStorage
             // The backend MUST return 'userId' and 'role' in the JSON response

@@ -1,20 +1,18 @@
-package com.university.backend.entity;
+package com.university.backend.entity.AssignmentSubmissions;
 
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "hall_attributes")
-public class HallAttribute {
+@Table(name = "submission_attributes")
+public class SubmissionAttributes {
 
-    //attributeId
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long AttributeId;
 
-    //EntityId
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "hall_id", nullable = false)
-    private Hall hall;
+    @JoinColumn(name = "submission_id", nullable = false)
+    private AssignmentSubmission submission;
 
     @Column(nullable = false)
     private String attributeName;
@@ -22,10 +20,10 @@ public class HallAttribute {
     @Column(nullable = false)
     private String dataType;
 
-    public HallAttribute() {}
+    public SubmissionAttributes() {}
 
-    public HallAttribute(Hall hall, String attributeName, String dataType) {
-        this.hall = hall;
+    public SubmissionAttributes(AssignmentSubmission submission, String attributeName, String dataType) {
+        this.submission = submission;
         this.attributeName = attributeName;
         this.dataType = dataType;
     }
@@ -33,8 +31,8 @@ public class HallAttribute {
     // Getters and Setters
     public Long getId() { return AttributeId; }
     public void setId(Long id) { this.AttributeId = id; }
-    public Hall getHall() { return hall; }
-    public void setHall(Hall hall) { this.hall = hall; }
+    public AssignmentSubmission getSubmission() { return submission; }
+    public void setSubmission(AssignmentSubmission submission) { this.submission = submission; }
     public String getAttributeName() { return attributeName; }
     public void setAttributeName(String attributeName) { this.attributeName = attributeName; }
     public String getDataType() { return dataType; }

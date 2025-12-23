@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
+import { Icon } from './Admin-Student-Api';
 import { getAdmin, Icon } from './Admin-Student-Api'
 import { jwtDecode } from "jwt-decode";
 
 const AdminDashboard = () => {
     const [admin, setAdmin] = useState("");
+    const location = useLocation();
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -43,11 +45,17 @@ const AdminDashboard = () => {
             accent: 'violet',
             path: '/Admin/Curriculum'
         },
-        // --- Professor BUTTON ADDED BELOW ---
+        {
+            title: 'Requests & Approvals',
+            sub: 'Track pending requests and actions',
+            icon: Icon.requests,
+            accent: 'citrus',
+            path: '/Admin/Requests'
+        },
         {
             title: 'Professors',
             sub: 'Manage faculty assignments and staff',
-            icon: Icon.professor, /* Make sure to add 'professor' to your Icon export in Admin-Student-Api */
+            icon: Icon.professor,
             accent: 'emerald',
             path: '/Admin/Professors'
         },
@@ -62,6 +70,7 @@ const AdminDashboard = () => {
 
     return (
         <div className="shell">
+            {/* --- TOPBAR --- */}
             <header className="topbar" role="banner">
                 <div className="topbar-left">
                     <div className="brand-mini">
@@ -85,11 +94,9 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             </header>
-            {/*// header section end*/}
 
-            {/*/////////////////////////////////////////////////////////////////////////////////////////////////*/}
-            {/*/////////////////////////////////////////////////////////////////////////////////////////////////*/}
 
+            {/* --- MAIN CONTENT --- */}
             <main className="main" role="main">
                 <div className="page-header">
                     <div className="page-title">
@@ -122,8 +129,7 @@ const AdminDashboard = () => {
                                 )}
                             </div>
                         </Link>
-                    )
-                    )}
+                    ))}
                 </div>
             </main>
         </div>

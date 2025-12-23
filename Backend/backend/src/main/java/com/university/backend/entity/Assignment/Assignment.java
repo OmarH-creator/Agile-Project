@@ -1,5 +1,7 @@
-package com.university.backend.entity;
+package com.university.backend.entity.Assignment;
 
+import com.university.backend.entity.Course;
+import com.university.backend.entity.Professor;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;

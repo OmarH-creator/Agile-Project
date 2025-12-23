@@ -1,6 +1,6 @@
 package com.university.backend.repository;
 
-import com.university.backend.entity.Hall;
+import com.university.backend.entity.Hall.Hall;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

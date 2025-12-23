@@ -1,6 +1,7 @@
 package com.university.backend.controllers;
 
 import com.university.backend.entity.*;
+import com.university.backend.entity.Hall.Hall;
 import com.university.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
