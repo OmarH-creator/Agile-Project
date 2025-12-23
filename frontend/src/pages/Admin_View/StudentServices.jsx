@@ -13,6 +13,12 @@ import umsLogo from "../../assets/UMS Logo.png";
 
 const StudentServices = () => {
     // --- STATE ---
+    const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+    const [studentToSelect, setStudentToSelect] = useState(null);
+    const [showSuccessToast, setShowSuccessToast] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [studentToDelete, setStudentToDelete] = useState(null);
     const [students, setStudents] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -69,10 +75,34 @@ const StudentServices = () => {
     };
 
     const handleSelectStudent = (student) => {
-        if (formMode !== 'view' && !window.confirm("Unsaved changes will be lost. Continue?")) return;
-        setSelectedStudent(student);
-        setFormMode('view');
-        setError(null);
+        if (formMode === 'view') {
+            setSelectedStudent(student);
+            setFormMode('view');
+            setError(null);
+            return;
+        }
+
+        // If we're in edit/add mode, show confirmation modal
+        setStudentToSelect(student);
+        setShowUnsavedChangesModal(true);
+    };
+    const handleConfirmDiscardChanges = () => {
+        if (studentToSelect) {
+            setSelectedStudent(studentToSelect);
+            setFormMode('view');
+            setError(null);
+        }
+
+        // Close the modal
+        setShowUnsavedChangesModal(false);
+        setStudentToSelect(null);
+    };
+
+// Handle canceling the discard changes action
+    const handleCancelDiscardChanges = () => {
+        // Just close the modal, don't select the student
+        setShowUnsavedChangesModal(false);
+        setStudentToSelect(null);
     };
 
     // --- ADD / EDIT / DELETE ACTIONS ---
@@ -147,7 +177,11 @@ const StudentServices = () => {
             if (formMode === 'add') {
                 // ... rest of your add logic
                 await createStudent(payload);
-                alert('Student Created Successfully!');
+                setSuccessMessage('Student Created Successfully!');
+                setShowSuccessToast(true);
+
+                // Auto-hide toast after 3 seconds
+                setTimeout(() => setShowSuccessToast(false), 3000);
 
                 // Refresh list and select the new student (optional)
                 triggerSearch(0, searchQuery);
@@ -165,7 +199,12 @@ const StudentServices = () => {
                 setStudents(updatedList);
                 setSelectedStudent({ ...selectedStudent, ...payload });
 
-                alert('Student Updated Successfully!');
+                //alert('Student Updated Successfully!');
+                setSuccessMessage('Student Updated Successfully!');
+                setShowSuccessToast(true);
+
+                // Auto-hide toast after 3 seconds
+                setTimeout(() => setShowSuccessToast(false), 3000);
                 setFormMode('view');
             }
         } catch (err) {
@@ -177,22 +216,47 @@ const StudentServices = () => {
     };
 
     // 5. DELETE
-    const handleDeleteClick = async () => {
+    const handleDeleteClick = () => {
         if (!selectedStudent) return;
-        const id = selectedStudent.studentId || selectedStudent.code;
+        setStudentToDelete(selectedStudent);
+        setShowDeleteModal(true);
+    };
 
-        if (!window.confirm(`Are you sure you want to delete ${selectedStudent.name}?`)) return;
+    const handleConfirmDelete = async () => {
+        if (!studentToDelete) return;
+
+        const id = studentToDelete.studentId || studentToDelete.code;
+        setLoading(true);
+        setError(null);
 
         try {
             await deleteStudent(id);
+
             // Remove from local list
-            setStudents(prev => prev.filter(s => s.studentId !== id && s.code !== id));
-            setSelectedStudent(null);
-            setFormMode('view');
-            alert("Student deleted.");
+            setStudents(prev => prev.filter(s =>
+                s.studentId !== id && s.code !== id
+            ));
+
+            // Clear selection if we deleted the selected student
+            if (selectedStudent && (selectedStudent.studentId === id || selectedStudent.code === id)) {
+                setSelectedStudent(null);
+                setFormMode('view');
+            }
+
+
+
         } catch (err) {
-            setError(err.message);
+            setError(err.message || 'Failed to delete student');
+        } finally {
+            setLoading(false);
+            setShowDeleteModal(false);
+            setStudentToDelete(null);
         }
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
+        setStudentToDelete(null);
     };
 
     const handleCancelForm = () => {
@@ -416,6 +480,73 @@ const StudentServices = () => {
                                         </button>
                                     </div>
                                 </form>
+                            </div>
+                        )}
+                        {/* ... all your existing JSX ... */}
+
+                        {/* Delete Confirmation Modal */}
+                        {showDeleteModal && studentToDelete && (
+                            <div className="modal-backdrop" onClick={handleCancelDelete}>
+                                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                    <div className="modal-header">
+                                        <h3>Confirm Deletion</h3>
+                                    </div>
+                                    <div className="modal-body">
+                                        <p>Are you sure you want to delete <strong>{studentToDelete.name}</strong> ({studentToDelete.studentId || studentToDelete.code})?</p>
+                                        <p style={{color: '#d24c5f', marginTop: '10px'}}>This action cannot be undone.</p>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button
+                                            className="ghost-btn"
+                                            onClick={handleCancelDelete}
+                                            disabled={loading}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            className="primary-btn danger"
+                                            onClick={handleConfirmDelete}
+                                            disabled={loading}
+                                            style={{background: '#d24c5f'}}
+                                        >
+                                            {loading ? 'Deleting...' : 'Delete Student'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {showSuccessToast && (
+                            <div className="toast">
+                                <span>{Icon.check16 || '✓'}</span>
+                                <span>{successMessage}</span>
+                            </div>
+                        )}
+                        {showUnsavedChangesModal && (
+                            <div className="modal-backdrop" onClick={handleCancelDiscardChanges}>
+                                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                    <div className="modal-header">
+                                        <h3>Unsaved Changes</h3>
+                                    </div>
+                                    <div className="modal-body">
+                                        <p>You have unsaved changes. Are you sure you want to continue?</p>
+                                        <p style={{color: '#ff9800', marginTop: '10px'}}>Your changes will be lost.</p>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button
+                                            className="ghost-btn"
+                                            onClick={handleCancelDiscardChanges}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            className="primary-btn"
+                                            onClick={handleConfirmDiscardChanges}
+                                            style={{background: '#ff9800'}}
+                                        >
+                                            Continue Anyway
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </section>
