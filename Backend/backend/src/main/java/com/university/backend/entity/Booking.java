@@ -2,6 +2,7 @@ package com.university.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.university.backend.entity.Hall.Hall;
 import jakarta.persistence.*;
 import java.util.Date;
 

@@ -57,8 +57,21 @@ function Login() {
                 setIsLoading(false);
                 return;
             }
+            // 1. Store Token
             localStorage.setItem("token", data.token);
+
+            // 2. Store Role (for routing checks)
+            localStorage.setItem("userRole", data.role);
+
+            // 3. Store Business ID (Critical for Dashboard API calls)
+            // The backend must return "businessId" (e.g., "P-101")
+            if (data.businessId) {
+                localStorage.setItem("userId", data.businessId);
+            }
+
             confetti({ particleCount: 200, spread: 150, origin: { y: 0.6 } });
+            // 4. Navigate based on Role
+            // Ensure these strings match exactly what is in your DB (case-sensitive)
             if(data.role === "ADMIN"){
                 navigate("/Admin");
             }
@@ -67,6 +80,8 @@ function Login() {
             }
             else if(data.role === "PROFESSOR"){
                 navigate("/professor");
+            }else{
+                setError("Unknown role: " + data.role);
             }
         } catch (err) {
             setError(err.message || "Login failed. Please try again.");

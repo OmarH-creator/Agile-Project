@@ -1,6 +1,6 @@
 package com.university.backend.repository;
 
-import com.university.backend.entity.AssignmentSubmission;
+import com.university.backend.entity.AssignmentSubmissions.AssignmentSubmission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.List;

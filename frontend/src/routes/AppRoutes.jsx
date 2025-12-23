@@ -7,7 +7,7 @@ import EditCourses from '../pages/EditCourses/EditCourses';
 import StudentServices from "../pages/Admin_View/StudentServices";
 import ProfessorRecords from "../pages/Admin_View/ProfessorRecords";
 import ProfessorManagement from "../pages/Admin_View/ProfessorManagement"; // Import the new file
-
+import ProfessorDashboard from "../pages/TeachingStaff_View/ProfessorDashboard";
 function AppRoutes() {
   return (
     <Router>
@@ -20,7 +20,8 @@ function AppRoutes() {
         <Route path="/Admin/Facilities" element={<FacilitiesUI />} />
         <Route path="/Admin/Curriculum" element={<Curriculum />} />
         <Route path="/Admin/Curriculum/Edit-courses" element={<EditCourses />} />
-
+        {/* 2. ADD THIS ROUTE */}
+        <Route path="/professor" element={<ProfessorDashboard />} />
         <Route path="/Student" />
       </Routes>
     </Router>

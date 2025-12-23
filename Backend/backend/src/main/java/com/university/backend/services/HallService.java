@@ -1,8 +1,10 @@
 package com.university.backend.services;
 
+import com.university.backend.entity.Hall.HallAttribute;
 import com.university.backend.dto.HallResponseDTO;
-import com.university.backend.entity.*;
+import com.university.backend.entity.Hall.Hall;
 import com.university.backend.repository.HallRepository;
+import com.university.backend.entity.Hall.HallValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -2,7 +2,7 @@ package com.university.backend.repository;
 
 import com.university.backend.entity.Course;
 import com.university.backend.entity.CoursePrerequisite;
-import com.university.backend.entity.Hall;
+import com.university.backend.entity.Hall.Hall;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
-import {Icon} from './Admin-Student-Api'
+import { Icon } from './Admin-Student-Api';
 
 const AdminDashboard = () => {
-    // Initialize with empty array - students will be loaded from backend
+    // Used to highlight the active link in the sidebar
+    const location = useLocation();
 
     const tiles = [
         {
@@ -36,11 +37,10 @@ const AdminDashboard = () => {
             accent: 'citrus',
             path: '/Admin/Requests'
         },
-        // --- Professor BUTTON ADDED BELOW ---
         {
             title: 'Professors',
             sub: 'Manage faculty assignments and staff',
-            icon: Icon.professor, /* Make sure to add 'professor' to your Icon export in Admin-Student-Api */
+            icon: Icon.professor,
             accent: 'emerald',
             path: '/Admin/Professors'
         }
@@ -48,6 +48,7 @@ const AdminDashboard = () => {
 
     return (
         <div className="shell">
+            {/* --- TOPBAR --- */}
             <header className="topbar" role="banner">
                 <div className="topbar-left">
                     <button className="icon-btn" aria-label="Menu" title="Menu">
@@ -73,11 +74,9 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             </header>
-            {/*// header section end*/}
 
-            {/*/////////////////////////////////////////////////////////////////////////////////////////////////*/}
-            {/*/////////////////////////////////////////////////////////////////////////////////////////////////*/}
 
+            {/* --- MAIN CONTENT --- */}
             <main className="main" role="main">
                 <div className="page-header">
                     <div className="page-title">
@@ -90,29 +89,28 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 </div>
-                    <div className="grid">
-                        {tiles.map((tile) => (
-                                <Link
-                                    to={tile.path ?? '#'}
-                                    key={tile.title}
-                                    className="card"
-                                    data-accent={tile.accent}
-                                >
-                                    <div className="card-title">
-                                        <div>
-                                            <div className="card-heading">{tile.title}</div>
-                                            {tile.sub && <p className="card-sub">{tile.sub}</p>}
-                                        </div>
-                                        {tile.icon && (
-                                            <div className="card-icon" aria-hidden="true" data-accent={tile.accent}>
-                                                {tile.icon}
-                                            </div>
-                                        )}
+                <div className="grid">
+                    {tiles.map((tile) => (
+                        <Link
+                            to={tile.path ?? '#'}
+                            key={tile.title}
+                            className="card"
+                            data-accent={tile.accent}
+                        >
+                            <div className="card-title">
+                                <div>
+                                    <div className="card-heading">{tile.title}</div>
+                                    {tile.sub && <p className="card-sub">{tile.sub}</p>}
+                                </div>
+                                {tile.icon && (
+                                    <div className="card-icon" aria-hidden="true" data-accent={tile.accent}>
+                                        {tile.icon}
                                     </div>
-                                </Link>
-                            )
-                        )}
-                    </div>
+                                )}
+                            </div>
+                        </Link>
+                    ))}
+                </div>
             </main>
         </div>
     );
