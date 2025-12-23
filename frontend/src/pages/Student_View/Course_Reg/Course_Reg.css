@@ -398,8 +398,8 @@ body {
 .btn-drop:hover { background: #ef4444; color: white; }
 
 .btn-disabled {
-    background: transparent;
     color: var(--neo-muted);
+    background: transparent;
     cursor: not-allowed;
     opacity: 0.5;
     border: 1px solid rgba(239, 68, 68, 0.3);
