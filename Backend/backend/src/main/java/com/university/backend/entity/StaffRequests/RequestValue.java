@@ -1,24 +1,23 @@
-package com.university.backend.entity.AssignmentSubmissions;
+package com.university.backend.entity.StaffRequests;
 
 import jakarta.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "submission_values")
-public class SubmissionValue {
+@Table(name = "request_values")
+public class RequestValue {
 
-    //valueId
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long ValueId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "submission_id", nullable = false)
-    private AssignmentSubmission submission;
+    @JoinColumn(name = "request_id", nullable = false)
+    private StaffRequest request;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "attribute_id", nullable = false)
-    private SubmissionAttributes attribute;
+    private RequestAttributes attribute;
 
     // --- Sparse Columns ---
     @Column(name = "val_string")
@@ -37,32 +36,32 @@ public class SubmissionValue {
     @Column(name = "val_date")
     private Date valDate;
 
-    public SubmissionValue() {}
+    public RequestValue() {}
 
     // Constructors for different types
-    public SubmissionValue(AssignmentSubmission sub, SubmissionAttributes attr, String val) {
-        this.submission = sub; this.attribute = attr; this.valString = val;
+    public RequestValue(StaffRequest request, RequestAttributes attr, String val) {
+        this.request = request; this.attribute = attr; this.valString = val;
     }
-    public SubmissionValue(AssignmentSubmission sub, SubmissionAttributes attr, Integer val) {
-        this.submission = sub; this.attribute = attr; this.valInt = val;
+    public RequestValue(StaffRequest request, RequestAttributes attr, Integer val) {
+        this.request = request; this.attribute = attr; this.valInt = val;
     }
-    public SubmissionValue(AssignmentSubmission sub, SubmissionAttributes attr, Double val) {
-        this.submission = sub; this.attribute = attr; this.valDouble = val;
+    public RequestValue(StaffRequest request, RequestAttributes attr, Double val) {
+        this.request = request; this.attribute = attr; this.valDouble = val;
     }
-    public SubmissionValue(AssignmentSubmission sub, SubmissionAttributes attr, Boolean val) {
-        this.submission = sub; this.attribute = attr; this.valBool = val;
+    public RequestValue(StaffRequest request, RequestAttributes attr, Boolean val) {
+        this.request = request; this.attribute = attr; this.valBool = val;
     }
-    public SubmissionValue(AssignmentSubmission sub, SubmissionAttributes attr, Date val) {
-        this.submission = sub; this.attribute = attr; this.valDate = val;
+    public RequestValue(StaffRequest request, RequestAttributes attr, Date val) {
+        this.request = request; this.attribute = attr; this.valDate = val;
     }
 
     // Getters and Setters
     public Long getId() { return ValueId; }
     public void setId(Long id) { this.ValueId = id; }
-    public AssignmentSubmission getSubmission() { return submission; }
-    public void setSubmission(AssignmentSubmission submission) { this.submission = submission; }
-    public SubmissionAttributes getAttribute() { return attribute; }
-    public void setAttribute(SubmissionAttributes attribute) { this.attribute = attribute; }
+    public StaffRequest getRequest() { return request; }
+    public void setRequest(StaffRequest request) { this.request = request; }
+    public RequestAttributes getAttribute() { return attribute; }
+    public void setAttribute(RequestAttributes attribute) { this.attribute = attribute; }
 
     public String getValString() { return valString; }
     public void setValString(String valString) { this.valString = valString; }

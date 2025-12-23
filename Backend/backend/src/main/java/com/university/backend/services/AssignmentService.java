@@ -1,13 +1,14 @@
 package com.university.backend.services;
 
-import com.university.backend.entity.Assignment.AssignmentAttributes;
 import com.university.backend.dto.AssignmentResponseDTO;
-import com.university.backend.entity.*;
 import com.university.backend.entity.Assignment.Assignment;
+import com.university.backend.entity.Assignment.AssignmentAttributes;
+import com.university.backend.entity.Assignment.AssignmentValue;
+import com.university.backend.entity.Course;
+import com.university.backend.entity.Professor;
 import com.university.backend.repository.AssignmentRepository;
 import com.university.backend.repository.CourseRepository;
-import com.university.backend.repository.ProfessorRepository; // Or UserRepository
-import com.university.backend.entity.Assignment.AssignmentValue;
+import com.university.backend.repository.ProfessorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
