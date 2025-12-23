@@ -1,31 +1,36 @@
 package com.university.backend.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import com.university.backend.entity.Student;
-import java.util.Optional;
-import org.springframework.transaction.annotation.Transactional; // Import needed for deletion
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 
-// T is Student, ID is String
+import java.util.Optional;
+
+// T is Student, ID is String (Assuming studentId is the PK or you rely on findByStudentId)
 public interface StudentRepository extends JpaRepository<Student, String> {
-// These methods MUST be defined here for the Controller to see them
 
-    // Custom finder to search by business key (studentId)
+    // --- ESSENTIAL FOR STUDENT CONTROLLER ---
+
+    // 1. Login/Profile lookup by ID
     Optional<Student> findByStudentId(String studentId);
 
-    // Check if student exists by business key
-    boolean existsByStudentId(String studentId);
-
-    // Find by email
+    // 2. Login/Profile lookup by Email
     Optional<Student> findByEmail(String email);
 
-    // ADDED THIS to check for unique phone numbers
+    // --- VALIDATION CHECKS ---
+
+    // Check if student exists (Used during creation)
+    boolean existsByStudentId(String studentId);
+
+    // Check for unique phone numbers
     Optional<Student> findByPhone(String phone);
 
+    // --- SEARCH & PAGINATION (For Admin View) ---
     Page<Student> findByStudentIdStartingWith(String prefix, Pageable pageable);
- // --- NEW: Deletion Method ---
-    @Transactional // Required for modifying operations
+
+    // --- MAINTENANCE ---
+    @Transactional
     void deleteByStudentId(String studentId);
 }

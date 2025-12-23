@@ -6,7 +6,9 @@ import Curriculum from '../pages/Curriculum/Curriculum';
 import EditCourses from '../pages/EditCourses/EditCourses';
 import StudentServices from "../pages/Admin_View/StudentServices";
 import ProfessorRecords from "../pages/Admin_View/ProfessorRecords";
-import ProfessorManagement from "../pages/Admin_View/ProfessorManagement"; // Import the new file
+import ProfessorManagement from "../pages/Admin_View/ProfessorManagement";
+import StudentDashboard from "../pages/Student_View/StudentDashboard";
+import Course_Reg from "../pages/Student_View/Course_Reg/Course_Reg"; // Import the new file
 
 function AppRoutes() {
   return (
@@ -21,7 +23,8 @@ function AppRoutes() {
         <Route path="/Admin/Curriculum" element={<Curriculum />} />
         <Route path="/Admin/Curriculum/Edit-courses" element={<EditCourses />} />
 
-        <Route path="/Student" />
+        <Route path="/Student" element={<StudentDashboard/>}/>
+        <Route path="/Student/registration" element={<Course_Reg/>}/>
       </Routes>
     </Router>
   );
