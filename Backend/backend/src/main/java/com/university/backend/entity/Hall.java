@@ -1,8 +1,6 @@
 package com.university.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,71 +9,53 @@ import java.util.List;
 public class Hall {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long hallId;
+
+    // --- STATIC COLUMNS (Real Relationships) ---
+
+    @Column(nullable = false)
     private String hallName;
 
-    @Column( nullable = false, length = 255)
-    private int capacity;
+    // --- DYNAMIC EAV MAPPING ---
 
-    // CHANGED: Use @OneToMany to manage the collection of Booking entities
     @OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<Booking> bookings = new ArrayList<>();
+    private List<HallAttribute> attributes = new ArrayList<>();
 
-    // Default constructor
+    @OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<HallValue> values = new ArrayList<>();
+
+    // --- CONSTRUCTORS ---
+
     public Hall() {
+        // Universal dynamic attributes
+        this.addAttribute("Name", "STRING");
+        this.addAttribute("Location", "STRING");
+        this.addAttribute("Capacity", "INTEGER");
     }
 
-    public Hall(String hallName, int capacity) {
+    public Hall(String hallName) {
+        this(); // Initialize attributes
         this.hallName = hallName;
-        this.capacity = capacity;
     }
 
-    /**
-     * Attempts to book the hall. If successful, it creates the new Booking entity
-     * and adds the reference to this Hall.
-     */
-    public boolean book(Date start, Date end, String purpose, long reservationId, String staffId) {
-        // Create a temporary booking object for conflict checking
-        Booking newBooking = new Booking(start, end, purpose, reservationId, staffId, this);
-
-        // Check for conflict with existing bookings
-        for (Booking b : bookings) {
-            if (b.conflictsWith(newBooking)) {
-                return false; // Overlapping
-            }
-        }
-
-        // Set the bidirectional relationship and add to the list
-        newBooking.setHall(this);
-        bookings.add(newBooking);
-        return true;
+    // Helper to add attribute
+    private void addAttribute(String name, String type) {
+        HallAttribute attr = new HallAttribute(this, name, type);
+        this.attributes.add(attr);
     }
 
-    /**
-     * Checks availability without creating a new booking.
-     * Note: This method now only needs the dates for conflict checking.
-     */
-    public boolean isAvailable(Date start, Date end) {
-        // Since we only need dates for checking, we can use a dummy Booking object
-        // for the conflictsWith logic.
-        Booking temp = new Booking();
-        temp.setStartTime(start);
-        temp.setEndTime(end);
+    // --- GETTERS AND SETTERS ---
 
-        for (Booking b : bookings) {
-            if (b.conflictsWith(temp)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // --- Getters and Setters ---
+    public Long getId() { return hallId; }
+    public void setId(Long id) { this.hallId = id; }
 
     public String getHallName() { return hallName; }
     public void setHallName(String hallName) { this.hallName = hallName; }
-    public int getCapacity() { return capacity; }
-    public void setCapacity(int capacity) { this.capacity = capacity; }
-    public List<Booking> getBookings() { return bookings; }
-    public void setBookings(List<Booking> bookings) { this.bookings = bookings; }
+
+    public List<HallAttribute> getAttributes() { return attributes; }
+    public void setAttributes(List<HallAttribute> attributes) { this.attributes = attributes; }
+
+    public List<HallValue> getValues() { return values; }
+    public void setValues(List<HallValue> values) { this.values = values; }
 }

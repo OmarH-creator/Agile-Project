@@ -48,7 +48,7 @@ public class Assignment {
     }
 
     public Assignment(String title, Course course, Professor professor) {
-        this(); // Initialize attributes
+        this(); // Initialize attributes by calling the default constructor above
         this.title = title;
         this.course = course;
         this.professor = professor;
