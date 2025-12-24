@@ -526,7 +526,7 @@ public class AdminController {
         return ResponseEntity.ok("Hall updated successfully.");
     }
     // --- Course Management --- ADDED THIS SECTION
-
+    // this is related to the course managment
     @PostMapping("/courses")
     public ResponseEntity<String> addCourse(@RequestBody Course course) {
         if (courseRepository.existsByCourseCode(course.getCourseCode())) {
