@@ -1,10 +1,15 @@
 package com.university.backend.repository;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import com.university.backend.entity.Student;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional; // Import needed for deletion
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.Optional;
 
@@ -33,4 +38,6 @@ public interface StudentRepository extends JpaRepository<Student, String> {
     // --- MAINTENANCE ---
     @Transactional
     void deleteByStudentId(String studentId);
+ //FOR Parent View
+    List<Student> findByStudentIdIn(List<String> studentIds);
 }
