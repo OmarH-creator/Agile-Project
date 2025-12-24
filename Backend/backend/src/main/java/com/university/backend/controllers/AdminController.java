@@ -5,6 +5,7 @@ import com.university.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,8 @@ public class AdminController {
     @Autowired
     private MajorRepository majorRepository; // ADDED
 
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private BookingRepository bookingRepository; // ADDED
@@ -55,55 +58,61 @@ public class AdminController {
     }
     // --- Student Management ---
 
-    // CREATE STUDENT
+    // ==========================================
+    // CREATE STUDENT + USER
+    // ==========================================
     @PostMapping("/students")
+    @Transactional // Ensures both User and Student are saved, or neither
     public ResponseEntity<?> createStudentRecord(@RequestBody Map<String, Object> payload) {
         String studentId = (String) payload.get("studentId");
+        String email = (String) payload.get("email");
 
-        // 1. Check if student already exists
+        // 1. Check if Student OR User already exists
         if (studentRepository.existsByStudentId(studentId)) {
             return ResponseEntity.badRequest().body("Student with this ID already exists.");
         }
+        if (userRepository.existsByEmail(email)) {
+            return ResponseEntity.badRequest().body("User with this Email already exists.");
+        }
 
         try {
-            // 2. Create new Student object and map simple fields
+            // 2. Create the Login User (The account they use to log in)
+            User newUser = new User();
+            newUser.setEmail(email);
+            // Set default password to the Student ID (encrypted)
+            newUser.setPassword("null");
+            newUser.setRole("STUDENT");
+            userRepository.save(newUser);
+
+            // 3. Create new Student object (Business Data)
             Student student = new Student();
             student.setStudentId(studentId);
             student.setName((String) payload.get("name"));
-            student.setEmail((String) payload.get("email"));
+            student.setEmail(email);
             student.setPhone((String) payload.get("phone"));
             student.setAddress((String) payload.get("address"));
             student.setMilitaryStatus((String) payload.get("militaryStatus"));
 
-//            // Handle Numbers safely (JSON numbers can be Integer or Double)
-//            if (payload.get("gradYear") != null)
-//                student.setGradYear(((Number) payload.get("gradYear")).intValue());
-//
-//            if (payload.get("completedHours") != null)
-//                student.setCompletedHours(((Number) payload.get("completedHours")).intValue());
-//
-//            if (payload.get("fees") != null)
-//                student.setFees(((Number) payload.get("fees")).doubleValue());
-//
-//            if (payload.get("gpa") != null)
-//                student.setGpa(((Number) payload.get("gpa")).doubleValue());
+            // (Optional) If you have a relationship, link them:
+            // student.setUser(newUser);
 
-            // 3. THE FIX: Look up the Major manually
+            // 4. Handle Major
             String majorId = (String) payload.get("majorId");
             if (majorId != null) {
                 Major major = majorRepository.findById(majorId)
                         .orElseThrow(() -> new RuntimeException("Major not found: " + majorId));
-                student.setMajor(major); // Set the relationship
+                student.setMajor(major);
             } else {
-                return ResponseEntity.badRequest().body("Major ID is required.");
+                throw new RuntimeException("Major ID is required.");
             }
 
-            // 4. Save
+            // 5. Save Student
             studentRepository.save(student);
-            return ResponseEntity.ok("Student created successfully.");
+            return ResponseEntity.ok("Student and User account created successfully.");
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error saving student: " + e.getMessage());
+            // Throwing exception triggers rollback for @Transactional
+            throw new RuntimeException("Error creating student: " + e.getMessage());
         }
     }
 
@@ -176,13 +185,23 @@ public class AdminController {
             return ResponseEntity.internalServerError().body("System Error: " + e.getMessage());
         }
     }
-    @GetMapping("/students/{studentId}")
-    public ResponseEntity<?> getStudent(@PathVariable String studentId) {
-        Optional<Student> student = studentRepository.findByStudentId(studentId);
+    @GetMapping("/students/{idOrEmail}")
+    public ResponseEntity<?> getStudent(@PathVariable String idOrEmail) {
+        Optional<Student> student;
+
+        // Smart check: If it looks like an email, search by email. Otherwise, ID.
+        if (idOrEmail.contains("@")) {
+            student = studentRepository.findByEmail(idOrEmail);
+        } else {
+            student = studentRepository.findByStudentId(idOrEmail);
+        }
+
+        // Return result
         if (student.isPresent()) {
             return ResponseEntity.ok(student.get());
         }
-        return ResponseEntity.status(404).body("Student not found.");
+
+        return ResponseEntity.status(404).body("Student not found with identifier: " + idOrEmail);
     }
 
     // GET ALL STUDENTS (With Pagination)
@@ -243,14 +262,42 @@ public class AdminController {
 
     // --- Professor Management ---
 
+    // ==========================================
+    // CREATE PROFESSOR + USER
+    // ==========================================
     @PostMapping("/professors")
+    @Transactional
     public ResponseEntity<String> createProfessorRecord(@RequestBody Professor professor) {
+
+        // 1. Check duplicates
         if (professorRepository.existsByProfessorId(professor.getProfessorId())) {
             return ResponseEntity.badRequest().body("Professor with this ID already exists.");
         }
-        professorRepository.save(professor);
-        return ResponseEntity.ok("Professor created successfully.");
+        if (userRepository.existsByEmail(professor.getProfessorEmail())) {
+            return ResponseEntity.badRequest().body("User with this Email already exists.");
+        }
+
+        try {
+            // 2. Create the Login User
+            User newUser = new User();
+            newUser.setEmail(professor.getProfessorEmail());
+            // Set default password to the Professor ID (encrypted)
+            newUser.setPassword("null");
+            newUser.setRole("PROFESSOR");
+            userRepository.save(newUser);
+
+            // 3. Save Professor
+            // (Optional) Link them if your entity has a user field:
+            // professor.setUser(newUser);
+
+            professorRepository.save(professor);
+            return ResponseEntity.ok("Professor and User account created successfully.");
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating professor: " + e.getMessage());
+        }
     }
+
 
     // GET ALL PROFESSORS (With Pagination and Search)
     // Usage: GET /api/admin/professors?page=0&size=10&search=P-1
@@ -526,7 +573,7 @@ public class AdminController {
         return ResponseEntity.ok("Hall updated successfully.");
     }
     // --- Course Management --- ADDED THIS SECTION
-
+    // this is related to the course managment
     @PostMapping("/courses")
     public ResponseEntity<String> addCourse(@RequestBody Course course) {
         if (courseRepository.existsByCourseCode(course.getCourseCode())) {
