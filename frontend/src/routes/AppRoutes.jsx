@@ -9,7 +9,7 @@ import ProfessorRecords from "../pages/Admin_View/ProfessorRecords";
 import ProfessorManagement from "../pages/Admin_View/ProfessorManagement";
 import StudentDashboard from "../pages/Student_View/StudentDashboard";
 import Course_Reg from "../pages/Student_View/Course_Reg/Course_Reg"; // Import the new file
-
+import ParentDashboard from "../pages/Parent/ParentDashboard";
 function AppRoutes() {
   return (
     <Router>
@@ -25,6 +25,7 @@ function AppRoutes() {
 
         <Route path="/Student" element={<StudentDashboard/>}/>
         <Route path="/Student/registration" element={<Course_Reg/>}/>
+        <Route path="/parent" element={<ParentDashboard />} />
       </Routes>
     </Router>
   );

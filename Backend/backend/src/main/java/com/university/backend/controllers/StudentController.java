@@ -44,7 +44,7 @@ public class StudentController {
         Student student = studentOpt.get();
         return ResponseEntity.ok(student);
     }
-
+/*
     // --- 2. GET ALL AVAILABLE COURSES ---
     // Frontend uses this to populate the registration table
     @GetMapping("/courses")
@@ -84,8 +84,8 @@ public class StudentController {
         }
 
         return ResponseEntity.ok(responseList);
-    }
-
+    }*/
+/*
     // --- 3. REGISTER FOR A COURSE ---
     @PostMapping("/{studentId}/register")
     public ResponseEntity<?> registerCourse(@PathVariable String studentId, @RequestBody Map<String, String> payload) {
@@ -163,7 +163,7 @@ public class StudentController {
         studentRepository.save(student);
 
         return ResponseEntity.ok("Successfully registered for " + course.getCourseName());
-    }
+    }*/
 
     // --- 4. DROP A COURSE ---
     @PostMapping("/{studentId}/drop")

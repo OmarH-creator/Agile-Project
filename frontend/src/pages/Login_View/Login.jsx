@@ -103,6 +103,7 @@ function Login() {
             if(data.role === "ADMIN") navigate("/admin");
             else if(data.role === "STUDENT") navigate("/student");
             else if(data.role === "PROFESSOR") navigate("/professor");
+            else if(data.role === "PARENT") navigate("/parent");
             else setError("User role not recognized.");
 
         } catch (err) {
