@@ -1,5 +1,7 @@
 import {jwtDecode} from 'jwt-decode';
 
+const API_BASE_URL = "http://localhost:8081/api/auth";
+
 export async function login(email, password) {
   const response = await fetch("http://localhost:8081/api/auth/login", {
     method: "POST",
@@ -16,6 +18,41 @@ export async function login(email, password) {
   }
   return await response.json(); // { token: ... }
 }
+
+export async function checkStatus(email) {
+  const response = await fetch(`${API_BASE_URL}/check-status`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({email})
+  });
+  // Throws an error if not successful
+  if (!response.ok) {
+    return response.text().then(text => {
+      // Show the error message in your UI
+      throw new Error(text);
+    });
+  }
+  return await response.json(); // { token: ... }
+}
+
+export async function SetPassword(email, newPassword) {
+  const response = await fetch(`${API_BASE_URL}/set-initial-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, newPassword })
+  });
+
+  // Throws an error if not successful
+  if (!response.ok) {
+    return response.text().then(text => {
+      // Show the error message in your UI
+      throw new Error(text);
+    });
+  }
+  return await response.text(); // { token: ... }
+}
+
+
 
 export function isAuthenticated() {
   const token = localStorage.getItem('token');
