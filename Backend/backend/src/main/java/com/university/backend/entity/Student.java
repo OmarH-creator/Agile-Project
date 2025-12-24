@@ -1,5 +1,6 @@
 package com.university.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,6 +38,7 @@ public class Student {
     private String militaryStatus; // Renamed to camelCase for standard convention
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"student"})
     private List<Course_record> completedCourses = new ArrayList<>();
 
     @ElementCollection
