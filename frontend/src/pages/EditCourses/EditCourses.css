@@ -137,7 +137,8 @@
     gap: 8px;
 }
 
-.edit-action-btn, .delete-action-btn {
+.edit-action-btn,
+.delete-action-btn {
     padding: 8px 16px;
     border: none;
     border-radius: 12px;
@@ -159,7 +160,8 @@
     box-shadow: 6px 6px 12px rgba(255, 107, 107, 0.3), -6px -6px 12px rgba(255, 255, 255, 0.8);
 }
 
-.edit-action-btn:hover, .delete-action-btn:hover {
+.edit-action-btn:hover,
+.delete-action-btn:hover {
     transform: translateY(-1px);
 }
 
@@ -222,7 +224,8 @@
     letter-spacing: 0.5px;
 }
 
-.form-group input, .form-group select {
+.form-group input,
+.form-group select {
     border: none;
     border-radius: 12px;
     padding: 10px 12px;
@@ -248,7 +251,8 @@
     margin-top: 8px;
 }
 
-.cancel-btn, .save-btn {
+.cancel-btn,
+.save-btn {
     padding: 10px 20px;
     border: none;
     border-radius: 12px;
@@ -270,7 +274,8 @@
     box-shadow: 6px 6px 12px rgba(106, 125, 255, 0.4), -6px -6px 12px rgba(255, 255, 255, 0.9);
 }
 
-.cancel-btn:hover, .save-btn:hover {
+.cancel-btn:hover,
+.save-btn:hover {
     transform: translateY(-1px);
 }
 
@@ -308,4 +313,83 @@
     .course-actions {
         justify-content: flex-end;
     }
+}
+
+/* Prerequisite Styling */
+.prereq-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+    min-height: 40px;
+}
+
+.prereq-tag {
+    background: linear-gradient(135deg, rgba(231, 237, 253, 0.9), rgba(219, 227, 248, 0.8));
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--neo-accent-strong);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 2px 2px 5px rgba(183, 190, 208, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.8);
+}
+
+.remove-prereq-btn {
+    background: none;
+    border: none;
+    color: var(--neo-accent-strong);
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.remove-prereq-btn:hover {
+    opacity: 1;
+    color: #ff5252;
+}
+
+.no-prereqs-text {
+    font-size: 13px;
+    color: var(--neo-muted);
+    font-style: italic;
+    padding: 8px;
+}
+
+.add-prereq-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.add-prereq-row select {
+    flex: 1;
+}
+
+.add-prereq-btn {
+    padding: 0 16px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(77, 99, 255, 0.1), rgba(106, 125, 255, 0.05));
+    color: var(--neo-accent-strong);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 4px 4px 8px rgba(183, 190, 208, 0.2), -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+.add-prereq-btn:hover:not(:disabled) {
+    background: rgba(106, 125, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.add-prereq-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
 }

@@ -1,105 +1,84 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import './Curriculum.css';
 import umsLogo from '../../assets/UMS Logo.png';
 import { Link } from 'react-router-dom';
+import { getAllCourses, addCourse, updatePrerequisites } from '../../api/CoursesApi';
 
-const curriculumData = {
-    version: 'CESS-bylaw-2018',
-    notes: [
-        'CSE491 requires standing (>=130 CH) rather than a specific course.',
-        "Electives (EL3/EL4) show 'varies' because prerequisites depend on the chosen course outline."
-    ],
-    courses: [
-        { code: 'CSE111', title: 'Logic Design', semester: 3, prerequisites: [] , creditHours: 3},
-        { code: 'CSE131', title: 'Computer Programming', semester: 3, prerequisites: [] , creditHours: 3},
-        { code: 'PHM113', title: 'Differential & Partial Differential Equations', semester: 3, prerequisites: ['PHM013'], creditHours: 3 },
-        { code: 'EPM118', title: 'Electrical & Electronic Circuits', semester: 3, prerequisites: ['PHM022'], creditHours: 3 },
-        { code: 'EPM211', title: 'Properties of Electrical Materials', semester: 3, prerequisites: ['PHM022'], creditHours: 3 },
-        { code: 'ASU112', title: 'Report Writing & Communication Skills', semester: 3, prerequisites: [], creditHours: 3 },
-
-        { code: 'CSE112', title: 'Computer Organization & Architecture', semester: 4, prerequisites: ['CSE111', 'CSE131'],creditHours: 3 },
-        { code: 'CSE231', title: 'Advanced Computer Programming', semester: 4, prerequisites: ['CSE131'],creditHours: 3 },
-        { code: 'CSE334', title: 'Software Engineering', semester: 4, prerequisites: ['CSE131'],creditHours: 3 },
-        { code: 'PHM111', title: 'Probability & Statistics', semester: 4, prerequisites: ['PHM013'], creditHours: 3 },
-        { code: 'PHM114', title: 'Numerical Analysis', semester: 4, prerequisites: ['PHM113'], creditHours: 3 },
-        { code: 'ASU-EL1', title: 'ASU Elective (1)', semester: 4, prerequisites: [],creditHours: 3 },
-
-        { code: 'CSE312', title: 'Electronic Design Automation', semester: 5, prerequisites: ['CSE112'],creditHours: 3 },
-        { code: 'CSE335', title: 'Operating Systems', semester: 5, prerequisites: ['CSE112'],creditHours: 3 },
-        { code: 'CSE232', title: 'Advanced Software Engineering', semester: 5, prerequisites: ['CSE334'],creditHours: 3 },
-        { code: 'CSE331', title: 'Data Structures & Algorithms', semester: 5, prerequisites: ['CSE231'],creditHours: 3 },
-        { code: 'PHM211', title: 'Discrete Mathematics', semester: 5, prerequisites: ['PHM111', 'PHM113'],creditHours: 3 },
-        { code: 'ECE251', title: 'Signals & Systems Fundamentals', semester: 5, prerequisites: ['PHM111', 'PHM113'],creditHours: 3 },
-
-        { code: 'CSE332', title: 'Design & Analysis of Algorithms', semester: 6, prerequisites: ['CSE331'],creditHours: 3 },
-        { code: 'CSE333', title: 'Database Systems', semester: 6, prerequisites: ['CSE331'],creditHours: 3 },
-        { code: 'CSE338', title: 'Software Testing, Validation & Verification', semester: 6, prerequisites: ['CSE232'],creditHours: 3 },
-        { code: 'CSE371', title: 'Control Engineering', semester: 6, prerequisites: ['ECE251'],creditHours: 3 },
-        { code: 'CSE439', title: 'Design of Compilers', semester: 6, prerequisites: ['CSE131'],creditHours: 3 },
-        { code: 'CSE472', title: 'Artificial Intelligence', semester: 6, prerequisites: ['CSE131', 'PHM211'] ,creditHours: 3},
-
-        { code: 'CSE211', title: 'Introduction to Embedded Systems', semester: 7, prerequisites: ['CSE131'],creditHours: 3 },
-        { code: 'CSE233', title: 'Agile Software Engineering', semester: 7, prerequisites: ['CSE232'],creditHours: 3 },
-        { code: 'CSE351', title: 'Computer Networks', semester: 7, prerequisites: ['CSE335'],creditHours: 3 },
-        { code: 'EL3-1', title: 'Level-3 Technical Elective (1)', semester: 7, prerequisites: ['varies'],creditHours: 3 },
-        { code: 'EPM119', title: 'Engineering Economy & Investments', semester: 7, prerequisites: [],creditHours: 3 },
-        { code: 'ASU114', title: 'Selected Topics in Contemporary Issues', semester: 7, prerequisites: [],creditHours: 3 },
-        { code: 'ASU-EL2', title: 'ASU Elective (2)', semester: 7, prerequisites: [],creditHours: 3 },
-
-        { code: 'CSE341', title: 'Internet Programming', semester: 8, prerequisites: ['CSE231'],creditHours: 3 },
-        { code: 'CSE354', title: 'Distributed Computing', semester: 8, prerequisites: ['CSE231', 'CSE351'],creditHours: 3 },
-        { code: 'CSE411', title: 'Real-Time & Embedded Systems Design', semester: 8, prerequisites: ['CSE211'],creditHours: 3 },
-        { code: 'CSE432', title: 'Automata & Computability', semester: 8, prerequisites: ['CSE332'],creditHours: 3 },
-        { code: 'EL3-2', title: 'Level-3 Technical Elective (2)', semester: 8, prerequisites: ['varies'],creditHours: 3 },
-        { code: 'EL3-3', title: 'Level-3 Technical Elective (3)', semester: 8, prerequisites: ['varies'],creditHours: 3 },
-        { code: 'ASU111', title: 'Human Rights', semester: 8, prerequisites: [],creditHours: 3 },
-
-        { code: 'CSE336', title: 'Software Design Patterns', semester: 9, prerequisites: ['CSE232'],creditHours: 3 },
-        { code: 'CSE431', title: 'Mobile Programming', semester: 9, prerequisites: ['CSE341'],creditHours: 3 },
-        { code: 'CSE441', title: 'Software Project Management', semester: 9, prerequisites: ['CSE334'],creditHours: 3 },
-        { code: 'EL4-1', title: 'Level-4 Technical Elective (1)', semester: 9, prerequisites: ['varies'],creditHours: 3 },
-        { code: 'EL4-2', title: 'Level-4 Technical Elective (2)', semester: 9, prerequisites: ['varies'] ,creditHours: 3},
-        { code: 'CSE491', title: 'Graduation Project (1)', semester: 9, prerequisites: ['standing>=130CH'],creditHours: 3 },
-
-        { code: 'CSE451', title: 'Computer & Network Security', semester: 10, prerequisites: ['CSE351'],creditHours: 3 },
-        { code: 'CSE455', title: 'High-Performance Computing', semester: 10, prerequisites: ['CSE112'],creditHours: 3 },
-        { code: 'EL4-3', title: 'Level-4 Technical Elective (3)', semester: 10, prerequisites: ['varies'],creditHours: 3 },
-        { code: 'EL4-4', title: 'Level-4 Technical Elective (4)', semester: 10, prerequisites: ['varies'],creditHours: 3 },
-        { code: 'CSE492', title: 'Graduation Project (2)', semester: 10, prerequisites: ['CSE491'],creditHours: 3 },
-        { code: 'ASU113', title: 'Professional Ethics & Legislations', semester: 10, prerequisites: [],creditHours: 3 }
-    ]
-};
+const NOTES = [
+    'CSE491 requires standing (>=130 CH) rather than a specific course.',
+    "Electives (EL3/EL4) show 'varies' because prerequisites depend on the chosen course outline."
+];
+const VERSION = 'CESS-bylaw-2018';
 
 const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const formatPrerequisite = (code) => {
-    if (code === 'varies') return 'Varies by elective';
-    if (code === 'standing>=130CH') return 'Standing = 130 CH';
-    return code;
-};
+
 
 const Curriculum = () => {
     const [search, setSearch] = useState('');
     const [semesterFilter, setSemesterFilter] = useState('All');
     const [selectedCourse, setSelectedCourse] = useState(null);
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const semesters = useMemo(() => {
-        const unique = Array.from(new Set(curriculumData.courses.map((course) => course.semester))).sort((a, b) => a - b);
-        return unique;
+    // Add Course State
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newCourse, setNewCourse] = useState({
+        code: '',
+        title: '',
+        creditHours: 3,
+        semester: 3,
+        prerequisites: []
+    });
+    const [newPrereqCode, setNewPrereqCode] = useState('');
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const data = await getAllCourses();
+                // Map backend data to frontend structure
+                const formattedCourses = data.map(course => ({
+                    code: course.courseCode,
+                    title: course.courseName,
+                    semester: Number(course.semester) || 0, // Ensure number
+                    creditHours: course.creditHours,
+                    prerequisites: course.prerequisites || []
+                }));
+                // Sort by semester then code
+                formattedCourses.sort((a, b) => {
+                    if (a.semester !== b.semester) return a.semester - b.semester;
+                    return a.code.localeCompare(b.code);
+                });
+                setCourses(formattedCourses);
+            } catch (err) {
+                console.error("Failed to load courses", err);
+                setError("Failed to load courses. Please check connection.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCourses();
     }, []);
 
+    const semesters = useMemo(() => {
+        const unique = Array.from(new Set(courses.map((course) => course.semester))).sort((a, b) => a - b);
+        return unique;
+    }, [courses]);
+
     const groupedCourses = useMemo(() => {
-        return curriculumData.courses.reduce((acc, course) => {
+        return courses.reduce((acc, course) => {
             if (!acc[course.semester]) {
                 acc[course.semester] = [];
             }
             acc[course.semester].push(course);
             return acc;
         }, {});
-    }, []);
+    }, [courses]);
 
     const dependentsMap = useMemo(() => {
-        return curriculumData.courses.reduce((acc, course) => {
+        return courses.reduce((acc, course) => {
             course.prerequisites.forEach((pr) => {
                 if (pr === 'varies' || pr === 'standing>=130CH') return;
                 if (!acc[pr]) {
@@ -109,7 +88,21 @@ const Curriculum = () => {
             });
             return acc;
         }, {});
-    }, []);
+    }, [courses]);
+
+    const courseMap = useMemo(() => {
+        const map = {};
+        courses.forEach(c => {
+            map[c.code] = c.title;
+        });
+        return map;
+    }, [courses]);//////////////////////////////////////////////////////
+
+    const formatPrerequisite = (code) => {
+        if (code === 'varies') return 'Varies by elective';
+        if (code === 'standing>=130CH') return 'Standing = 130 CH';
+        return courseMap[code] || code;
+    };
 
     const highlight = (text) => {
         if (!search) return text;
@@ -133,6 +126,73 @@ const Curriculum = () => {
         setSelectedCourse((prev) => (prev?.code === course.code ? null : course));
     };
 
+    // --- Add Course Handlers --- till line 194
+    const resetNewCourse = () => {
+        setNewCourse({
+            code: '',
+            title: '',
+            creditHours: 3,
+            semester: 3,
+            prerequisites: []
+        });
+        setNewPrereqCode('');
+        setShowAddModal(false);
+    };
+
+    const handleAddPrereqToNew = () => {
+        if (newPrereqCode && !newCourse.prerequisites.includes(newPrereqCode)) {
+            setNewCourse(prev => ({
+                ...prev,
+                prerequisites: [...prev.prerequisites, newPrereqCode]
+            }));
+            setNewPrereqCode('');
+        }
+    };
+
+    const handleRemovePrereqFromNew = (code) => {
+        setNewCourse(prev => ({
+            ...prev,
+            prerequisites: prev.prerequisites.filter(p => p !== code)
+        }));
+    };
+
+    const isFormValid = newCourse.code && newCourse.title && newCourse.semester && newCourse.creditHours;
+
+    const handleCreateCourse = async () => {
+        if (!isFormValid) return;
+
+        try {
+            // 1. Create Base Course
+            const coursePayload = {
+                courseCode: newCourse.code,
+                courseName: newCourse.title,
+                creditHours: Number(newCourse.creditHours),
+                semester: String(newCourse.semester)
+            };
+
+            await addCourse(coursePayload);
+
+            // 2. Add Prerequisites if any
+            if (newCourse.prerequisites.length > 0) {
+                await updatePrerequisites(newCourse.code, newCourse.prerequisites);
+            }
+
+            // 3. Refresh & Close
+            alert("Course created successfully!");
+            resetNewCourse();
+            window.location.reload(); // Simple reload to refresh data
+        } catch (err) {
+            console.error(err);
+            alert("Failed to create course. Code might already exist.");
+        }
+    };
+
+    // Filter available for prereq dropdown (exclude self if typed)
+    const availableForPrereq = courses.filter(c => c.code !== newCourse.code && !newCourse.prerequisites.includes(c.code));
+
+    if (loading) return <div className="curriculum-loading">Loading curriculum...</div>;
+    if (error) return <div className="curriculum-error">{error}</div>;
+
     return (
         <div className="curriculum-shell">
             <header className="curriculum-topline" role="banner">
@@ -147,7 +207,10 @@ const Curriculum = () => {
                     </div>
                 </div>
                 <div className="meta">
-                    <span className="version">{curriculumData.version}</span>
+                    <span className="version">{VERSION}</span>
+                    <Link to="/Admin" className="back-btn">
+                        ← Back to Dashboard
+                    </Link>
                 </div>
             </header>
 
@@ -167,6 +230,12 @@ const Curriculum = () => {
                 <Link to="/admin/curriculum/edit-courses" className="edit-course-btn">
                     Edit Course
                 </Link>
+                <button
+                    className="add-course-btn"
+                    onClick={() => setShowAddModal(true)}
+                >
+                    + Add Course
+                </button>
             </section>
 
             <section className="curriculum-grid">
@@ -222,7 +291,7 @@ const Curriculum = () => {
             <section className="notes">
                 <h2>Advising Notes</h2>
                 <ul>
-                    {curriculumData.notes.map((note, index) => (
+                    {NOTES.map((note, index) => (
                         <li key={index}>{note}</li>
                     ))}
                 </ul>
@@ -270,6 +339,99 @@ const Curriculum = () => {
                     </div>
                     <button className="ghost-btn" onClick={() => setSelectedCourse(null)}>Close</button>
                 </aside>
+            )}
+            {/* Add Course Modal till line 435*/}
+            {showAddModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <header className="modal-header">
+                            <h2>Add New Course</h2>
+                            <button className="close-modal-btn" onClick={resetNewCourse}>×</button>
+                        </header>
+                        <div className="modal-body">
+                            <div className="input-group">
+                                <label>Course Code</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. CSE123"
+                                    value={newCourse.code}
+                                    onChange={(e) => setNewCourse({ ...newCourse, code: e.target.value.toUpperCase() })}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label>Course Title</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Data Structures"
+                                    value={newCourse.title}
+                                    onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="row-group">
+                                <div className="input-group">
+                                    <label>Credits</label>
+                                    <select
+                                        value={newCourse.creditHours}
+                                        onChange={(e) => setNewCourse({ ...newCourse, creditHours: e.target.value })}
+                                    >
+                                        {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}</option>)}
+                                    </select>
+                                </div>
+                                <div className="input-group">
+                                    <label>Semester</label>
+                                    <select
+                                        value={newCourse.semester || 3}
+                                        onChange={(e) => setNewCourse({ ...newCourse, semester: Number(e.target.value) })}
+                                    >
+                                        {[3, 4, 5, 6, 7, 8, 9, 10].map(s => <option key={s} value={s}>Sem {s}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="prereq-section">
+                                <label>Prerequisites</label>
+                                <div className="prereq-tags-container">
+                                    {newCourse.prerequisites.map(p => (
+                                        <span key={p} className="prereq-tag-edit">
+                                            {formatPrerequisite(p)}
+                                            <button onClick={() => handleRemovePrereqFromNew(p)}>×</button>
+                                        </span>
+                                    ))}
+                                    {newCourse.prerequisites.length === 0 && <small>None selected</small>}
+                                </div>
+                                <div className="add-prereq-control">
+                                    <select
+                                        value={newPrereqCode}
+                                        onChange={(e) => setNewPrereqCode(e.target.value)}
+                                    >
+                                        <option value="">Select Course...</option>
+                                        {availableForPrereq.map(c => (
+                                            <option key={c.code} value={c.code}>{c.code} - {c.title}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        disabled={!newPrereqCode}
+                                        onClick={handleAddPrereqToNew}
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <footer className="modal-footer">
+                            <button className="cancel-btn-modal" onClick={resetNewCourse}>Cancel</button>
+                            <button
+                                className="confirm-btn-modal"
+                                disabled={!isFormValid}
+                                onClick={handleCreateCourse}
+                            >
+                                Add Course
+                            </button>
+                        </footer>
+                    </div>
+                </div>
             )}
         </div>
     );
