@@ -5,8 +5,8 @@ import FacilitiesUI from '../pages/Facilities/FacilitiesUI';
 import Curriculum from '../pages/Curriculum/Curriculum';
 import EditCourses from '../pages/EditCourses/EditCourses';
 import StudentServices from "../pages/Admin_View/StudentServices";
-import ProfessorRecords from "../pages/Admin_View/ProfessorRecords";
 import ProfessorManagement from "../pages/Admin_View/ProfessorManagement"; // Import the new file
+import ParentDashboard from "../pages/Parent/ParentDashboard";
 
 function AppRoutes() {
   return (
@@ -20,7 +20,7 @@ function AppRoutes() {
         <Route path="/Admin/Facilities" element={<FacilitiesUI />} />
         <Route path="/Admin/Curriculum" element={<Curriculum />} />
         <Route path="/Admin/Curriculum/Edit-courses" element={<EditCourses />} />
-
+        <Route path="/parent" element={<ParentDashboard />} />
         <Route path="/Student" />
       </Routes>
     </Router>

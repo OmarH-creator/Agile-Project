@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import Illust from "../../assets/loginimage.png";
 import umsLogo from "../../assets/UMS Logo.png";
-import confetti from "canvas-confetti";
 import { login } from "../../auth/login";
 
 function FloatingLabelInput({ id, type, label, value, setValue }) {
@@ -81,6 +80,9 @@ function Login() {
             }
             else if(data.role === "PROFESSOR"){
                 navigate("/professor");
+            }
+            else if(data.role === "PARENT"){
+                navigate("/parent");
             }
             else {
                 // Fallback if role is undefined
