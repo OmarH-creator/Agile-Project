@@ -10,12 +10,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-
+import java.util.List;
 import java.util.Optional;
 
 // T is Student, ID is String (Assuming studentId is the PK or you rely on findByStudentId)
 public interface StudentRepository extends JpaRepository<Student, String> {
 
+    List<Student> findByStudentIdIn(List<String> studentIds);
     // --- ESSENTIAL FOR STUDENT CONTROLLER ---
 
     // 1. Login/Profile lookup by ID

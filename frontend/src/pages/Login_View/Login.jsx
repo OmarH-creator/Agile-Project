@@ -124,25 +124,11 @@ function Login() {
             localStorage.setItem("role", data.role);
             if (data.userId) localStorage.setItem("userId", data.userId);
 
-
-            // 3. Redirect based on Role
-            // Ensure these paths match your Router paths in App.js
-            if(data.role === "ADMIN"){
-                navigate("/admin"); // Updated to match likely router path
-            }
-            else if(data.role === "STUDENT"){
-                navigate("/student");
-            }
-            else if(data.role === "PROFESSOR"){
-                navigate("/professor");
-            }
-            else if(data.role === "PARENT"){
-                navigate("/parent");
-            }
-            else {
-                // Fallback if role is undefined
-                setError("User role not recognized.");
-            }
+            if(data.role === "ADMIN") navigate("/admin");
+            else if(data.role === "STUDENT") navigate("/student");
+            else if(data.role === "PROFESSOR") navigate("/professor");
+            else if(data.role === "PARENT") navigate("/parent");
+            else setError("User role not recognized.");
 
         } catch (err) {
             setError(err.message || "Login failed.");
