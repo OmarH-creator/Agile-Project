@@ -2,10 +2,14 @@ package com.university.backend.repository;
 
 import com.university.backend.entity.CoursePrerequisite;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
+@Repository
+@org.springframework.transaction.annotation.Transactional
 public interface CoursePrerequisiteRepository extends JpaRepository<CoursePrerequisite, Long> {
-    // Get all prerequisites for a specific course
-    List<CoursePrerequisite> findByCourse_CourseCode(String courseCode);
-    
+    List<CoursePrerequisite> findByCourse(com.university.backend.entity.Course course);
+    void deleteByCourse(com.university.backend.entity.Course course);
+    void deleteByPrerequisite(com.university.backend.entity.Course prerequisite);
 }
