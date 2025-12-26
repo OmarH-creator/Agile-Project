@@ -5,13 +5,13 @@ import FacilitiesUI from '../pages/Facilities/FacilitiesUI';
 import Curriculum from '../pages/Curriculum/Curriculum';
 import EditCourses from '../pages/EditCourses/EditCourses';
 import StudentServices from "../pages/Admin_View/StudentServices";
-import ProfessorRecords from "../pages/Admin_View/ProfessorRecords";
 import ProfessorManagement from "../pages/Admin_View/ProfessorManagement";
 import StudentDashboard from "../pages/Student_View/StudentDashboard";
 import Course_Reg from "../pages/Student_View/Course_Reg/Course_Reg"; // Import the new file
 import ParentDashboard from "../pages/Parent/ParentDashboard";
 import ProfessorDashboard from "../pages/TeachingStaff_View/ProfessorDashboard";
-import RequestManagement from "../pages/Admin_View/RequestManagement"; // Import RequestManagement
+import RequestManagement from "../pages/Admin_View/RequestManagement";
+import LMS from "../pages/Student_View/LMS/LMS"; // Import RequestManagement
 function AppRoutes() {
   return (
     <Router>
@@ -28,6 +28,8 @@ function AppRoutes() {
 
         <Route path="/Student" element={<StudentDashboard />} />
         <Route path="/Student/registration" element={<Course_Reg />} />
+        <Route path="/Student/LMS" element={<LMS/>}/>
+
         <Route path="/parent" element={<ParentDashboard />} />
         {/* 2. ADD THIS ROUTE */}
         <Route path="/professor" element={<ProfessorDashboard />} />
