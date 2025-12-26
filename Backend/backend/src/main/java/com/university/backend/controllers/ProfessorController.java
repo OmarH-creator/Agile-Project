@@ -159,7 +159,7 @@ public class ProfessorController {
         // Note: We need a repo method or service method for this.
         // Assuming assignmentRepository.findByCourse_CourseCode(courseId)
 
-        List<Assignment> assignments = assignmentRepository.findByCourse_CourseCode(courseId);
+        List<Assignment> assignments = assignmentRepository.findAllByCourseCode(courseId);
         List<AssignmentResponseDTO> dtos = assignments.stream()
                 .map(a -> assignmentService.getAssignmentById(a.getId()))
                 .collect(Collectors.toList());
