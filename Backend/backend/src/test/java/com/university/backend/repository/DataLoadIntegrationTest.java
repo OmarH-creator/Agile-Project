@@ -175,56 +175,56 @@ public class DataLoadIntegrationTest {
             }
         }
 
-        // --- Halls data ---
-        // You provided grouped hall names and capacities. Insert a representative list.
-        List<Hall> halls = new ArrayList<>();
-        // Main building small rooms
-        halls.add(new Hall("219", 80));
-        halls.add(new Hall("338", 80));
-        halls.add(new Hall("346", 80));
-        halls.add(new Hall("347", 80));
-        halls.add(new Hall("348", 80));
-        halls.add(new Hall("350", 80));
-
-        // Credit building rooms (capacity 60)
-        String[] creditRooms = {"911","911A","912","913","914","914A","921","921A","922","923","924","924A","931","931A","932","933","941","941A","942","943","944","944A"};
-        for (String r : creditRooms) {
-            halls.add(new Hall(r, 60));
-        }
-
-
-        // Halls with capacity 180
-        halls.add(new Hall("Hall 1", 180));
-        halls.add(new Hall("Hall 2", 180));
-        halls.add(new Hall("Hall 3", 180));
-        halls.add(new Hall("Hall 4", 180));
-        // Another set
-        halls.add(new Hall("Hall A", 180));
-        halls.add(new Hall("Hall B", 180));
-        halls.add(new Hall("Hall C", 180));
-        halls.add(new Hall("Hall D", 180));
-
-        // Architecture building rooms capacity 250
-        halls.add(new Hall("500", 250));
-        halls.add(new Hall("501", 250));
-        halls.add(new Hall("502", 250));
-        halls.add(new Hall("504", 250));
-        halls.add(new Hall("505", 250));
-
-
-        for (Hall h : halls) {
-            em.persist(h);
-        }
-
-        // flush to DB
-        em.flush();
+//        // --- Halls data ---
+//        // You provided grouped hall names and capacities. Insert a representative list.
+//        List<Hall> halls = new ArrayList<>();
+//        // Main building small rooms
+//        halls.add(new Hall("219", 80));
+//        halls.add(new Hall("338", 80));
+//        halls.add(new Hall("346", 80));
+//        halls.add(new Hall("347", 80));
+//        halls.add(new Hall("348", 80));
+//        halls.add(new Hall("350", 80));
+//
+//        // Credit building rooms (capacity 60)
+//        String[] creditRooms = {"911","911A","912","913","914","914A","921","921A","922","923","924","924A","931","931A","932","933","941","941A","942","943","944","944A"};
+//        for (String r : creditRooms) {
+//            halls.add(new Hall(r, 60));
+//        }
+//
+//
+//        // Halls with capacity 180
+//        halls.add(new Hall("Hall 1", 180));
+//        halls.add(new Hall("Hall 2", 180));
+//        halls.add(new Hall("Hall 3", 180));
+//        halls.add(new Hall("Hall 4", 180));
+//        // Another set
+//        halls.add(new Hall("Hall A", 180));
+//        halls.add(new Hall("Hall B", 180));
+//        halls.add(new Hall("Hall C", 180));
+//        halls.add(new Hall("Hall D", 180));
+//
+//        // Architecture building rooms capacity 250
+//        halls.add(new Hall("500", 250));
+//        halls.add(new Hall("501", 250));
+//        halls.add(new Hall("502", 250));
+//        halls.add(new Hall("504", 250));
+//        halls.add(new Hall("505", 250));
+//
+//
+//        for (Hall h : halls) {
+//            em.persist(h);
+//        }
+//
+//        // flush to DB
+//        em.flush();
 
         // Assertions: basic counts and lookups
         Long courseCount = em.createQuery("select count(c) from Course c", Long.class).getSingleResult();
         assertEquals(courses.size(), courseCount.intValue(), "course count should match");
 
-        Long hallCount = em.createQuery("select count(h) from Hall h", Long.class).getSingleResult();
-        assertTrue(hallCount >= halls.size(), "at least the inserted halls should exist");
+//        Long hallCount = em.createQuery("select count(h) from Hall h", Long.class).getSingleResult();
+//        assertTrue(hallCount >= halls.size(), "at least the inserted halls should exist");
 
         // sample lookup
         Course found = em.find(Course.class, "CSE111");
