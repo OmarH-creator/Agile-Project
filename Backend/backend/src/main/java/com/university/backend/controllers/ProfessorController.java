@@ -48,10 +48,16 @@ public class ProfessorController {
     @Autowired
     private AssignmentSubmissionRepository submissionRepository;
 
+    @Autowired
     private final AssignmentService assignmentService;
 
-    public ProfessorController(AssignmentService assignmentService) {
+    @Autowired
+    private final com.university.backend.services.AssignmentSubmissionService submissionService;
+
+    public ProfessorController(AssignmentService assignmentService,
+            com.university.backend.services.AssignmentSubmissionService submissionService) {
         this.assignmentService = assignmentService;
+        this.submissionService = submissionService;
     }
     // =================================================================
     // SECTION 1: PROFESSOR DASHBOARD (Courses & Students)
@@ -299,16 +305,20 @@ public class ProfessorController {
     }
 
     @GetMapping("/assignment/{assignmentId}/submissions")
-    public ResponseEntity<List<AssignmentSubmission>> getAssignmentSubmissions(@PathVariable Long assignmentId) {
-        // This returns all submissions for an assignment
-        // Note: This might return a list, but the repo method findFullSubmissionById
-        // returns Optional (single).
-        // You likely need a findAllByAssignmentId in the repo.
-        // For now, returning empty or fixing the repo call is needed.
-        // Assuming we want to list all submissions for an assignment:
-        // List<AssignmentSubmission> submissions =
-        // submissionRepository.findAllByAssignmentId(assignmentId);
-        return ResponseEntity.ok(List.of()); // Placeholder until repo is updated
+    public ResponseEntity<?> getAssignmentSubmissions(
+            @PathVariable Long assignmentId) {
+        try {
+            System.out.println("DEBUG: Fetching submissions for assignment " + assignmentId);
+            if (submissionService == null) {
+                return ResponseEntity.status(500).body("CRITICAL: submissionService is null!");
+            }
+            List<com.university.backend.dto.AssignmentSubmissionResponseDTO> submissions = submissionService
+                    .getSubmissionsByAssignment(assignmentId);
+            return ResponseEntity.ok(submissions);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
     }
 
     // =================================================================
@@ -383,50 +393,72 @@ public class ProfessorController {
      */
     @PostMapping("/halls/book")
     public ResponseEntity<?> bookHallByProfessor(@RequestBody Map<String, String> request) {
+        System.out.println("DEBUG: Booking Request Payload: " + request); // Debug log
+
         try {
             String professorId = request.get("professorId");
-            String hallName = request.get("hallName");
+            String rawHallName = request.get("hallName");
             String dayOfWeek = request.get("dayOfWeek");
             String startTimeStr = request.get("startTime"); // HH:mm
             String endTimeStr = request.get("endTime"); // HH:mm
 
-            // 1. Validate Professor
+            // 1. Validation: Null Checks
+            if (professorId == null || rawHallName == null || dayOfWeek == null || startTimeStr == null
+                    || endTimeStr == null) {
+                return ResponseEntity.badRequest()
+                        .body("Error: Missing required fields. Received: " + request.keySet());
+            }
+
+            // 1.1 Handle "HallName - Building" format from Frontend dropdown
+            String hallName = rawHallName;
+            if (rawHallName.contains(" - ")) {
+                hallName = rawHallName.split(" - ")[0].trim();
+            }
+
+            // 2. Validate Professor
             if (!professorRepository.existsByProfessorId(professorId)) {
-                return ResponseEntity.status(401).body("Error: Professor not found.");
+                return ResponseEntity.status(401).body("Error: Professor not found with ID: " + professorId);
             }
 
-            // 2. Find Hall (Static lookup)
-            Optional<Hall> hallOpt = hallRepository.findByHallName(hallName);
-            if (hallOpt.isEmpty()) {
+            // 3. Find Hall (Handle Duplicates)
+            java.util.List<com.university.backend.entity.Hall.Hall> halls = hallRepository.findByHallName(hallName);
+            if (halls.isEmpty()) {
                 // Try finding by EAV name if static fails
-                hallOpt = hallRepository.findByName(hallName);
-                if (hallOpt.isEmpty())
+                halls = hallRepository.findByName(hallName);
+                if (halls.isEmpty()) {
                     return ResponseEntity.status(404).body("Hall '" + hallName + "' not found.");
+                }
             }
-            Hall hall = hallOpt.get();
+            // If duplicates exist, we take the first one (or log a warning)
+            com.university.backend.entity.Hall.Hall hall = halls.get(0);
 
-            // 3. Calculate Date/Time
-            Date start = calculateNextDate(dayOfWeek, startTimeStr);
-            Date end = calculateNextDate(dayOfWeek, endTimeStr);
+            // 4. Calculate Date/Time
+            Date start;
+            Date end;
+            try {
+                start = calculateNextDate(dayOfWeek, startTimeStr);
+                end = calculateNextDate(dayOfWeek, endTimeStr);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body("Error parsing date/time: " + e.getMessage());
+            }
 
             if (start.after(end)) {
                 return ResponseEntity.badRequest().body("Error: Start time must be before end time.");
             }
 
-            // 4. Conflict Check
-            // Ideally use repository: bookingRepository.findConflictingBookings(hall,
-            // start, end)
-            // For now, manually checking just to be safe if repo method missing
-            List<Booking> hallBookings = bookingRepository.findAll(); // Optimization: Should filter by Hall
+            // 5. Conflict Check
+            List<Booking> hallBookings = bookingRepository.findAll();
+            Date finalStart = start;
+            Date finalEnd = end;
             boolean conflict = hallBookings.stream()
                     .filter(b -> b.getHall() != null && b.getHall().getId().equals(hall.getId()))
-                    .anyMatch(b -> start.before(b.getEndTime()) && end.after(b.getStartTime()));
+                    .anyMatch(b -> finalStart.before(b.getEndTime()) && finalEnd.after(b.getStartTime()));
 
             if (conflict) {
                 return ResponseEntity.badRequest().body("Error: Hall is already booked for this time.");
             }
 
-            // 5. Create Booking
+            // 6. Create Booking
             Booking newBooking = new Booking();
             newBooking.setStaffId(professorId);
             newBooking.setHall(hall);

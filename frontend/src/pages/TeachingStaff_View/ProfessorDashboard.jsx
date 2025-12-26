@@ -17,6 +17,8 @@ const ProfessorDashboard = () => {
     // --- DATA STATE ---
     const [students, setStudents] = useState([]);
     const [assignments, setAssignments] = useState([]);
+    const [gradingItems, setGradingItems] = useState([]);
+    const [submissions, setSubmissions] = useState([]); // NEW STATE for Submissions
     const [requests, setRequests] = useState([]);
     const [halls, setHalls] = useState([]);
 
@@ -24,6 +26,8 @@ const ProfessorDashboard = () => {
     // --- LOADING STATES ---
     const [loadingStudents, setLoadingStudents] = useState(false);
     const [loadingAssignments, setLoadingAssignments] = useState(false);
+    const [loadingGradingItems, setLoadingGradingItems] = useState(false);
+    const [loadingSubmissions, setLoadingSubmissions] = useState(false); // NEW STATE
     const [loadingRequests, setLoadingRequests] = useState(false);
     const [loadingHalls, setLoadingHalls] = useState(false);
 
@@ -53,6 +57,14 @@ const ProfessorDashboard = () => {
     const [loadingPayment, setLoadingPayment] = useState(false);
 
 
+
+    // Grading Bucket Form State
+    const [newGradingItem, setNewGradingItem] = useState({ categoryName: '', weight: '' });
+    const [showCreateGradingItem, setShowCreateGradingItem] = useState(false);
+
+    // Submissions Modal State
+    const [viewingAssignment, setViewingAssignment] = useState(null); // The assignment we are grading
+    const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
 
     // --- EFFECTS ---
 
@@ -105,10 +117,26 @@ const ProfessorDashboard = () => {
                 }
             };
 
+            // Load Grading Buckets (NEW)
+            const fetchGradingItems = async () => {
+                setLoadingGradingItems(true);
+                try {
+                    const data = await ProfessorAPI.getGradingItemsByCourse(selectedCourse);
+                    setGradingItems(Array.isArray(data) ? data : []);
+                } catch (err) {
+                    console.error("Failed to load grading items", err);
+                    setGradingItems([]);
+                } finally {
+                    setLoadingGradingItems(false);
+                }
+            };
+
             fetchStudents();
             fetchAssignments();
+            fetchGradingItems();
             setCourseSubTab('students'); // Reset tab
             setShowCreateAssign(false);
+            setShowCreateGradingItem(false);
         }
     }, [selectedCourse]);
 
@@ -218,7 +246,8 @@ const ProfessorDashboard = () => {
                     title: newAssignData.title,
                     description: newAssignData.description,
                     maxGrade: newAssignData.maxGrade,
-                    deadline: newAssignData.deadline
+                    deadline: newAssignData.deadline,
+                    Grading_Item_Id: newAssignData.gradingItemId // Add bucket ID
                 };
                 // Add custom attributes to payload
                 newAssignData.customAttributes.forEach(attr => {
@@ -239,7 +268,8 @@ const ProfessorDashboard = () => {
                     professorId: professorId,
                     deadline: newAssignData.deadline,
                     maxGrade: newAssignData.maxGrade,
-                    file: newAssignData.file
+                    file: newAssignData.file,
+                    Grading_Item_Id: newAssignData.gradingItemId // Add bucket ID
                 };
                 // Add custom attributes to payload
                 newAssignData.customAttributes.forEach(attr => {
@@ -252,7 +282,7 @@ const ProfessorDashboard = () => {
                 alert("Assignment Created!");
             }
 
-            setNewAssignData({ title: '', description: '', deadline: '', maxGrade: 100, file: null, customAttributes: [] });
+            setNewAssignData({ title: '', description: '', deadline: '', maxGrade: 100, file: null, customAttributes: [], gradingItemId: '' });
             setShowCreateAssign(false);
             setEditingAssignmentId(null);
 
@@ -263,6 +293,24 @@ const ProfessorDashboard = () => {
             console.error(e);
             const errorMsg = e.response?.data ? (typeof e.response.data === 'object' ? JSON.stringify(e.response.data) : e.response.data) : e.message;
             alert("Failed to save assignment: " + errorMsg);
+        }
+    };
+
+    // --- ACTION: View Submissions ---
+    const handleViewSubmissions = async (assignment) => {
+        setViewingAssignment(assignment);
+        setShowSubmissionsModal(true);
+        setLoadingSubmissions(true);
+        try {
+            const data = await ProfessorAPI.getSubmissions(assignment.id);
+            setSubmissions(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error(err);
+            const msg = err.response?.data ? (typeof err.response.data === 'object' ? JSON.stringify(err.response.data) : err.response.data) : err.message;
+            alert("Error fetching submissions: " + msg);
+            setSubmissions([]);
+        } finally {
+            setLoadingSubmissions(false);
         }
     };
 
@@ -286,7 +334,8 @@ const ProfessorDashboard = () => {
             deadline: assign.data?.Due_Date ? (new Date(assign.data.Due_Date).toISOString().slice(0, 16)) : '',
             maxGrade: assign.data?.Max_Grade || 100,
             file: null,
-            customAttributes: customAttrs
+            customAttributes: customAttrs,
+            gradingItemId: assign.data?.Grading_Item_Id || '' // Load existing bucket
         });
         setShowCreateAssign(true);
     };
@@ -308,6 +357,40 @@ const ProfessorDashboard = () => {
             } catch (err) {
                 alert("Error grading assignment");
             }
+        }
+    };
+
+    const handleGradeSubmission = async (submissionId, currentScore, currentFeedback) => {
+        // Simple prompt for now, could be a real form in the modal
+        const score = prompt("Enter Grade (0-100):", currentScore || "");
+        if (score === null) return; // Cancelled
+
+        const feedback = prompt("Enter Feedback:", currentFeedback || "");
+        if (feedback === null) return; // Cancelled
+
+        try {
+            // We need studentId and assignmentId, but the API expects { assignmentId, studentId, score, feedback }
+            // OR we can use the EAV update endpoint if we have the submission ID.
+            // ProfessorAPI.gradeAssignment uses: POST /api/professor/assignment/grade
+            // Payload: { assignmentId, studentId, score, feedback }
+
+            // We can find studentId and assignmentId from the submission object in the list
+            const sub = submissions.find(s => s.id === submissionId);
+            if (!sub) return;
+
+            await ProfessorAPI.gradeAssignment({
+                assignmentId: viewingAssignment.id,
+                studentId: sub.studentId, // Ensure DTO has this
+                score: parseFloat(score),
+                feedback: feedback
+            });
+
+            alert("Grade saved!");
+            // Refresh
+            handleViewSubmissions(viewingAssignment);
+
+        } catch (err) {
+            alert("Error saving grade: " + err.message);
         }
     };
 
@@ -381,6 +464,32 @@ const ProfessorDashboard = () => {
             alert("Hall Booked Successfully!");
         } catch (err) {
             alert("Failed to book hall: " + (err.response?.data || err.message));
+        }
+    };
+
+    // --- ACTION: Create Grading Bucket ---
+    const handleCreateGradingItem = async (e) => {
+        e.preventDefault();
+        try {
+            // Extract core Course ID
+            const realCourseId = selectedCourse.split(' - ')[0];
+
+            await ProfessorAPI.createGradingItem({
+                courseId: realCourseId,
+                categoryName: newGradingItem.categoryName,
+                weight: parseInt(newGradingItem.weight)
+            });
+
+            alert("Grading Bucket Created!");
+            setNewGradingItem({ categoryName: '', weight: '' });
+            setShowCreateGradingItem(false);
+
+            // Refresh list
+            const data = await ProfessorAPI.getGradingItemsByCourse(selectedCourse);
+            setGradingItems(Array.isArray(data) ? data : []);
+
+        } catch (err) {
+            alert("Failed to create bucket: " + (err.response?.data || err.message));
         }
     };
 
@@ -497,7 +606,7 @@ const ProfessorDashboard = () => {
                     onClick={() => {
                         if (!showCreateAssign) {
                             // Reset form when opening creation mode
-                            setNewAssignData({ title: '', description: '', deadline: '', maxGrade: 100, file: null, customAttributes: [] });
+                            setNewAssignData({ title: '', description: '', deadline: '', maxGrade: 100, file: null, customAttributes: [], gradingItemId: '' });
                             setEditingAssignmentId(null);
                         }
                         setShowCreateAssign(!showCreateAssign);
@@ -527,6 +636,23 @@ const ProfessorDashboard = () => {
                             onChange={e => setNewAssignData({ ...newAssignData, description: e.target.value })}
                         />
                     </div>
+
+                    {/* Grading Bucket Selection */}
+                    <div className="form-group">
+                        <label>Grading Bucket (Optional)</label>
+                        <select
+                            value={newAssignData.gradingItemId}
+                            onChange={e => setNewAssignData({ ...newAssignData, gradingItemId: e.target.value })}
+                        >
+                            <option value="">-- No Grading Bucket --</option>
+                            {gradingItems.map(item => (
+                                <option key={item.id} value={item.id}>
+                                    {item.categoryName} ({item.weightPercentage}%)
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
                         <div className="form-group" style={{ flex: 1 }}>
                             <label>Deadline</label>
@@ -603,15 +729,27 @@ const ProfessorDashboard = () => {
                                     <div className="assign-date">
                                         Due: {assign.data?.Due_Date ? new Date(assign.data.Due_Date).toLocaleDateString() : 'No Date'}
                                         {assign.data?.Max_Grade ? ` | Max: ${assign.data.Max_Grade}` : ''}
+                                        Due: {assign.data?.Due_Date ? new Date(assign.data.Due_Date).toLocaleDateString() : 'No Date'}
+                                        {assign.data?.Grading_Category ? ` | ${assign.data.Grading_Category}` : ''}
                                     </div>
                                     {assign.data?.Is_Visible === false && <span className="status-badge">Hidden</span>}
                                 </div>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button className="ghost-btn small" onClick={() => handleEditClick(assign)}>Edit</button>
+                                <div className="assign-actions">
+                                    <button
+                                        className="secondary-btn small"
+                                        onClick={(e) => { e.stopPropagation(); handleViewSubmissions(assign); }}
+                                    >
+                                        Submissions
+                                    </button>
                                     <button
                                         className="ghost-btn small"
-                                        style={{ color: '#ef4444' }}
-                                        onClick={() => handleDeleteAssignment(assign.id)}
+                                        onClick={(e) => { e.stopPropagation(); handleEditClick(assign); }}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        className="ghost-btn small delete-btn"
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteAssignment(assign.id); }}
                                     >
                                         Delete
                                     </button>
@@ -670,6 +808,81 @@ const ProfessorDashboard = () => {
                             </div>
                         </div>
                     ))
+                )}
+            </div>
+        </div>
+    );
+
+    const renderGradingItemsTab = () => (
+        <div className="grading-container">
+            <div className="actions-bar">
+                <button
+                    className="primary-btn"
+                    onClick={() => setShowCreateGradingItem(!showCreateGradingItem)}
+                >
+                    {showCreateGradingItem ? 'Cancel' : '+ New Grading Bucket'}
+                </button>
+            </div>
+
+            {/* Create Form */}
+            {showCreateGradingItem && (
+                <form className="create-form card" onSubmit={handleCreateGradingItem}>
+                    <h4>New Grading Bucket</h4>
+                    <div className="form-group">
+                        <label>Category Name (e.g. Midterm, Labs)</label>
+                        <input
+                            type="text" required
+                            value={newGradingItem.categoryName}
+                            onChange={e => setNewGradingItem({ ...newGradingItem, categoryName: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Weight (%) (e.g. 20)</label>
+                        <input
+                            type="number" required
+                            min="1" max="100"
+                            value={newGradingItem.weight}
+                            onChange={e => setNewGradingItem({ ...newGradingItem, weight: e.target.value })}
+                        />
+                    </div>
+                    <button type="submit" className="primary-btn small">Create Bucket</button>
+                </form>
+            )}
+
+            {/* List */}
+            <div className="table-card" style={{ marginTop: '1rem' }}>
+                <div className="table-header">
+                    <h3>Grading Scheme</h3>
+                    <span className="badge">
+                        Total Weight: {gradingItems.reduce((sum, item) => sum + (item.weightPercentage || 0), 0)}%
+                    </span>
+                </div>
+
+                {loadingGradingItems ? (
+                    <div className="p-4">Loading grading items...</div>
+                ) : (!Array.isArray(gradingItems) || gradingItems.length === 0) ? (
+                    <div className="p-4">No grading buckets defined for this course.</div>
+                ) : (
+                    <table className="prof-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Weight (%)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {gradingItems.map(item => (
+                                <tr key={item.id}>
+                                    <td>{item.categoryName}</td>
+                                    <td>{item.weightPercentage}%</td>
+                                    <td>
+                                        <button className="ghost-btn small">Edit</button> {/* Placeholder */}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </div>
         </div>
@@ -928,12 +1141,12 @@ const ProfessorDashboard = () => {
                                     </div>
 
                                     {/* Tabs */}
-                                    <div className="tabs">
+                                    <div className="detail-tabs">
                                         <button
                                             className={`tab-btn ${courseSubTab === 'students' ? 'active' : ''}`}
                                             onClick={() => setCourseSubTab('students')}
                                         >
-                                            Students & Final Grades
+                                            Students
                                         </button>
                                         <button
                                             className={`tab-btn ${courseSubTab === 'assignments' ? 'active' : ''}`}
@@ -941,10 +1154,20 @@ const ProfessorDashboard = () => {
                                         >
                                             Assignments
                                         </button>
+                                        <button
+                                            className={`tab-btn ${courseSubTab === 'grading' ? 'active' : ''}`}
+                                            onClick={() => setCourseSubTab('grading')}
+                                        >
+                                            Grading Buckets
+                                        </button>
                                     </div>
 
-                                    {/* Tab Content */}
-                                    {courseSubTab === 'students' ? renderStudentsTab() : renderAssignmentsTab()}
+                                    {/* SUB-TAB CONTENT */}
+                                    <div className="detail-content">
+                                        {courseSubTab === 'students' && renderStudentsTab()}
+                                        {courseSubTab === 'assignments' && renderAssignmentsTab()}
+                                        {courseSubTab === 'grading' && renderGradingItemsTab()}
+                                    </div>
                                 </>
                             ) : (
                                 <>
@@ -961,12 +1184,80 @@ const ProfessorDashboard = () => {
                                 </>
                             )
                         )}
+                        {/* SUBMISSIONS MODAL */}
+                        {showSubmissionsModal && viewingAssignment && (
+                            <div className="modal-overlay">
+                                <div className="modal-content" style={{ maxWidth: '800px', width: '90%' }}>
+                                    <div className="modal-header">
+                                        <h3>Submissions: {viewingAssignment.data?.Title}</h3>
+                                        <button className="close-btn" onClick={() => setShowSubmissionsModal(false)}>×</button>
+                                    </div>
+                                    <div className="modal-body">
+                                        {loadingSubmissions ? (
+                                            <div>Loading submissions...</div>
+                                        ) : submissions.length === 0 ? (
+                                            <div>No submissions found.</div>
+                                        ) : (
+                                            <table className="prof-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Student ID</th>
+                                                        <th>Date</th>
+                                                        <th>File</th>
+                                                        <th>Grade</th>
+                                                        {/* <th>Feedback</th> */}
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {submissions.map(sub => {
+                                                        const grade = sub.values?.Grade || '-';
+                                                        const feedback = sub.values?.Feedback || '';
+                                                        return (
+                                                            <tr key={sub.id}>
+                                                                <td>{sub.studentId}</td>
+                                                                <td>{sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : '-'}</td>
+                                                                <td>
+                                                                    {sub.values?.Attachment_Url ? (
+                                                                        <a
+                                                                            href={`http://localhost:8081${sub.values.Attachment_Url}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            style={{ color: 'var(--primary-color)', textDecoration: 'underline' }}
+                                                                        >
+                                                                            View PDF
+                                                                        </a>
+                                                                    ) : 'No File'}
+                                                                </td>
+                                                                <td>
+                                                                    <span className={`status-badge ${grade !== '-' ? 'completed' : 'pending'}`}>
+                                                                        {grade !== '-' ? `${grade}/100` : 'Ungraded'}
+                                                                    </span>
+                                                                </td>
+                                                                {/* <td>{feedback || '-'}</td> */}
+                                                                <td>
+                                                                    <button
+                                                                        className="primary-btn small"
+                                                                        onClick={() => handleGradeSubmission(sub.id, grade === '-' ? '' : grade, feedback)}
+                                                                    >
+                                                                        Grade
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </main>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
-
 
 export default ProfessorDashboard;

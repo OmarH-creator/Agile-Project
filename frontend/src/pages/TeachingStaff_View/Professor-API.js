@@ -224,7 +224,31 @@ export const ProfessorAPI = {
         }
     },
 
+    // 12. Create Grading Item (Bucket)
+    createGradingItem: async (data) => {
+        // data = { courseId, categoryName, weight }
+        try {
+            // Override baseURL to point to /api/grading
+            const response = await api.post('http://localhost:8081/api/grading/item/create', data);
+            return response.data;
+        } catch (error) {
+            console.error("Error creating grading item:", error);
+            throw error;
+        }
+    },
 
+    // 13. Get Grading Items for Course
+    getGradingItemsByCourse: async (courseName) => {
+        try {
+            const courseCode = courseName.split(' - ')[0];
+            // Override baseURL to point to /api/grading
+            const response = await api.get(`http://localhost:8081/api/grading/item/course/${courseCode}`);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching grading items:", error);
+            throw error;
+        }
+    }
 };
 
 

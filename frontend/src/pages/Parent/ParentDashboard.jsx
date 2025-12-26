@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import umsLogo from "../../assets/UMS Logo.png";
-import {getChildrenByEmail, getChildrenCourseRecords, getProfessorsForCourses} from "./ParentApi";
-import "./ParentDashboard.css";
+import {getChildrenByEmail, getChildrenCourseRecords, getProfessorsForCourses} from "./ParentApi";import "./ParentDashboard.css";
 
 export default function ParentDashboard() {
     const [children, setChildren] = useState([]);
