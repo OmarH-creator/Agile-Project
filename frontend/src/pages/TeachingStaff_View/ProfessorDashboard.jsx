@@ -48,6 +48,12 @@ const ProfessorDashboard = () => {
     // Hall Booking Form State
     const [bookingData, setBookingData] = useState({ hallName: '', dayOfWeek: 'Monday', startTime: '09:00', endTime: '10:00' });
 
+    // Payment
+    const [payment, setPayment] = useState(null);
+    const [loadingPayment, setLoadingPayment] = useState(false);
+
+
+
     // --- EFFECTS ---
 
     // 1. Load Courses on Mount
@@ -143,6 +149,27 @@ const ProfessorDashboard = () => {
             fetchHalls();
         }
     }, [activeTab]);
+
+
+    // Add this useEffect (after the other useEffects)
+    useEffect(() => {
+        if (activeTab === 'payment') {
+            const fetchPayment = async () => {
+                setLoadingPayment(true);
+                try {
+                    const data = await ProfessorAPI.getProfessorPayment(professorId);
+                    setPayment(data.payment);
+                } catch (err) {
+                    console.error("Failed to load payment", err);
+                    setPayment(null);
+                } finally {
+                    setLoadingPayment(false);
+                }
+            };
+            fetchPayment();
+        }
+    }, [activeTab, professorId]);
+
 
     // --- HANDLERS ---
 
@@ -358,6 +385,35 @@ const ProfessorDashboard = () => {
     };
 
     // --- RENDERERS ---
+    const renderPaymentTab = () => (
+        <div className="payment-container">
+            <div className="page-header">
+                <h2>Payment</h2>
+                <p>Your monthly salary information</p>
+            </div>
+
+            {loadingPayment ? (
+                <div className="card p-4">Loading payment information...</div>
+            ) : payment === null ? (
+                <div className="card p-4">No payment information available.</div>
+            ) : (
+                <div className="card" style={{ maxWidth: '400px' }}>
+                    <div className="card-title">
+                        <h3>Monthly Salary</h3>
+                    </div>
+                    <div style={{ padding: '2rem', textAlign: 'center' }}>
+                        <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#10b981' }}>
+                            ${payment}
+                        </div>
+                        <p style={{ color: '#666', marginTop: '1rem' }}>per month</p>
+                        <div style={{ marginTop: '2rem', fontSize: '0.875rem', color: '#888' }}>
+                            Paid on the 1st of every month
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 
     const renderCourseCards = () => (
         <div className="grid">
@@ -809,6 +865,13 @@ const ProfessorDashboard = () => {
                         >
                             {Icon.home16} <span>My Courses</span>
                         </button>
+
+                        <button
+                            className={`nav-item ${activeTab === 'payment' ? 'active' : ''}`}
+                            onClick={() => { setActiveTab('payment'); setSelectedCourse(null); }}
+                        >
+                            💰 <span>Payment</span>
+                        </button>
                         <button
                             className={`nav-item ${activeTab === 'requests' ? 'active' : ''}`}
                             onClick={() => { setActiveTab('requests'); setSelectedCourse(null); }}
@@ -847,6 +910,7 @@ const ProfessorDashboard = () => {
                     <div className="content-body" style={{ marginTop: '24px' }}>
                         {activeTab === 'requests' && renderRequestsTab()}
 
+                        {activeTab === 'payment' && renderPaymentTab()}
                         {activeTab === 'halls' && renderHallsTab()}
 
                         {activeTab === 'courses' && (
