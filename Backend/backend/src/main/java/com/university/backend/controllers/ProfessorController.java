@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.CrossOrigin;
-
+import java.text.SimpleDateFormat;
 import com.university.backend.dto.AssignmentResponseDTO;
 import com.university.backend.dto.StaffRequestResponseDTO;
 import com.university.backend.services.AssignmentService;
@@ -18,10 +18,7 @@ import com.university.backend.services.StaffRequestService;
 import com.university.backend.entity.Hall.Hall;
 import com.university.backend.entity.Booking;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -692,6 +689,95 @@ public class ProfessorController {
 
         public void setFeedback(String feedback) {
             this.feedback = feedback;
+        }
+    }
+
+    // =================================================================
+// SECTION 8: PAYMENT TAB (Simple)
+// =================================================================
+
+    @GetMapping("/{professorId}/payment")
+    public ResponseEntity<?> getProfessorPayment(@PathVariable String professorId) {
+        try {
+            Optional<Professor> profOpt = professorRepository.findByProfessorId(professorId);
+            if (profOpt.isEmpty()) {
+                return ResponseEntity.status(404).body("Professor not found");
+            }
+
+            Professor professor = profOpt.get();
+
+            // Simple response - just return the payment amount
+            Map<String, Object> response = new HashMap<>();
+            response.put("payment", professor.getPayment());
+            response.put("currency", "USD");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error fetching payment");
+        }
+    }
+
+    @GetMapping("/course/{courseName}/info")
+    public ResponseEntity<?> getProfessorByCourse(@PathVariable String courseName) {
+        try {
+            Optional<Professor> professorOpt = professorRepository.findByProfessorCoursesContaining(courseName);
+
+            if (professorOpt.isEmpty()) {
+                return ResponseEntity.ok(Map.of(
+                        "professorName", "Not Assigned",
+                        "professorEmail", "",
+                        "message", "No professor assigned to this course"
+                ));
+            }
+
+            Professor professor = professorOpt.get();
+            return ResponseEntity.ok(Map.of(
+                    "professorId", professor.getProfessorId(),
+                    "professorName", professor.getProfessorName(),
+                    "professorEmail", professor.getProfessorEmail(),
+                    "department", professor.getProfessorDepartment()
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error fetching professor info: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Bulk fetch professors for multiple courses.
+     * Used by Parent Dashboard to get all professors at once.
+     * Endpoint: POST /api/professor/courses/professors
+     */
+    @PostMapping("/courses/professors")
+    public ResponseEntity<?> getProfessorsForCourses(@RequestBody Map<String, List<String>> request) {
+        try {
+            List<String> courseNames = request.get("courses");
+            Map<String, Object> response = new HashMap<>();
+
+            for (String courseName : courseNames) {
+                Optional<Professor> professorOpt = professorRepository.findByProfessorCoursesContaining(courseName);
+
+                if (professorOpt.isPresent()) {
+                    Professor prof = professorOpt.get();
+                    response.put(courseName, Map.of(
+                            "professorName", prof.getProfessorName(),
+                            "professorEmail", prof.getProfessorEmail()
+                    ));
+                } else {
+                    response.put(courseName, Map.of(
+                            "professorName", "Not Assigned",
+                            "professorEmail", ""
+                    ));
+                }
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error fetching professors: " + e.getMessage());
         }
     }
 }

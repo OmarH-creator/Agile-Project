@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import umsLogo from "../../assets/UMS Logo.png";
-import { getChildrenByEmail, getChildrenCourseRecords } from "./ParentApi";
-import "./ParentDashboard.css";
+import {getChildrenByEmail, getChildrenCourseRecords, getProfessorsForCourses} from "./ParentApi";import "./ParentDashboard.css";
 
 export default function ParentDashboard() {
     const [children, setChildren] = useState([]);
@@ -34,6 +33,45 @@ export default function ParentDashboard() {
         };
         fetchData();
     }, []);
+
+    useEffect(() => {
+        const fetchProfessorInfo = async () => {
+            if (Object.keys(courseRecords).length > 0) {
+                // Collect all unique course names
+                const allCourses = new Set();
+                Object.values(courseRecords).forEach(records => {
+                    records.forEach(record => {
+                        if (record.courseName) {
+                            allCourses.add(record.courseName);
+                        }
+                    });
+                });
+
+                if (allCourses.size > 0) {
+                    try {
+                        // Bulk fetch all professors at once
+                        const professorMap = await getProfessorsForCourses(Array.from(allCourses));
+
+                        // Update course records with professor info
+                        const updatedRecords = { ...courseRecords };
+                        Object.keys(updatedRecords).forEach(studentId => {
+                            updatedRecords[studentId] = updatedRecords[studentId].map(record => ({
+                                ...record,
+                                professorName: professorMap[record.courseName]?.professorName || "Not Assigned",
+                                professorEmail: professorMap[record.courseName]?.professorEmail || ""
+                            }));
+                        });
+
+                        setCourseRecords(updatedRecords);
+                    } catch (error) {
+                        console.error("Error fetching professor info:", error);
+                    }
+                }
+            }
+        };
+
+        fetchProfessorInfo();
+    }, [courseRecords]); // Run when courseRecords change
 
     const calculateGPA = (records) => {
         if (!records || records.length === 0) return 0;
@@ -154,10 +192,11 @@ export default function ParentDashboard() {
                                     <p><strong>Student:</strong> {selectedStudent.name}</p>
                                     <p><strong>ID:</strong> {selectedStudent.studentId}</p>
                                     <p><strong>Department:</strong> {selectedStudent.major?.majorName || "Undeclared"}</p>
-                                    <p><strong>Overall GPA:</strong> {calculateGPA(courseRecords[selectedStudent.studentId] || [])}</p>
+
                                 </div>
 
                                 {courseRecords[selectedStudent.studentId]?.length > 0 ? (
+                                    // Update the grades table to include professor columns
                                     <table className="grades-table">
                                         <thead>
                                         <tr>
@@ -165,7 +204,9 @@ export default function ParentDashboard() {
                                             <th>Grade</th>
                                             <th>Credits</th>
                                             <th>Semester</th>
-                                            <th>Grade Points</th>
+                                            <th>Professor</th>
+                                            <th>Contact</th>
+                                           {/* <th>Grade Points</th>*/}
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -177,7 +218,18 @@ export default function ParentDashboard() {
                                                 </td>
                                                 <td>{record.credits}</td>
                                                 <td>{record.semester}</td>
-                                                <td>{(record.grade * record.credits).toFixed(1)}</td>
+                                                <td>{record.professorName}</td>
+                                                <td>
+                                                    {record.professorEmail && (
+                                                        <a
+                                                            href={`mailto:${record.professorEmail}`}
+                                                            className="contact-link"
+                                                        >
+                                                            📧 Email
+                                                        </a>
+                                                    )}
+                                                </td>
+                                                <td></td>
                                             </tr>
                                         ))}
                                         </tbody>
