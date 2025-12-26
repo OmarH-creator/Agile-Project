@@ -34,7 +34,7 @@ public class Booking {
     @JoinColumn(name = "hall_id", nullable = false)
     @JsonIgnore
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-    private Hall hall; // Reference to the Hall this booking is for
+    private com.university.backend.entity.Hall.Hall hall; // Reference to the Hall this booking is for
 
     // Transient field: This allows the JSON to send "hallName" as a string,
     // and we can read it, even though we don't save it to this column directly.
@@ -102,7 +102,7 @@ public class Booking {
         this.staffId = staffId;
     }
 
-    public Hall getHall() {
+    public com.university.backend.entity.Hall.Hall getHall() {
         return hall;
     }
 

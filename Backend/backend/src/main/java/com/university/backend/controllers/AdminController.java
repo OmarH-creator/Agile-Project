@@ -217,6 +217,7 @@ public class AdminController {
             return ResponseEntity.internalServerError().body("System Error: " + e.getMessage());
         }
     }
+
     @GetMapping("/students/{idOrEmail}")
     public ResponseEntity<?> getStudent(@PathVariable String idOrEmail) {
         Optional<Student> student;
@@ -303,7 +304,6 @@ public class AdminController {
         professorRepository.save(professor);
         return ResponseEntity.ok("Professor created successfully.");
     }
-
 
     @GetMapping("/professors")
     public ResponseEntity<Page<Professor>> getAllProfessors(
@@ -394,7 +394,7 @@ public class AdminController {
     public ResponseEntity<HallResponseDTO> addHall(@RequestBody Map<String, Object> payload) {
         // Check if hall name exists (using the custom EAV lookup)
         String hallName = (String) payload.get("Hall_Name");
-        if (hallRepository.findByName(hallName).isPresent()) {
+        if (!hallRepository.findByName(hallName).isEmpty()) {
             // Return conflict or bad request
             //return ResponseEntity.badRequest().body("Hall with this name already exists.");
              // For now, let's just proceed or throw exception.
@@ -420,9 +420,9 @@ public class AdminController {
     public ResponseEntity<String> bookHall(@RequestBody BookingRequest request) {
 
         // 1. Find the Hall Object using the String name from Frontend (EAV Lookup)
-        Optional<Hall> hallOpt = hallRepository.findByName(request.getHallName());
+        List<com.university.backend.entity.Hall.Hall> halls = hallRepository.findByName(request.getHallName());
 
-        if (hallOpt.isEmpty()) {
+        if (halls.isEmpty()) {
             return ResponseEntity.status(404).body("Hall not found: " + request.getHallName());
         }
 
@@ -445,7 +445,7 @@ public class AdminController {
             newBooking.setPurpose(request.getPurpose());
             newBooking.setStaffId(String.valueOf(request.getStaffId()));
 
-            newBooking.setHall(hallOpt.get());
+            newBooking.setHall(hall);
 
             bookingRepository.save(newBooking);
 
@@ -465,10 +465,11 @@ public class AdminController {
                 .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + id));
 
         // EAV Lookup
-        Optional<Hall> hallOpt = hallRepository.findByName(request.getHallName());
-        if (hallOpt.isEmpty()) {
+        List<com.university.backend.entity.Hall.Hall> halls = hallRepository.findByName(request.getHallName());
+        if (halls.isEmpty()) {
             return ResponseEntity.status(404).body("Hall '" + request.getHallName() + "' not found.");
         }
+        com.university.backend.entity.Hall.Hall hall = halls.get(0);
 
         boolean hasConflict = bookingRepository.existsByHallAndOverlapExcludingId(
                 request.getHallName(),
@@ -482,10 +483,7 @@ public class AdminController {
 
         // 4. Apply Updates
         try {
-            // Update the relationship
-            booking.setHall(hallOpt.get());
-
-            // Update fields
+            booking.setHall(hall);
             booking.setStartTime(request.getStart());
             booking.setEndTime(request.getEnd());
             booking.setPurpose(request.getPurpose());
@@ -524,13 +522,13 @@ public class AdminController {
             @RequestBody Map<String, Object> payload) {
 
         // 1. Find existing Hall by Name (EAV Lookup)
-        Optional<Hall> hallOpt = hallRepository.findByName(originalName);
+        List<com.university.backend.entity.Hall.Hall> halls = hallRepository.findByName(originalName);
 
-        if (hallOpt.isEmpty()) {
+        if (halls.isEmpty()) {
             return ResponseEntity.status(404).body("Hall '" + originalName + "' not found.");
         }
 
-        Hall hall = hallOpt.get();
+        com.university.backend.entity.Hall.Hall hall = halls.get(0);
 
         // 2. Update EAV Attributes (Dynamic Loop)
         for (Map.Entry<String, Object> entry : payload.entrySet()) {
@@ -549,7 +547,7 @@ public class AdminController {
         String newName = (String) payload.get("Hall_Name");
         if (newName != null && !newName.equals(hall.getHallName())) {
             // Check conflict
-            if (hallRepository.findByName(newName).isPresent()) {
+            if (!hallRepository.findByName(newName).isEmpty()) {
                 return ResponseEntity.badRequest().body("Name '" + newName + "' is already taken.");
             }
             hall.setHallName(newName);
@@ -560,7 +558,7 @@ public class AdminController {
         hallRepository.save(hall);
         return ResponseEntity.ok("Hall updated successfully.");
     }
-    
+
     // Helper to update EAV values
     private void updateHallValue(Hall hall, String key, Object value) {
         Optional<HallAttribute> attrOpt = hall.getAttributes().stream()
@@ -575,7 +573,7 @@ public class AdminController {
             Optional<HallValue> existingVal = hall.getValues().stream()
                     .filter(v -> v.getAttribute().getAttributeName().equals(key))
                     .findFirst();
-            
+
             HallValue val;
             if (existingVal.isPresent()) {
                 val = existingVal.get();
@@ -615,7 +613,6 @@ public class AdminController {
 
         Course existingCourse = existingCourseOpt.get();
 
-        // Update fields if provided in the request
         if (updatedCourse.getCourseName() != null) {
             existingCourse.setCourseName(updatedCourse.getCourseName());
         }
@@ -670,7 +667,7 @@ public class AdminController {
         courseRepository.delete(course);
         return ResponseEntity.ok("Course removed successfully.");
     }
-        // COURSE MANAGMENT : for getting a specific course
+
     @GetMapping("/courses/{courseCode}")
     public ResponseEntity<?> getCourse(@PathVariable String courseCode) {
         Optional<Course> course = courseRepository.findByCourseCode(courseCode);
@@ -704,8 +701,6 @@ public class AdminController {
         }
         return ResponseEntity.status(404).body("Course not found.");
     }
-
-    // COURSE MANAGMENT : for editing course , deleting them , and adding them
 
     @GetMapping("/courses")
     public ResponseEntity<?> getAllCourses() {
@@ -761,9 +756,9 @@ public class AdminController {
     @DeleteMapping("/halls/{hallName}")
     public ResponseEntity<String> deleteHall(@PathVariable String hallName) {
         // EAV Lookup
-        Optional<Hall> hallOpt = hallRepository.findByName(hallName);
-        if (hallOpt.isPresent()) {
-            hallRepository.delete(hallOpt.get());
+        List<com.university.backend.entity.Hall.Hall> halls = hallRepository.findByName(hallName);
+        if (!halls.isEmpty()) {
+            hallRepository.delete(halls.get(0));
             return ResponseEntity.ok("Hall '" + hallName + "' removed successfully.");
         }
         return ResponseEntity.status(404).body("Hall '" + hallName + "' not found.");
