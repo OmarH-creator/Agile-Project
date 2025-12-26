@@ -30,8 +30,8 @@ public class AssignmentSubmissionService {
 
     @Autowired
     public AssignmentSubmissionService(AssignmentSubmissionRepository submissionRepository,
-                                       AssignmentRepository assignmentRepository,
-                                       StudentRepository studentRepository) {
+            AssignmentRepository assignmentRepository,
+            StudentRepository studentRepository) {
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
         this.studentRepository = studentRepository;
@@ -47,19 +47,29 @@ public class AssignmentSubmissionService {
 
         // 1. Static Links (Assignment & Student)
         if (submission.getAssignment() != null) {
+
             response.addField("Assignment_Id", submission.getAssignment().getId());
             response.addField("Assignment_Title", submission.getAssignment().getTitle());
+
+            // Add Grading Bucket Info
+            if (submission.getAssignment().getGradingItem() != null) {
+                response.addField("Grading_Item_Id", submission.getAssignment().getGradingItem().getId());
+                response.addField("Grading_Category", submission.getAssignment().getGradingItem().getCategoryName());
+            }
         }
+
         if (submission.getStudent() != null) {
             response.addField("Student_Id", submission.getStudent().getStudentId());
         }
 
         // 2. All Data is EAV (Content, Grade, Custom Answers)
-        for (SubmissionValue val : submission.getValues()) {
-            if (val.getAttribute() != null) {
-                String key = val.getAttribute().getAttributeName();
-                Object value = extractValue(val);
-                response.addField(key, value);
+        if (submission.getValues() != null) {
+            for (SubmissionValue val : submission.getValues()) {
+                if (val.getAttribute() != null) {
+                    String key = val.getAttribute().getAttributeName();
+                    Object value = extractValue(val);
+                    response.addField(key, value);
+                }
             }
         }
 
@@ -91,7 +101,8 @@ public class AssignmentSubmissionService {
             Student student = studentRepository.findById(studentId)
                     .orElseThrow(() -> new RuntimeException("Student not found"));
 
-            // This Constructor adds "Content", "Grade", "Feedback", "Submission_Date" to 'attributes' list
+            // This Constructor adds "Content", "Grade", "Feedback", "Submission_Date" to
+            // 'attributes' list
             submission = new AssignmentSubmission(assignment, student);
         }
 
@@ -108,7 +119,8 @@ public class AssignmentSubmissionService {
             Object value = entry.getValue();
 
             // Skip ID keys
-            if (key.equals("Assignment_Id") || key.equals("Student_Id")) continue;
+            if (key.equals("Assignment_Id") || key.equals("Student_Id"))
+                continue;
 
             SubmissionAttributes targetAttr = null;
 
@@ -160,7 +172,8 @@ public class AssignmentSubmissionService {
             String key = entry.getKey();
             Object newValue = entry.getValue();
 
-            if (key.equals("id") || key.equals("Assignment_Id") || key.equals("Student_Id")) continue;
+            if (key.equals("id") || key.equals("Assignment_Id") || key.equals("Student_Id"))
+                continue;
 
             if (validAttributesMap.containsKey(key)) {
                 SubmissionAttributes targetAttr = validAttributesMap.get(key);
@@ -216,16 +229,29 @@ public class AssignmentSubmissionService {
                 .orElse(null);
     }
 
+    @Transactional(readOnly = true)
+    public List<AssignmentSubmissionResponseDTO> getSubmissionsByGradingItem(Long gradingItemId) {
+        List<AssignmentSubmission> submissions = submissionRepository.findByAssignment_GradingItem_Id(gradingItemId);
+        return submissions.stream()
+                .map(sub -> getSubmissionById(sub.getId()))
+                .collect(Collectors.toList());
+    }
+
     // ==================================================================================
     // HELPERS
     // ==================================================================================
 
     private Object extractValue(SubmissionValue val) {
-        if (val.getValString() != null) return val.getValString();
-        if (val.getValInt() != null) return val.getValInt();
-        if (val.getValDouble() != null) return val.getValDouble();
-        if (val.getValBool() != null) return val.getValBool();
-        if (val.getValDate() != null) return val.getValDate();
+        if (val.getValString() != null)
+            return val.getValString();
+        if (val.getValInt() != null)
+            return val.getValInt();
+        if (val.getValDouble() != null)
+            return val.getValDouble();
+        if (val.getValBool() != null)
+            return val.getValBool();
+        if (val.getValDate() != null)
+            return val.getValDate();
         return null;
     }
 
@@ -245,8 +271,11 @@ public class AssignmentSubmissionService {
 
     private void updateValueEntity(SubmissionValue valEntity, Object value, String type) {
         // Reset old values to avoid data type conflicts
-        valEntity.setValString(null); valEntity.setValInt(null);
-        valEntity.setValDouble(null); valEntity.setValBool(null); valEntity.setValDate(null);
+        valEntity.setValString(null);
+        valEntity.setValInt(null);
+        valEntity.setValDouble(null);
+        valEntity.setValBool(null);
+        valEntity.setValDate(null);
 
         try {
             setValueBasedOnType(valEntity, value, type.toUpperCase());
@@ -258,15 +287,25 @@ public class AssignmentSubmissionService {
     // Shared logic to reduce code duplication
     private void setValueBasedOnType(SubmissionValue valEntity, Object value, String type) throws ParseException {
         switch (type) {
-            case "STRING": valEntity.setValString(String.valueOf(value)); break;
-            case "INTEGER": case "INT": valEntity.setValInt(Integer.parseInt(String.valueOf(value))); break;
-            case "DOUBLE": valEntity.setValDouble(Double.parseDouble(String.valueOf(value))); break;
-            case "BOOLEAN": valEntity.setValBool(Boolean.parseBoolean(String.valueOf(value))); break;
+            case "STRING":
+                valEntity.setValString(String.valueOf(value));
+                break;
+            case "INTEGER":
+            case "INT":
+                valEntity.setValInt(Integer.parseInt(String.valueOf(value)));
+                break;
+            case "DOUBLE":
+                valEntity.setValDouble(Double.parseDouble(String.valueOf(value)));
+                break;
+            case "BOOLEAN":
+                valEntity.setValBool(Boolean.parseBoolean(String.valueOf(value)));
+                break;
             case "DATE":
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 valEntity.setValDate(sdf.parse(String.valueOf(value)));
                 break;
-            default: valEntity.setValString(String.valueOf(value));
+            default:
+                valEntity.setValString(String.valueOf(value));
         }
     }
 }

@@ -49,7 +49,6 @@ public class GradingController {
     @Autowired
     private AssignmentSubmissionRepository submissionRepository;
 
-
     private final AssignmentService assignmentService;
 
     private final AssignmentSubmissionService submissionService;
@@ -60,7 +59,7 @@ public class GradingController {
     }
     // ==================================================================================
     // ==================================================================================
-    // SECTION 1: COURSE GRADING ITEMS (The "Buckets")                                 ||
+    // SECTION 1: COURSE GRADING ITEMS (The "Buckets") ||
     // ==================================================================================
     // ==================================================================================
 
@@ -78,7 +77,8 @@ public class GradingController {
             Integer weight = (Integer) payload.get("weight");
 
             if (courseId == null || categoryName == null || weight == null) {
-                return ResponseEntity.badRequest().body("Error: Missing required fields (courseId, categoryName, weight).");
+                return ResponseEntity.badRequest()
+                        .body("Error: Missing required fields (courseId, categoryName, weight).");
             }
 
             // 2. Check if Course Exists (Prevent Crash)
@@ -107,7 +107,8 @@ public class GradingController {
     @GetMapping("/item/course/{courseCode}")
     public ResponseEntity<?> getGradingItemsByCourse(@PathVariable String courseCode) {
         try {
-            // 1. Check if Course Exists first (Optional, but good for specific error messages)
+            // 1. Check if Course Exists first (Optional, but good for specific error
+            // messages)
             if (!courseRepository.existsById(courseCode)) {
                 return ResponseEntity.status(404).body("Error: Course with ID " + courseCode + " not found.");
             }
@@ -193,10 +194,35 @@ public class GradingController {
 
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             // This happens if Assignments are already linked to this bucket
-            return ResponseEntity.badRequest().body("Cannot delete this Grading Item because Assignments are linked to it. Please re-assign or delete the assignments first.");
+            return ResponseEntity.badRequest().body(
+                    "Cannot delete this Grading Item because Assignments are linked to it. Please re-assign or delete the assignments first.");
 
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error deleting item: " + e.getMessage());
+        }
+    }
+
+    /**
+     * GET: Fetch all Submissions for a specific Grading Bucket (e.g., all 50
+     * submissions for "Midterm")
+     * URL: http://localhost:8081/api/grading/item/submissions/{gradingItemId}
+     */
+    @GetMapping("/item/submissions/{gradingItemId}")
+    public ResponseEntity<?> getSubmissionsByGradingItem(@PathVariable Long gradingItemId) {
+        try {
+            // 1. Check if Bucket Exists
+            if (!gradingItemRepository.existsById(gradingItemId)) {
+                return ResponseEntity.status(404).body("Error: Grading Item with ID " + gradingItemId + " not found.");
+            }
+
+            // 2. Fetch Submissions via Service
+            List<AssignmentSubmissionResponseDTO> submissions = submissionService
+                    .getSubmissionsByGradingItem(gradingItemId);
+
+            return ResponseEntity.ok(submissions);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error fetching submissions for grading item: " + e.getMessage());
         }
     }
 
@@ -205,7 +231,6 @@ public class GradingController {
     // SECTION 2: ASSIGNMENTS (Create, View)
     // =================================================================
     // =================================================================
-
 
     // GET: Fetch all assignments for a course
     // URL: http://localhost:8080/api/grading/task/course/CSE111
@@ -255,7 +280,6 @@ public class GradingController {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
 
-
     }
 
     // 2. POST: Create Assignment (Handles Static + Dynamic Attributes)
@@ -302,20 +326,18 @@ public class GradingController {
             return ResponseEntity.ok("Assignment and all related submissions deleted successfully.");
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             // This catches the case where Cascade Delete is NOT configured
-            return ResponseEntity.badRequest().body("Cannot delete Assignment: It has linked submissions. Please delete submissions first.");
-        }
-        catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body("Cannot delete Assignment: It has linked submissions. Please delete submissions first.");
+        } catch (RuntimeException e) {
             return ResponseEntity.status(404).body("Error: " + e.getMessage());
         }
     }
-
 
     // =================================================================
     // =================================================================
     // SECTION 3: SUBMISSIONS (Create, View)
     // =================================================================
     // =================================================================
-
 
     // 1. POST: Create a Submission (Uses the Service's createSubmission)
     @PostMapping("submission/create")
@@ -336,6 +358,7 @@ public class GradingController {
 
         }
     }
+
     // 2. GET: Fetch a Submission by ID (Uses the Service's getSubmissionById)
     @GetMapping("submission/{id}")
     public ResponseEntity<?> getSubmissionById(@PathVariable Long id) {
@@ -377,7 +400,8 @@ public class GradingController {
             }
 
             // 3. LOGIC: Check for submission
-            AssignmentSubmissionResponseDTO submission = submissionService.getStudentSubmission(assignmentId, studentId);
+            AssignmentSubmissionResponseDTO submission = submissionService.getStudentSubmission(assignmentId,
+                    studentId);
 
             // 4. RETURN:
             // - If Found: Returns JSON object
@@ -414,7 +438,6 @@ public class GradingController {
         }
     }
 
-
     // URL: http://localhost:8081/api/grading/calculate/{studentId}/{gradingItemId}
     @GetMapping("/calculate/{studentId}/{gradingItemId}")
     public ResponseEntity<?> getBucketScore(
@@ -425,7 +448,8 @@ public class GradingController {
             double scoreReport = gradingService.calculateBucketScore(studentId, gradingItemId);
 
             // 2. Return Report
-            // JSON Example: { "totalEarned": 80.0, "totalPossible": 100.0, "weightedScore": 16.0 }
+            // JSON Example: { "totalEarned": 80.0, "totalPossible": 100.0, "weightedScore":
+            // 16.0 }
             return ResponseEntity.ok(scoreReport);
 
         } catch (RuntimeException e) {

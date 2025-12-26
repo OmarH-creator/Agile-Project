@@ -26,8 +26,8 @@ function AppRoutes() {
         <Route path="/Admin/Curriculum" element={<Curriculum />} />
         <Route path="/Admin/Curriculum/Edit-courses" element={<EditCourses />} />
 
-        <Route path="/Student" element={<StudentDashboard/>}/>
-        <Route path="/Student/registration" element={<Course_Reg/>}/>
+        <Route path="/Student" element={<StudentDashboard />} />
+        <Route path="/Student/registration" element={<Course_Reg />} />
         <Route path="/parent" element={<ParentDashboard />} />
         {/* 2. ADD THIS ROUTE */}
         <Route path="/professor" element={<ProfessorDashboard />} />

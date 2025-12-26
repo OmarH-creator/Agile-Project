@@ -105,18 +105,19 @@ public class AdminController {
             student.setAddress((String) payload.get("address"));
             student.setMilitaryStatus((String) payload.get("militaryStatus"));
 
-//            // Handle Numbers safely (JSON numbers can be Integer or Double)
-//            if (payload.get("gradYear") != null)
-//                student.setGradYear(((Number) payload.get("gradYear")).intValue());
-//
-//            if (payload.get("completedHours") != null)
-//                student.setCompletedHours(((Number) payload.get("completedHours")).intValue());
-//
-//            if (payload.get("fees") != null)
-//                student.setFees(((Number) payload.get("fees")).doubleValue());
-//
-//            if (payload.get("gpa") != null)
-//                student.setGpa(((Number) payload.get("gpa")).doubleValue());
+            // // Handle Numbers safely (JSON numbers can be Integer or Double)
+            // if (payload.get("gradYear") != null)
+            // student.setGradYear(((Number) payload.get("gradYear")).intValue());
+            //
+            // if (payload.get("completedHours") != null)
+            // student.setCompletedHours(((Number)
+            // payload.get("completedHours")).intValue());
+            //
+            // if (payload.get("fees") != null)
+            // student.setFees(((Number) payload.get("fees")).doubleValue());
+            //
+            // if (payload.get("gpa") != null)
+            // student.setGpa(((Number) payload.get("gpa")).doubleValue());
 
             // 3. THE FIX: Look up the Major manually
             String majorId = (String) payload.get("majorId");
@@ -202,6 +203,7 @@ public class AdminController {
             return ResponseEntity.internalServerError().body("System Error: " + e.getMessage());
         }
     }
+
     @GetMapping("/students/{idOrEmail}")
     public ResponseEntity<?> getStudent(@PathVariable String idOrEmail) {
         Optional<Student> student;
@@ -309,7 +311,6 @@ public class AdminController {
         }
     }
 
-
     @GetMapping("/professors")
     public ResponseEntity<Page<Professor>> getAllProfessors(
             @RequestParam(defaultValue = "0") int page,
@@ -399,7 +400,7 @@ public class AdminController {
     public ResponseEntity<HallResponseDTO> addHall(@RequestBody Map<String, Object> payload) {
         // Check if hall name exists (using the custom EAV lookup)
         String hallName = (String) payload.get("Hall_Name");
-        if (hallRepository.findByName(hallName).isPresent()) {
+        if (!hallRepository.findByName(hallName).isEmpty()) {
             // Return conflict or bad request
             // return ResponseEntity.badRequest().body("Hall with this name already
             // exists.");
@@ -426,11 +427,12 @@ public class AdminController {
     public ResponseEntity<String> bookHall(@RequestBody BookingRequest request) {
 
         // 1. Find the Hall Object using the String name from Frontend (EAV Lookup)
-        Optional<Hall> hallOpt = hallRepository.findByName(request.getHallName());
+        List<com.university.backend.entity.Hall.Hall> halls = hallRepository.findByName(request.getHallName());
 
-        if (hallOpt.isEmpty()) {
+        if (halls.isEmpty()) {
             return ResponseEntity.status(404).body("Hall not found: " + request.getHallName());
         }
+        com.university.backend.entity.Hall.Hall hall = halls.get(0); // Take the first one if duplicates exist
 
         // 2. Check Conflicts
         boolean hasConflict = bookingRepository.existsByHallAndOverlap(
@@ -450,7 +452,7 @@ public class AdminController {
             newBooking.setPurpose(request.getPurpose());
             newBooking.setStaffId(String.valueOf(request.getStaffId()));
 
-            newBooking.setHall(hallOpt.get());
+            newBooking.setHall(hall);
 
             bookingRepository.save(newBooking);
 
@@ -469,10 +471,11 @@ public class AdminController {
                 .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + id));
 
         // EAV Lookup
-        Optional<Hall> hallOpt = hallRepository.findByName(request.getHallName());
-        if (hallOpt.isEmpty()) {
+        List<com.university.backend.entity.Hall.Hall> halls = hallRepository.findByName(request.getHallName());
+        if (halls.isEmpty()) {
             return ResponseEntity.status(404).body("Hall '" + request.getHallName() + "' not found.");
         }
+        com.university.backend.entity.Hall.Hall hall = halls.get(0);
 
         boolean hasConflict = bookingRepository.existsByHallAndOverlapExcludingId(
                 request.getHallName(),
@@ -485,7 +488,7 @@ public class AdminController {
         }
 
         try {
-            booking.setHall(hallOpt.get());
+            booking.setHall(hall);
             booking.setStartTime(request.getStart());
             booking.setEndTime(request.getEnd());
             booking.setPurpose(request.getPurpose());
@@ -522,13 +525,13 @@ public class AdminController {
             @RequestBody Map<String, Object> payload) {
 
         // 1. Find existing Hall by Name (EAV Lookup)
-        Optional<Hall> hallOpt = hallRepository.findByName(originalName);
+        List<com.university.backend.entity.Hall.Hall> halls = hallRepository.findByName(originalName);
 
-        if (hallOpt.isEmpty()) {
+        if (halls.isEmpty()) {
             return ResponseEntity.status(404).body("Hall '" + originalName + "' not found.");
         }
 
-        Hall hall = hallOpt.get();
+        com.university.backend.entity.Hall.Hall hall = halls.get(0);
 
         // 2. Update EAV Attributes (Dynamic Loop)
         for (Map.Entry<String, Object> entry : payload.entrySet()) {
@@ -547,7 +550,7 @@ public class AdminController {
         String newName = (String) payload.get("Hall_Name");
         if (newName != null && !newName.equals(hall.getHallName())) {
             // Check conflict
-            if (hallRepository.findByName(newName).isPresent()) {
+            if (!hallRepository.findByName(newName).isEmpty()) {
                 return ResponseEntity.badRequest().body("Name '" + newName + "' is already taken.");
             }
             hall.setHallName(newName);
@@ -679,9 +682,9 @@ public class AdminController {
     @DeleteMapping("/halls/{hallName}")
     public ResponseEntity<String> deleteHall(@PathVariable String hallName) {
         // EAV Lookup
-        Optional<Hall> hallOpt = hallRepository.findByName(hallName);
-        if (hallOpt.isPresent()) {
-            hallRepository.delete(hallOpt.get());
+        List<com.university.backend.entity.Hall.Hall> halls = hallRepository.findByName(hallName);
+        if (!halls.isEmpty()) {
+            hallRepository.delete(halls.get(0));
             return ResponseEntity.ok("Hall '" + hallName + "' removed successfully.");
         }
         return ResponseEntity.status(404).body("Hall '" + hallName + "' not found.");
