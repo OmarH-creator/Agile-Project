@@ -1,0 +1,549 @@
+/* Inherit standard variables from Admin if globally imported,
+   otherwise redefine them here for isolation */
+
+/* SCOPED THEME: Apply .prof-dashboard-theme to the top-level container in JSX */
+.prof-dashboard-theme {
+    --neo-bg: #DA70D6;
+    /* Base Orchid */
+    --neo-surface: rgba(255, 255, 255, 0.45);
+    /* More opaque glass */
+    --neo-shadow-dark: rgba(74, 14, 78, 0.2);
+    --neo-shadow-light: rgba(255, 255, 255, 0.4);
+    --neo-text: #4A0E4E;
+    /* Deep Purple Text */
+    --neo-muted: #7e22ce;
+    --neo-accent: #FFFFFF;
+    --neo-accent-strong: #4A0E4E;
+}
+
+/* --- SHELL & LAYOUT --- */
+.prof-dashboard-theme .shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 80px 1fr;
+    gap: 24px;
+    padding: 24px;
+    height: 100vh;
+    box-sizing: border-box;
+    overflow: hidden;
+    /* Move background definition here to prevent global body pollution */
+    background-color: var(--neo-bg);
+    /* Lighter Gradient: Pastel Orchid to Soft White/Orchid */
+    background-image: linear-gradient(135deg, #F9E6FB 0%, #F3E5F5 100%);
+    color: var(--neo-text);
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* --- TOPBAR --- */
+.topbar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    background: rgba(255, 255, 255, 0.85);
+    /* High contrast white */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 8px 32px 0 rgba(186, 85, 211, 0.1);
+    backdrop-filter: blur(12px);
+    color: var(--neo-text);
+}
+
+.topbar-left,
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.brand-mini {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.brand-logo-shell {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.mini-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.brand-text {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--neo-text);
+}
+
+/* User Profile Pill */
+.sidebar-user {
+    padding: 6px 16px;
+    gap: 10px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    /* increased border visibility */
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.3);
+    color: var(--neo-text);
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--neo-text);
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    grid-column: 1;
+    grid-row: 2;
+    background: var(--neo-surface);
+    /* Use the opaque white variable */
+    border-radius: 24px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 32px 0 rgba(186, 85, 211, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    justify-content: flex-start;
+    backdrop-filter: blur(12px);
+}
+
+.side-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 18px;
+    text-decoration: none;
+    color: var(--neo-muted);
+    background: transparent;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.nav-item:hover {
+    color: var(--neo-text);
+    background: rgba(218, 112, 214, 0.15);
+    /* Light orchid hover */
+}
+
+.nav-item.active {
+    color: var(--neo-accent-strong);
+    background: linear-gradient(135deg, #fff 0%, #FAEAFF 100%);
+    box-shadow: 0 4px 12px rgba(186, 85, 211, 0.15);
+}
+
+/* --- MAIN CONTENT --- */
+.main {
+    grid-column: 2;
+    grid-row: 2;
+    background: var(--neo-surface);
+    /* Opaque white */
+    border-radius: 36px;
+    padding: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 32px 0 rgba(186, 85, 211, 0.1);
+    overflow-y: auto;
+    backdrop-filter: blur(12px);
+}
+
+/* Headers */
+.page-header {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 28px;
+    padding: 24px 30px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-title-ico {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    color: var(--neo-text);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.page-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--neo-text);
+    /* Dark text for visibility */
+}
+
+.page-sub {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--neo-muted);
+    /* Muted purple/dark text */
+}
+
+/* Buttons */
+.icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 16px;
+    border: none;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(235, 240, 255, 0.7));
+    color: var(--neo-accent);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 6px 6px 14px rgba(183, 190, 208, 0.6), -6px -6px 12px rgba(255, 255, 255, 0.95);
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    transform: translateY(-2px);
+    color: var(--neo-accent-strong);
+}
+
+.primary-btn {
+    background: linear-gradient(145deg, rgba(106, 125, 255, 0.92), rgba(94, 110, 255, 0.75));
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 14px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 4px 4px 12px rgba(106, 125, 255, 0.35);
+    transition: transform 0.2s;
+}
+
+.primary-btn.small {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+}
+
+.ghost-btn {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--neo-accent-strong);
+    padding: 6px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.ghost-btn:hover {
+    background: #fff;
+}
+
+/* --- CARDS & GRID --- */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 26px;
+}
+
+.card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(237, 242, 255, 0.74));
+    border-radius: 32px;
+    min-height: 160px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 18px 18px 34px rgba(183, 190, 208, 0.55), -18px -18px 34px rgba(241, 241, 241, 0.95);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.clickable-card {
+    cursor: pointer;
+}
+
+.clickable-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 22px 22px 40px rgba(183, 190, 208, 0.65), -22px -22px 40px rgba(255, 255, 255, 0.98);
+}
+
+.card-title {
+    padding: 28px;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.card-heading {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--neo-text);
+    margin-bottom: 8px;
+}
+
+.card-sub {
+    margin: 0;
+    font-size: 13px;
+    color: var(--neo-muted);
+}
+
+.card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--neo-accent-strong);
+}
+
+/* Accent overrides */
+.card[data-accent='violet'] .card-icon {
+    color: #5b7cfe;
+    background: rgba(220, 230, 255, 0.5);
+}
+
+.card[data-accent='emerald'] .card-icon {
+    color: #00b862;
+    background: rgba(200, 255, 220, 0.5);
+}
+
+/* --- STUDENT TABLE --- */
+.table-card {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: inset 2px 2px 8px rgba(255, 255, 255, 0.8), 4px 4px 12px rgba(181, 190, 210, 0.2);
+}
+
+.table-header {
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(181, 190, 210, 0.2);
+}
+
+.table-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.badge {
+    background: var(--neo-accent);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.prof-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.prof-table th,
+.prof-table td {
+    padding: 16px 24px;
+    text-align: left;
+    border-bottom: 1px solid rgba(181, 190, 210, 0.15);
+}
+
+.prof-table th {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--neo-muted);
+}
+
+.prof-table tr:last-child td {
+    border-bottom: none;
+}
+
+.name-cell {
+    font-weight: 600;
+    color: var(--neo-text);
+}
+
+.id-cell {
+    font-family: monospace;
+    color: var(--neo-muted);
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        padding: 16px;
+    }
+
+    .topbar {
+        flex-direction: column;
+        gap: 10px;
+        padding: 16px;
+        height: auto;
+    }
+
+    .sidebar {
+        display: none;
+    }
+}
+
+/* --- TABS --- */
+.tabs {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--neo-muted);
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--neo-accent-strong);
+}
+
+.tab-btn.active {
+    background: #fff;
+    color: var(--neo-accent-strong);
+    box-shadow: 4px 4px 12px rgba(183, 190, 208, 0.2);
+}
+
+/* --- ASSIGNMENT STYLES --- */
+.actions-bar {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.create-form {
+    padding: 24px;
+    margin-bottom: 30px;
+    background: #fff;
+}
+
+.form-group {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--neo-muted);
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: inherit;
+    background: #f8faff;
+}
+
+.assignments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.assignment-item {
+    padding: 20px;
+    background: #fff;
+    border-left: 5px solid var(--neo-accent);
+}
+
+.assign-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.assign-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--neo-text);
+}
+
+.assign-date {
+    font-size: 12px;
+    color: var(--neo-muted);
+}
+
+.assign-desc {
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* Mini Student List for Grading Assignments */
+.mini-student-list {
+    max-height: 150px;
+    overflow-y: auto;
+    background: rgba(236, 241, 255, 0.5);
+    padding: 10px;
+    border-radius: 12px;
+    margin-top: 10px;
+}
+
+.student-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 14px;
+}
+
+.student-row:last-child {
+    border-bottom: none;
+}

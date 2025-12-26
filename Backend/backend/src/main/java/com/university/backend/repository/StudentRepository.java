@@ -1,6 +1,9 @@
 package com.university.backend.repository;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import com.university.backend.entity.Student;
+import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional; // Import needed for deletion
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +14,7 @@ import java.util.Optional;
 
 // T is Student, ID is String (Assuming studentId is the PK or you rely on findByStudentId)
 public interface StudentRepository extends JpaRepository<Student, String> {
+// These methods MUST be defined here for the Controller to see them
 
     List<Student> findByStudentIdIn(List<String> studentIds);
     // --- ESSENTIAL FOR STUDENT CONTROLLER ---
@@ -35,4 +39,7 @@ public interface StudentRepository extends JpaRepository<Student, String> {
     // --- MAINTENANCE ---
     @Transactional
     void deleteByStudentId(String studentId);
+
+    // NEW: Find students where the 'currentCourses' collection contains the specific course name
+    List<Student> findByCurrentCoursesContaining(String courseName);
 }
