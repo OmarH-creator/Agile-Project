@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 // We reuse the Admin CSS because the layout is identical
 import './StudentDashboard.css';
@@ -23,7 +23,7 @@ const StudentDashboard = () => {
                     try {
                         // Assuming you have a similar function for students
                         const response = await getStudent(email);
-                        const name =  response.name;
+                        const name = response.name;
                         setStudentName(name); // response should be the name string
                     } catch (error) {
                         console.error("Failed to fetch student info", error);
@@ -59,19 +59,20 @@ const StudentDashboard = () => {
             accent: 'aqua',
             path: '/student/lms' // or external link
         },
-        {
-            title: 'Schedule',
-            sub: 'View your weekly timetable',
-            icon: Icon.facilities, // Calendar icon would be best here
-            accent: 'emerald',
-            path: '/student/schedule'
-        },
+
         {
             title: 'Profile',
             sub: 'Update personal info and settings',
             icon: Icon.user16, // Using the user icon
             accent: 'citrus',
             path: '/student/profile'
+        },
+        {
+            title: 'Announcements',
+            sub: 'View university updates and news',
+            icon: Icon.megaphone,
+            accent: 'orange',
+            path: '/student/announcements'
         }
     ];
 
@@ -82,7 +83,7 @@ const StudentDashboard = () => {
                 <div className="topbar-left">
                     <div className="brand-mini">
                         <div className="brand-logo-shell">
-                            <img src={String(umsLogo)} alt="UMS logo" className="mini-logo"/>
+                            <img src={String(umsLogo)} alt="UMS logo" className="mini-logo" />
                         </div>
                         <span className="brand-text brand-title">
                             Student Portal

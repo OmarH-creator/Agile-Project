@@ -174,6 +174,49 @@ export async function getTranscript(studentId) {
     return await response.text();
 }
 
+
+// Get a specific course by code
+export async function getCourse(courseCode) {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/courses/${courseCode}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch course: ${courseCode}`);
+    }
+
+    return await response.json();
+}
+
+// Get all courses a student is enrolled in
+export async function getEnrolledCourses(studentId) {
+    try {
+        // 1. Get current student data to see list of course codes
+        const student = await getStudent(studentId);
+
+        // 2. Extract the list of course codes (e.g. ["CS101", "MATH202"])
+        const courseCodes = student.currentCourses || [];
+
+        if (courseCodes.length === 0) {
+            return [];
+        }
+
+        // 3. Fetch full details for each course code
+        const coursePromises = courseCodes.map(code => getCourse(code));
+        const courses = await Promise.all(coursePromises);
+
+        return courses;
+    } catch (error) {
+        console.error("Error fetching enrolled courses:", error);
+        throw error;
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// API-FUNCTIONS-FOR-ADMIN-STUDENT-RELATED-SERVICES //////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,7 +234,7 @@ export const emptyStudent = {
     majorId: '',
     majorName: '',
     nationalId: '',
-    birthdate: '',
+    dateOfBirth: '',
     gradYear: '',
     completedHours: 0,
     fees: 0,
@@ -242,6 +285,7 @@ export const buildStudentSnapshot = (student) => {
         militaryStatus: student.militaryStatus,
         address: student.address,
         nationalId: student.nationalId,
+        dateOfBirth: student.dateOfBirth,
 
         // Arrays
         currentRegistrations: student.currentCourses || [],
@@ -329,9 +373,22 @@ export const Icon = {
     ),
     search16: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="7" />
             <line x1="16.65" y1="16.65" x2="21" y2="21" />
+        </svg>
+    ),
+    professor: (
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+    ),
+    megaphone: (
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 11l18-5v12l-18-5v-2z" />
+            <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
         </svg>
     ),
 

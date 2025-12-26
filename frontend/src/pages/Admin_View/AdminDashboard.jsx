@@ -1,9 +1,9 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
-import {getAdmin, Icon} from './Admin-Student-Api'
-import  {jwtDecode} from "jwt-decode";
+import { getAdmin, Icon } from './Admin-Student-Api'
+import { jwtDecode } from "jwt-decode";
 
 const AdminDashboard = () => {
     const [admin, setAdmin] = useState("");
@@ -50,6 +50,13 @@ const AdminDashboard = () => {
             icon: Icon.professor, /* Make sure to add 'professor' to your Icon export in Admin-Student-Api */
             accent: 'emerald',
             path: '/Admin/Professors'
+        },
+        {
+            title: 'Announcements',
+            sub: 'Create and manage university announcements',
+            icon: Icon.megaphone,
+            accent: 'orange',
+            path: '/Admin/Announcements'
         }
     ];
 
@@ -59,7 +66,7 @@ const AdminDashboard = () => {
                 <div className="topbar-left">
                     <div className="brand-mini">
                         <div className="brand-logo-shell">
-                            <img src={String(umsLogo)} alt="UMS logo" className="mini-logo"/>
+                            <img src={String(umsLogo)} alt="UMS logo" className="mini-logo" />
                         </div>
                         <span className="brand-text brand-title">
                             University Management - Admin
@@ -69,7 +76,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="topbar-right">
                     <div className="sidebar-user">
-                    <div className="avatar" aria-hidden="true">
+                        <div className="avatar" aria-hidden="true">
                             <span className="avatar-ico">{Icon.user16}</span>
                         </div>
                         <div className="user-meta">
@@ -95,29 +102,29 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 </div>
-                    <div className="grid">
-                        {tiles.map((tile) => (
-                                <Link
-                                    to={tile.path ?? '#'}
-                                    key={tile.title}
-                                    className="card"
-                                    data-accent={tile.accent}
-                                >
-                                    <div className="card-title">
-                                        <div>
-                                            <div className="card-heading">{tile.title}</div>
-                                            {tile.sub && <p className="card-sub">{tile.sub}</p>}
-                                        </div>
-                                        {tile.icon && (
-                                            <div className="card-icon" aria-hidden="true" data-accent={tile.accent}>
-                                                {tile.icon}
-                                            </div>
-                                        )}
+                <div className="grid">
+                    {tiles.map((tile) => (
+                        <Link
+                            to={tile.path ?? '#'}
+                            key={tile.title}
+                            className="card"
+                            data-accent={tile.accent}
+                        >
+                            <div className="card-title">
+                                <div>
+                                    <div className="card-heading">{tile.title}</div>
+                                    {tile.sub && <p className="card-sub">{tile.sub}</p>}
+                                </div>
+                                {tile.icon && (
+                                    <div className="card-icon" aria-hidden="true" data-accent={tile.accent}>
+                                        {tile.icon}
                                     </div>
-                                </Link>
-                            )
-                        )}
-                    </div>
+                                )}
+                            </div>
+                        </Link>
+                    )
+                    )}
+                </div>
             </main>
         </div>
     );

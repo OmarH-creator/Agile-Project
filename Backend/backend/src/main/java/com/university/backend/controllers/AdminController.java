@@ -46,6 +46,13 @@ public class AdminController {
     @Autowired
     private BookingRepository bookingRepository; // ADDED
 
+    @Autowired
+    private AnnouncementRepository announcementRepository; // ADDED
+
+    @Autowired
+    private CoursePrerequisiteRepository coursePrerequisiteRepository; // ADDED
+
+
     @GetMapping("/{email}")
     public ResponseEntity<String> fetchAdminByEmail(@PathVariable String email) {
         Optional<Admin> admin = adminRepository.findByEmail(email);
@@ -92,6 +99,13 @@ public class AdminController {
             student.setPhone((String) payload.get("phone"));
             student.setAddress((String) payload.get("address"));
             student.setMilitaryStatus((String) payload.get("militaryStatus"));
+            
+            // Handle Date of Birth
+            if (payload.get("dateOfBirth") != null) {
+                String dobStr = (String) payload.get("dateOfBirth");
+                // Parse ISO 8601 string to Date
+                student.setDateOfBirth(Date.from(java.time.Instant.parse(dobStr)));
+            }
 
             // (Optional) If you have a relationship, link them:
             // student.setUser(newUser);
@@ -154,6 +168,13 @@ public class AdminController {
             }
             if (payload.containsKey("address")) student.setAddress((String) payload.get("address"));
             if (payload.containsKey("militaryStatus")) student.setMilitaryStatus((String) payload.get("militaryStatus"));
+            
+            if (payload.containsKey("dateOfBirth")) {
+                 String dobStr = (String) payload.get("dateOfBirth");
+                 if (dobStr != null) {
+                     student.setDateOfBirth(Date.from(java.time.Instant.parse(dobStr)));
+                 }
+            }
 //            if (payload.containsKey("status")) student.setStatus((String) payload.get("status"));
 
 //            if (payload.containsKey("gradYear"))
@@ -605,32 +626,107 @@ public class AdminController {
         return ResponseEntity.ok("Course updated successfully.");
     }
 
+    @PutMapping("/courses/{courseCode}/prerequisites")
+    @Transactional
+    public ResponseEntity<String> updatePrerequisites(@PathVariable String courseCode, @RequestBody List<String> prerequisiteCodes) {
+        Optional<Course> courseOpt = courseRepository.findByCourseCode(courseCode);
+        if (courseOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Course not found.");
+        }
+        Course course = courseOpt.get();
+
+        // 1. Clear existing prerequisites for this course
+        coursePrerequisiteRepository.deleteByCourse(course);
+
+        // 2. Add new prerequisites
+        for (String code : prerequisiteCodes) {
+            Optional<Course> prereqOpt = courseRepository.findByCourseCode(code);
+            if (prereqOpt.isPresent()) {
+                CoursePrerequisite cp = new CoursePrerequisite(course, prereqOpt.get());
+                coursePrerequisiteRepository.save(cp);
+            }
+        }
+        return ResponseEntity.ok("Prerequisites updated successfully.");
+    }
+
     @DeleteMapping("/courses/{courseCode}")
+    @Transactional
     public ResponseEntity<String> removeCourse(@PathVariable String courseCode) {
         Optional<Course> courseOpt = courseRepository.findByCourseCode(courseCode);
 
         if (courseOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Course not found.");
         }
+        Course course = courseOpt.get();
 
-        courseRepository.delete(courseOpt.get());
+        // 1. (basheel el prerequisites men 3andy)
+        coursePrerequisiteRepository.deleteByCourse(course);
+
+        // 2. (basheelny men prerequisite course tany)
+        coursePrerequisiteRepository.deleteByPrerequisite(course);
+
+        // 3. ba delete el course
+        courseRepository.delete(course);
         return ResponseEntity.ok("Course removed successfully.");
     }
-
+        // COURSE MANAGMENT : for getting a specific course
     @GetMapping("/courses/{courseCode}")
     public ResponseEntity<?> getCourse(@PathVariable String courseCode) {
         Optional<Course> course = courseRepository.findByCourseCode(courseCode);
         if (course.isPresent()) {
-            return ResponseEntity.ok(course.get());
+            Course c = course.get();
+            List<CoursePrerequisite> prereqs = coursePrerequisiteRepository.findByCourse(c);
+            List<String> codes = new java.util.ArrayList<>();
+            for (CoursePrerequisite cp : prereqs) {
+                codes.add(cp.getPrerequisite().getCourseCode());
+            }
+            c.setPrerequisites(codes);
+            // Populate Professor Email
+            // 3ashan info el professor teban fel course
+            String lookupName = c.getCourseCode() + " - " + c.getCourseName();
+            System.out.println("DEBUG: Searching for professor teaching: " + lookupName);
+            
+            Optional<Professor> prof = professorRepository.findByProfessorCoursesContains(lookupName);
+            if (prof.isPresent()) {
+                System.out.println("DEBUG: Found professor: " + prof.get().getProfessorName());
+                c.setProfessorEmail(prof.get().getProfessorEmail());
+            } else {
+                System.out.println("DEBUG: No professor found for " + lookupName);
+                
+                // ehtyay: try searching just by name in case of inconsistencies
+                 Optional<Professor> profByName = professorRepository.findByProfessorCoursesContains(c.getCourseName());
+                 if (profByName.isPresent()) {
+                     c.setProfessorEmail(profByName.get().getProfessorEmail());
+                 }
+            }
+            return ResponseEntity.ok(c);
         }
         return ResponseEntity.status(404).body("Course not found.");
     }
 
-    // Add these methods to the Course Management section in your AdminController
+    // COURSE MANAGMENT : for editing course , deleting them , and adding them
 
     @GetMapping("/courses")
     public ResponseEntity<?> getAllCourses() {
-        return ResponseEntity.ok(courseRepository.findAll());
+        List<Course> courses = courseRepository.findAll();
+        for (Course c : courses) {
+            List<CoursePrerequisite> prereqs = coursePrerequisiteRepository.findByCourse(c);
+            List<String> codes = new java.util.ArrayList<>();
+            for (CoursePrerequisite cp : prereqs) {
+                codes.add(cp.getPrerequisite().getCourseCode());
+            }
+            if (!codes.isEmpty()) {
+                System.out.println("DEBUG: Course " + c.getCourseCode() + " has prereqs: " + codes);
+            }
+            c.setPrerequisites(codes);
+
+            // show professor email in courses for contact information
+            Optional<Professor> prof = professorRepository.findByProfessorCoursesContains(c.getCourseName());
+            if (prof.isPresent()) {
+                c.setProfessorEmail(prof.get().getProfessorEmail());
+            }
+        }
+        return ResponseEntity.ok(courses);
     }
 
     @GetMapping("/courses/search")
@@ -669,6 +765,26 @@ public class AdminController {
             return ResponseEntity.ok("Hall '" + hallName + "' removed successfully.");
         }
         return ResponseEntity.status(404).body("Hall '" + hallName + "' not found.");
+    }
+
+    // --- Announcement Management --- here we post annopuncements for the users
+
+    @GetMapping("/announcements")
+    public ResponseEntity<List<Announcement>> getAllAnnouncements() {
+        return ResponseEntity.ok(announcementRepository.findAllByOrderByTimestampDesc());
+    }
+
+    @PostMapping("/announcements")
+    public ResponseEntity<String> createAnnouncement(@RequestBody Announcement announcement) {
+        if (announcement.getTitle() == null || announcement.getTitle().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Title is required");
+        }
+        if (announcement.getContent() == null || announcement.getContent().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Content is required");
+        }
+
+        announcementRepository.save(announcement);
+        return ResponseEntity.ok("Announcement created successfully");
     }
 
     // Helper class for the booking JSON body

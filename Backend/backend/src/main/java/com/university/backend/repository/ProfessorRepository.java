@@ -25,4 +25,6 @@ public interface ProfessorRepository extends JpaRepository<Professor, String> {
 
     // Optional: If you prefer searching by Name instead of ID, add this:
     // Page<Professor> findByProfessorNameContainingIgnoreCase(String name, Pageable pageable);
+
+    Optional<Professor> findByProfessorCoursesContains(String courseName);
 }

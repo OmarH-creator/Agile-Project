@@ -98,7 +98,7 @@ const StudentServices = () => {
         setStudentToSelect(null);
     };
 
-// Handle canceling the discard changes action
+    // Handle canceling the discard changes action
     const handleCancelDiscardChanges = () => {
         // Just close the modal, don't select the student
         setShowUnsavedChangesModal(false);
@@ -125,6 +125,7 @@ const StudentServices = () => {
             code: selectedStudent.studentId || selectedStudent.code,
             majorId: selectedStudent.major?.majorId || selectedStudent.majorId || '',
             majorName: selectedStudent.major?.majorName || selectedStudent.majorName || '',
+            dateOfBirth: selectedStudent.dateOfBirth || '',
             // Ensure numbers
             completedHours: selectedStudent.completedHours || 0,
             cgpa: selectedStudent.gpa || selectedStudent.cgpa || 0,
@@ -164,6 +165,7 @@ const StudentServices = () => {
             majorId: formData.majorId?.trim(),
             majorName: formData.majorName?.trim(),
             militaryStatus: formData.militaryStatus,
+            dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : null,
             notes: (formData.notes ?? '').trim(),
 
             // Ensure numbers are actual numbers
@@ -275,7 +277,7 @@ const StudentServices = () => {
             <header className="topbar" role="banner">
                 <div className="topbar-left">
                     <div className="brand-mini">
-                        <div className="brand-logo-shell"><img src={String(umsLogo)} alt="UMS" className="mini-logo"/></div>
+                        <div className="brand-logo-shell"><img src={String(umsLogo)} alt="UMS" className="mini-logo" /></div>
                         <span className="brand-text brand-title">Admin Console</span>
                     </div>
                 </div>
@@ -315,7 +317,7 @@ const StudentServices = () => {
 
                         <div className="student-list">
                             {loading && students.length === 0 ? (
-                                <div style={{padding: '20px', textAlign:'center'}}>Loading...</div>
+                                <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>
                             ) : students.length > 0 ? (
                                 students.map(student => (
                                     <button
@@ -330,7 +332,7 @@ const StudentServices = () => {
                                     </button>
                                 ))
                             ) : (
-                                <div style={{padding: '1rem', color: '#666', textAlign:'center'}}>No students found</div>
+                                <div style={{ padding: '1rem', color: '#666', textAlign: 'center' }}>No students found</div>
                             )}
                         </div>
 
@@ -343,39 +345,39 @@ const StudentServices = () => {
 
                     {/* --- RIGHT PANEL: DETAILS OR FORM --- */}
                     <section className="detail-panel">
-                        {error && <div className="error-banner" style={{background: '#ffebee', color: '#c62828', padding: '10px', marginBottom: '10px', borderRadius: '4px'}}>{error}</div>}
+                        {error && <div className="error-banner" style={{ background: '#ffebee', color: '#c62828', padding: '10px', marginBottom: '10px', borderRadius: '4px' }}>{error}</div>}
 
                         {/* CASE 1: NO SELECTION & NOT ADDING */}
                         {!selectedStudent && formMode === 'view' ? (
                             <div className="empty-state large">
-                                <div style={{marginBottom:'10px', fontSize:'2rem', color:'#ccc'}}>{Icon.user || '👤'}</div>
+                                <div style={{ marginBottom: '10px', fontSize: '2rem', color: '#ccc' }}>{Icon.user || '👤'}</div>
                                 Select a student to view details or click "Add" to create a new one.
                             </div>
                         ) : formMode === 'view' ? (
 
                             // --- CASE 2: VIEW MODE (Uses StudentRecord Component) ---
                             <div className="view-container">
-                                <div className="action-toolbar" style={{display: 'flex', gap: '10px', marginBottom: '20px', justifyContent: 'flex-end'}}>
+                                <div className="action-toolbar" style={{ display: 'flex', gap: '10px', marginBottom: '20px', justifyContent: 'flex-end' }}>
                                     <button className="secondary-btn" onClick={handleEditClick}>
                                         {Icon.edit16} Edit Record
                                     </button>
-                                    <button className="danger-btn" style={{background: '#fee', color: 'red', border: '1px solid #fdd', padding: '8px 12px', borderRadius:'4px', cursor: 'pointer'}} onClick={handleDeleteClick}>
+                                    <button className="danger-btn" style={{ background: '#fee', color: 'red', border: '1px solid #fdd', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }} onClick={handleDeleteClick}>
                                         {Icon.trash16} Delete
                                     </button>
                                 </div>
-                                <StudentRecord student={selectedStudent}/>
+                                <StudentRecord student={selectedStudent} />
                             </div>
 
                         ) : (
 
                             // --- CASE 3: ADD / EDIT FORM MODE ---
-                            <div className="edit-form-container" style={{padding: '30px', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)'}}>
-                                <h3 style={{borderBottom:'1px solid #eee', paddingBottom:'15px', marginBottom:'20px'}}>
+                            <div className="edit-form-container" style={{ padding: '30px', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                                <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '15px', marginBottom: '20px' }}>
                                     {formMode === 'add' ? 'Add New Student' : `Edit Student: ${formData.studentId || formData.code}`}
                                 </h3>
 
                                 <form onSubmit={handleFormSubmit} className="student-form">
-                                    <div className="form-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
+                                    <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
 
                                         {/* Row 1 */}
                                         <div className="form-group">
@@ -405,6 +407,16 @@ const StudentServices = () => {
                                         <div className="form-group">
                                             <label>Phone</label>
                                             <input type="text" name="phone" value={formData.phone || ''} onChange={handleFormChange} />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Date of Birth</label>
+                                            <input
+                                                type="date"
+                                                name="dateOfBirth"
+                                                value={formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString().split('T')[0] : ''}
+                                                onChange={handleFormChange}
+                                            />
                                         </div>
 
                                         {/* Row 3 - Academic */}
@@ -458,19 +470,19 @@ const StudentServices = () => {
                                             <input name="completedHours" type="number" value={formData.completedHours || 0} onChange={handleFormChange} />
                                         </div>
 
-                                        <div className="form-group full-width" style={{gridColumn:'1 / -1'}}>
+                                        <div className="form-group full-width" style={{ gridColumn: '1 / -1' }}>
                                             <label>Address</label>
                                             <input type="text" name="address" value={formData.address || ''} onChange={handleFormChange} />
                                         </div>
 
-                                        <div className="form-group full-width" style={{gridColumn:'1 / -1'}}>
+                                        <div className="form-group full-width" style={{ gridColumn: '1 / -1' }}>
                                             <label>Notes</label>
                                             <textarea name="notes" value={formData.notes || ''} onChange={handleFormChange} rows="3" />
                                         </div>
 
                                     </div>
 
-                                    <div className="form-actions" style={{marginTop: '30px', display: 'flex', gap: '15px', justifyContent:'flex-end', borderTop:'1px solid #eee', paddingTop:'20px'}}>
+                                    <div className="form-actions" style={{ marginTop: '30px', display: 'flex', gap: '15px', justifyContent: 'flex-end', borderTop: '1px solid #eee', paddingTop: '20px' }}>
                                         <button type="button" className="ghost-btn" onClick={handleCancelForm} disabled={loading}>
                                             Cancel
                                         </button>
@@ -493,7 +505,7 @@ const StudentServices = () => {
                                     </div>
                                     <div className="modal-body">
                                         <p>Are you sure you want to delete <strong>{studentToDelete.name}</strong> ({studentToDelete.studentId || studentToDelete.code})?</p>
-                                        <p style={{color: '#d24c5f', marginTop: '10px'}}>This action cannot be undone.</p>
+                                        <p style={{ color: '#d24c5f', marginTop: '10px' }}>This action cannot be undone.</p>
                                     </div>
                                     <div className="modal-footer">
                                         <button
@@ -507,7 +519,7 @@ const StudentServices = () => {
                                             className="primary-btn danger"
                                             onClick={handleConfirmDelete}
                                             disabled={loading}
-                                            style={{background: '#d24c5f'}}
+                                            style={{ background: '#d24c5f' }}
                                         >
                                             {loading ? 'Deleting...' : 'Delete Student'}
                                         </button>
@@ -529,7 +541,7 @@ const StudentServices = () => {
                                     </div>
                                     <div className="modal-body">
                                         <p>You have unsaved changes. Are you sure you want to continue?</p>
-                                        <p style={{color: '#ff9800', marginTop: '10px'}}>Your changes will be lost.</p>
+                                        <p style={{ color: '#ff9800', marginTop: '10px' }}>Your changes will be lost.</p>
                                     </div>
                                     <div className="modal-footer">
                                         <button
@@ -541,7 +553,7 @@ const StudentServices = () => {
                                         <button
                                             className="primary-btn"
                                             onClick={handleConfirmDiscardChanges}
-                                            style={{background: '#ff9800'}}
+                                            style={{ background: '#ff9800' }}
                                         >
                                             Continue Anyway
                                         </button>
