@@ -12,7 +12,9 @@ public class AssignmentSubmission {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id") // <--- ADD THIS LINE
     private Long submissionId;
+
 
     // --- STATIC COLUMNS ---
 

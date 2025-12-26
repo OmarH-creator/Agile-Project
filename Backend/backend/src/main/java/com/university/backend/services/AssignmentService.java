@@ -1,20 +1,21 @@
 package com.university.backend.services;
 
 import com.university.backend.dto.AssignmentResponseDTO;
+import com.university.backend.dto.AssignmentSubmissionResponseDTO;
 import com.university.backend.entity.Assignment.Assignment;
 import com.university.backend.entity.Assignment.AssignmentAttributes;
 import com.university.backend.entity.Assignment.AssignmentValue;
 import com.university.backend.entity.Course;
+import com.university.backend.entity.CourseGradingItem; // <--- Import this
 import com.university.backend.entity.Professor;
-import com.university.backend.repository.AssignmentRepository;
-import com.university.backend.repository.CourseRepository;
-import com.university.backend.repository.ProfessorRepository;
+import com.university.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -24,218 +25,313 @@ public class AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final CourseRepository courseRepository;
     private final ProfessorRepository professorRepository;
-
+    private final CourseGradingItemRepository gradingItemRepository; // <--- Dependency
+    private final AssignmentSubmissionService submissionService;
     @Autowired
     public AssignmentService(AssignmentRepository assignmentRepository,
-            CourseRepository courseRepository,
-            ProfessorRepository professorRepository) {
+                             CourseRepository courseRepository,
+                             ProfessorRepository professorRepository,
+                             CourseGradingItemRepository gradingItemRepository, AssignmentSubmissionService submissionService) { // <--- Inject here
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
         this.professorRepository = professorRepository;
+        this.gradingItemRepository = gradingItemRepository;
+        this.submissionService = submissionService;
     }
 
     /**
-     * FETCH: Retrieves the full structure (Static Columns + EAV) and flattens it.
+     * LIST VIEW: Fetches all assignments for a specific course.
+     */
+    @Transactional(readOnly = true)
+    public List<AssignmentResponseDTO> getAssignmentsByCourse(String courseCode) {
+        List<Assignment> assignments = assignmentRepository.findAllByCourseCode(courseCode);
+
+        return assignments.stream().map(assignment -> {
+            AssignmentResponseDTO dto = new AssignmentResponseDTO(assignment.getId());
+            dto.addField("Title", assignment.getTitle());
+            dto.addField("Course_Id", assignment.getCourse().getCourseCode());
+
+            // Helpful for frontend to see which bucket this belongs to
+            if (assignment.getGradingItem() != null) {
+                dto.addField("Grading_Category", assignment.getGradingItem().getCategoryName());
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * FETCH: Retrieves the full structure.
      */
     @Transactional(readOnly = true)
     public AssignmentResponseDTO getAssignmentById(Long id) {
-        // 1. Fetch optimized data
+        // 1. Use the CUSTOM QUERY
         Assignment assignment = assignmentRepository.findFullAssignmentById(id)
                 .orElseThrow(() -> new RuntimeException("Assignment not found with ID: " + id));
 
-        // 2. Initialize DTO
         AssignmentResponseDTO response = new AssignmentResponseDTO(assignment.getId());
 
-        // 3. Map STATIC fields (From main table)
+        // 2. Static Fields
         response.addField("Title", assignment.getTitle());
-
-        // Ensure you use the correct getter names for your Entities
-        // e.g., getCourseCode() vs getCourseId() depending on your Course entity
         if (assignment.getCourse() != null) {
             response.addField("Course_Id", assignment.getCourse().getCourseCode());
         }
         if (assignment.getProfessor() != null) {
             response.addField("Professor_Id", assignment.getProfessor().getProfessorId());
         }
+        if (assignment.getGradingItem() != null) {
+            response.addField("Grading_Item_Id", assignment.getGradingItem().getId());
+            response.addField("Grading_Category_Name", assignment.getGradingItem().getCategoryName());
+        }
 
-        // 4. Map DYNAMIC EAV fields (From attributes table)
+        // 3. Dynamic EAV Fields
+        // Because of the Repository fix, 'val.getAttribute()' will never be null/proxy.
         for (AssignmentValue val : assignment.getValues()) {
-            String key = val.getAttribute().getAttributeName();
-            Object value = extractValue(val);
-            response.addField(key, value);
+            if (val.getAttribute() != null) { // Safety check
+                String key = val.getAttribute().getAttributeName();
+                Object value = extractValue(val);
+                response.addField(key, value);
+            }
         }
 
         return response;
     }
-
     /**
-     * CREATE: Handles both Static Columns and Dynamic Attributes from one JSON
-     * payload.
+     * CREATE: Handles Static Columns + Grading Item + Dynamic Attributes
      */
     @Transactional
     public AssignmentResponseDTO createAssignment(Map<String, Object> payload) {
 
-        // 1. Extract and Validate Static Keys
+        // 1. Extract Static Keys
         String title = (String) payload.get("Title");
         String courseId = (String) payload.get("Course_Id");
         Object profIdObj = payload.get("Professor_Id");
+        Object gradingItemIdObj = payload.get("Grading_Item_Id");
 
         if (title == null || courseId == null || profIdObj == null) {
             throw new RuntimeException("Missing required fields: Title, Course_Id, or Professor_Id");
         }
 
-        // 2. Fetch Real Entities for Foreign Keys
+        // 2. Fetch Entities
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found: " + courseId));
 
-        // Handle Professor ID (Assuming it might come as String or Integer from JSON)
         String professorId = String.valueOf(profIdObj);
         Professor professor = professorRepository.findById(professorId)
                 .orElseThrow(() -> new RuntimeException("Professor not found: " + professorId));
 
-        // 3. Create Assignment with Static Links
+        // 3. Create Assignment (Constructor creates defaults like Description, Max_Grade)
         Assignment assignment = new Assignment(title, course, professor);
 
-        // 4. Save to generate IDs (triggers default attribute creation)
+        // 4. LINK GRADING ITEM
+        if (gradingItemIdObj != null) {
+            Long gradingItemId = Long.parseLong(String.valueOf(gradingItemIdObj));
+            CourseGradingItem gradingItem = gradingItemRepository.findById(gradingItemId)
+                    .orElseThrow(() -> new RuntimeException("Grading Item not found: " + gradingItemId));
+
+            assignment.setGradingItem(gradingItem);
+        }
+
+        // 5. Save (Generates ID and persists default attributes)
         assignment = assignmentRepository.save(assignment);
 
-        // 5. Create Map for Attribute Lookup
+        // 6. Map Attributes for fast lookup
         Map<String, AssignmentAttributes> attributeMap = assignment.getAttributes().stream()
                 .collect(Collectors.toMap(AssignmentAttributes::getAttributeName, attr -> attr));
 
-        // 6. Loop through Payload for DYNAMIC attributes
-        for (Map.Entry<String, Object> entry : payload.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-
-            // Skip static keys we already processed
-            if (key.equals("Title") || key.equals("Course_Id") || key.equals("Professor_Id")) {
-                continue;
-            }
-
-            // Process matches or CREATE NEW ATTRIBUTE
-            if (attributeMap.containsKey(key)) {
-                AssignmentAttributes targetAttr = attributeMap.get(key);
-                AssignmentValue newValue = createValueEntity(assignment, targetAttr, value);
-                assignment.getValues().add(newValue);
-            } else {
-                // DYNAMICALLY CREATE NEW ATTRIBUTE
-                // Defaulting to STRING for custom attributes for simplicity
-                AssignmentAttributes newAttr = new AssignmentAttributes(assignment, key, "STRING");
-                assignment.getAttributes().add(newAttr);
-
-                // We need to save the attribute first or rely on Cascade.
-                // Since mappedBy="assignment" and CascadeType.ALL, adding to list should work
-                // if we save assignment.
-                // However, createValueEntity needs the attribute entity.
-                // Safe bet: The attribute object is connected to assignment.
-
-                AssignmentValue newValue = createValueEntity(assignment, newAttr, value);
-                assignment.getValues().add(newValue);
-            }
-        }
-
-        // 7. Update with new values
-        Assignment savedAssignment = assignmentRepository.save(assignment);
-
-        System.out.println("DEBUG: ASSIGNMENT SAVED. ID: " + savedAssignment.getId());
-        System.out.println("DEBUG: ATTRIBUTES COUNT: " + savedAssignment.getAttributes().size());
-        System.out.println("DEBUG: VALUES COUNT: " + savedAssignment.getValues().size());
-
-        return getAssignmentById(savedAssignment.getId());
-    }
-
-    /**
-     * UPDATE: Updates Static Columns and Dynamic Attributes.
-     */
-    @Transactional
-    public AssignmentResponseDTO updateAssignment(Long id, Map<String, Object> payload) {
-        // 1. Fetch Existing Assignment
-        Assignment assignment = assignmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Assignment not found with ID: " + id));
-
-        // 2. Update Static Fields if present
-        if (payload.containsKey("Title")) {
-            assignment.setTitle((String) payload.get("Title"));
-            // Note: Updating Course/Professor is usually restricted, so we skip them here
-            // unless needed
-        }
-
-        // 3. Update/Create Dynamic Attributes
-        Map<String, AssignmentAttributes> attributeMap = assignment.getAttributes().stream()
-                .collect(Collectors.toMap(AssignmentAttributes::getAttributeName, attr -> attr));
-
-        // Create a map of existing VALUES for quick lookup (to update instead of
-        // duplicate)
-        // We map Attribute Name -> AssignmentValue entity
-        Map<String, AssignmentValue> valueMap = assignment.getValues().stream()
-                .collect(Collectors.toMap(v -> v.getAttribute().getAttributeName(), v -> v));
-
+        // 7. Loop payload for Dynamic Attributes
         for (Map.Entry<String, Object> entry : payload.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
 
             // Skip static keys
-            if (key.equals("Title") || key.equals("Course_Id") || key.equals("Professor_Id") || key.equals("id")) {
+            if (key.equals("Title") || key.equals("Course_Id") ||
+                    key.equals("Professor_Id") || key.equals("Grading_Item_Id")) {
                 continue;
             }
 
-            // Check for match or CREATE NEW
+            AssignmentAttributes targetAttr;
+
+            // CHECK: Does this attribute definition exist?
             if (attributeMap.containsKey(key)) {
-                AssignmentAttributes targetAttr = attributeMap.get(key);
-
-                if (valueMap.containsKey(key)) {
-                    // UPDATE existing value
-                    AssignmentValue existingValue = valueMap.get(key);
-                    updateValueEntity(existingValue, targetAttr, value);
-                } else {
-                    // CREATE new value for existing attribute
-                    AssignmentValue newValue = createValueEntity(assignment, targetAttr, value);
-                    assignment.getValues().add(newValue);
-                    valueMap.put(key, newValue);
-                }
+                // A. Yes -> Use existing definition
+                targetAttr = attributeMap.get(key);
             } else {
-                // NEW CUSTOM ATTRIBUTE (during Update)
-                AssignmentAttributes newAttr = new AssignmentAttributes(assignment, key, "STRING");
-                assignment.getAttributes().add(newAttr);
+                // B. No -> CREATE NEW ATTRIBUTE DEFINITION ON THE FLY
+                // This handles custom questions or fields the professor adds
+                String inferredType = inferDataType(value);
 
-                AssignmentValue newValue = createValueEntity(assignment, newAttr, value);
-                assignment.getValues().add(newValue);
+                targetAttr = new AssignmentAttributes();
+                targetAttr.setAssignment(assignment);
+                targetAttr.setAttributeName(key);
+                targetAttr.setDataType(inferredType);
 
-                // Update local maps just in case
-                attributeMap.put(key, newAttr);
-                valueMap.put(key, newValue);
+                // Add to list and map so we can use it immediately
+                assignment.getAttributes().add(targetAttr);
+                attributeMap.put(key, targetAttr);
+            }
+
+            // 8. Create and Save the Value
+            // Now we are guaranteed to have a targetAttr (either old or new)
+            AssignmentValue newValue = createValueEntity(assignment, targetAttr, value);
+            assignment.getValues().add(newValue);
+        }
+
+        // 9. Final Save
+        assignmentRepository.save(assignment);
+
+        return getAssignmentById(assignment.getId());
+    }
+
+    // ==================================================================================
+    // 4. UPDATE ASSIGNMENT (Full EAV Support + Grading Bucket)
+    // ==================================================================================
+    @Transactional
+    public AssignmentResponseDTO updateAssignment(Long id, Map<String, Object> payload) {
+        // 1. Fetch Assignment
+        Assignment assignment = assignmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Assignment not found with ID: " + id));
+
+        // 2. Update Static Fields
+        // A. Title
+        if (payload.containsKey("Title")) {
+            assignment.setTitle((String) payload.get("Title"));
+        }
+
+        // B. Grading Bucket (NEW: Moving assignment to a different bucket, e.g. Labs -> Project)
+        if (payload.containsKey("Grading_Item_Id")) {
+            Object gItemId = payload.get("Grading_Item_Id");
+            if (gItemId != null) {
+                Long newItemId = Long.parseLong(String.valueOf(gItemId));
+                CourseGradingItem newItem = gradingItemRepository.findById(newItemId)
+                        .orElseThrow(() -> new RuntimeException("Grading Item not found with ID: " + newItemId));
+                assignment.setGradingItem(newItem);
+            } else {
+                assignment.setGradingItem(null); // Allow un-assigning
             }
         }
 
-        Assignment saved = assignmentRepository.save(assignment);
-        return getAssignmentById(saved.getId());
+        // 3. Update DYNAMIC Fields (Description, Max_Grade, and NEW Professor Attributes)
+
+        // Map Existing Values (Key -> Entity)
+        Map<String, AssignmentValue> currentValuesMap = assignment.getValues().stream()
+                .filter(val -> val.getAttribute() != null)
+                .collect(Collectors.toMap(
+                        val -> val.getAttribute().getAttributeName(),
+                        val -> val
+                ));
+
+        // Map Existing Attribute Definitions
+        Map<String, AssignmentAttributes> attributesMap = assignment.getAttributes().stream()
+                .collect(Collectors.toMap(AssignmentAttributes::getAttributeName, attr -> attr));
+
+        // Iterate Payload
+        for (Map.Entry<String, Object> entry : payload.entrySet()) {
+            String key = entry.getKey();
+            Object newValue = entry.getValue();
+
+            // Skip Restricted Static Keys
+            if (key.equals("id") || key.equals("Title") ||
+                    key.equals("Course_Id") || key.equals("Professor_Id") ||
+                    key.equals("Grading_Item_Id")) { // Skip because we handled it above
+                continue;
+            }
+
+            // CHECK: Does this attribute definition exist?
+            AssignmentAttributes targetAttr;
+            if (attributesMap.containsKey(key)) {
+                // Yes -> Get it
+                targetAttr = attributesMap.get(key);
+            } else {
+                // No -> PROFESSOR ADDED A NEW FIELD (e.g., "Extra_Link")
+                // We must create the Attribute Definition on the fly
+                String inferredType = inferDataType(newValue);
+                targetAttr = new AssignmentAttributes(); // Assuming default constructor
+                targetAttr.setAssignment(assignment);
+                targetAttr.setAttributeName(key);
+                targetAttr.setDataType(inferredType);
+
+                assignment.getAttributes().add(targetAttr);
+                attributesMap.put(key, targetAttr); // Add to map so we don't recreate it inside loop
+            }
+
+            // Now Update/Create the Value for this Attribute
+            if (currentValuesMap.containsKey(key)) {
+                // Update Existing Value
+                AssignmentValue existingVal = currentValuesMap.get(key);
+                updateAssignmentValue(existingVal, newValue, targetAttr.getDataType());
+            } else {
+                // Create New Value
+                AssignmentValue newVal = createValueEntity(assignment, targetAttr, newValue);
+                assignment.getValues().add(newVal);
+            }
+        }
+
+        assignmentRepository.save(assignment);
+        return getAssignmentById(id);
     }
 
-    /**
-     * DELETE: Removes an assignment and all its EAV data (cascaded).
-     */
     @Transactional
     public void deleteAssignment(Long id) {
-        if (!assignmentRepository.existsById(id)) {
-            throw new RuntimeException("Assignment not found with ID: " + id);
+        // 1. Fetch the Entity first (We need access to the lists)
+        Assignment assignment = assignmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Assignment not found with ID: " + id));
+
+        // 2. DELETE ALL SUBMISSIONS FIRST
+        // We reuse the robust logic from SubmissionService.
+        // This ensures student answers (Values) are deleted before their attributes.
+        List<AssignmentSubmissionResponseDTO> submissions = submissionService.getSubmissionsByAssignment(id);
+        for (AssignmentSubmissionResponseDTO sub : submissions) {
+            submissionService.deleteSubmission(sub.getId());
         }
-        assignmentRepository.deleteById(id);
+        // We must remove the "Assignment Values" (e.g., Description text)
+        assignment.getValues().clear();
+        // Force the database to delete these values NOW.
+        assignmentRepository.saveAndFlush(assignment);
+        // Now it is safe to delete the Assignment (and its Attributes)
+        assignmentRepository.delete(assignment);
+    }
+
+    // --- HELPER: Infer Data Type for new Attributes ---
+    private String inferDataType(Object value) {
+        if (value instanceof Integer) return "INTEGER";
+        if (value instanceof Double) return "DOUBLE";
+        if (value instanceof Boolean) return "BOOLEAN";
+        // Simple heuristic for dates (optional)
+        if (value.toString().matches("\\d{4}-\\d{2}-\\d{2}")) return "DATE";
+        return "STRING";
+    }
+
+    // --- HELPER: Assignment Value Update ---
+    private void updateAssignmentValue(AssignmentValue valEntity, Object value, String type) {
+        valEntity.setValString(null); valEntity.setValInt(null);
+        valEntity.setValDouble(null); valEntity.setValBool(null); valEntity.setValDate(null);
+
+        try {
+            switch (type.toUpperCase()) {
+                case "STRING": valEntity.setValString(String.valueOf(value)); break;
+                case "INTEGER": case "INT": valEntity.setValInt(Integer.parseInt(String.valueOf(value))); break;
+                case "DOUBLE": valEntity.setValDouble(Double.parseDouble(String.valueOf(value))); break;
+                case "BOOLEAN": valEntity.setValBool(Boolean.parseBoolean(String.valueOf(value))); break;
+                case "DATE":
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    valEntity.setValDate(sdf.parse(String.valueOf(value)));
+                    break;
+                default: valEntity.setValString(String.valueOf(value));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating value: " + e.getMessage());
+        }
     }
 
     // --- HELPER METHODS ---
-
+    // (Keep existing extractValue and createValueEntity methods exactly as they were)
     private Object extractValue(AssignmentValue val) {
-        if (val.getValString() != null)
-            return val.getValString();
-        if (val.getValInt() != null)
-            return val.getValInt();
-        if (val.getValDouble() != null)
-            return val.getValDouble();
-        if (val.getValBool() != null)
-            return val.getValBool();
-        if (val.getValDate() != null)
-            return val.getValDate();
+        if (val.getValString() != null) return val.getValString();
+        if (val.getValInt() != null) return val.getValInt();
+        if (val.getValDouble() != null) return val.getValDouble();
+        if (val.getValBool() != null) return val.getValBool();
+        if (val.getValDate() != null) return val.getValDate();
         return null;
     }
 
@@ -262,75 +358,15 @@ public class AssignmentService {
                     valEntity.setValBool(Boolean.parseBoolean(String.valueOf(value)));
                     break;
                 case "DATE":
-                    String dateStr = String.valueOf(value);
-                    try {
-                        // Try standard HTML5 datetime-local format first (yyyy-MM-dd'T'HH:mm)
-                        SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-                        valEntity.setValDate(timestampFormat.parse(dateStr));
-                    } catch (ParseException e1) {
-                        try {
-                            // Fallback to simple date (yyyy-MM-dd)
-                            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                            valEntity.setValDate(dateFormat.parse(dateStr));
-                        } catch (ParseException e2) {
-                            // Last resort: Try parsing standard JS Date.toString() or generic formats if
-                            // needed
-                            throw new RuntimeException("Invalid Date Format for " + attr.getAttributeName() + ": "
-                                    + dateStr + ". Expected yyyy-MM-dd'T'HH:mm or yyyy-MM-dd.");
-                        }
-                    }
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    valEntity.setValDate(sdf.parse(String.valueOf(value)));
                     break;
                 default:
                     valEntity.setValString(String.valueOf(value));
             }
-        } catch (NumberFormatException e) {
-            throw new RuntimeException(
-                    "Error parsing value for attribute " + attr.getAttributeName() + ": " + e.getMessage());
+        } catch (ParseException | NumberFormatException e) {
+            throw new RuntimeException("Error parsing value for attribute " + attr.getAttributeName() + ": " + e.getMessage());
         }
         return valEntity;
-    }
-
-    private void updateValueEntity(AssignmentValue valEntity, AssignmentAttributes attr, Object value) {
-        // Reuse the setting logic. For simplicity, we can just call the setters
-        // directly matching the type.
-        // Or refactor createValueEntity to use this.
-        // Let's copy the switch logic for now to be safe.
-
-        String type = attr.getDataType().toUpperCase();
-        try {
-            switch (type) {
-                case "STRING":
-                    valEntity.setValString(String.valueOf(value));
-                    break;
-                case "INTEGER":
-                case "INT":
-                    valEntity.setValInt(Integer.parseInt(String.valueOf(value)));
-                    break;
-                case "DOUBLE":
-                    valEntity.setValDouble(Double.parseDouble(String.valueOf(value)));
-                    break;
-                case "BOOLEAN":
-                    valEntity.setValBool(Boolean.parseBoolean(String.valueOf(value)));
-                    break;
-                case "DATE":
-                    String dateStr = String.valueOf(value);
-                    try {
-                        SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-                        valEntity.setValDate(timestampFormat.parse(dateStr));
-                    } catch (ParseException e1) {
-                        try {
-                            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                            valEntity.setValDate(dateFormat.parse(dateStr));
-                        } catch (ParseException e2) {
-                            throw new RuntimeException("Invalid Date Format: " + dateStr);
-                        }
-                    }
-                    break;
-                default:
-                    valEntity.setValString(String.valueOf(value));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error updating value: " + e.getMessage());
-        }
     }
 }

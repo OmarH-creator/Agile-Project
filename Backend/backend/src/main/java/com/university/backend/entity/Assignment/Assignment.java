@@ -1,6 +1,7 @@
 package com.university.backend.entity.Assignment;
 
 import com.university.backend.entity.Course;
+import com.university.backend.entity.CourseGradingItem;
 import com.university.backend.entity.Professor;
 import jakarta.persistence.*;
 import java.util.ArrayList;
@@ -29,6 +30,14 @@ public class Assignment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "professor_id", nullable = false)
     private Professor professor;
+
+    // ... inside Assignment class ...
+
+    // LINK: Connects this assignment to a specific Grading Bucket
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grading_item_id") // Nullable (some assignments might be ungraded)
+    private CourseGradingItem gradingItem;
+
 
     // --- DYNAMIC EAV MAPPING ---
 
@@ -64,51 +73,25 @@ public class Assignment {
 
     // --- GETTERS AND SETTERS ---
 
-    public Long getId() {
-        return assignmentId;
-    }
+    public Long getId() { return assignmentId; }
+    public void setId(Long id) { this.assignmentId = id; }
 
-    public void setId(Long id) {
-        this.assignmentId = id;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public String getTitle() {
-        return title;
-    }
+    public Course getCourse() { return course; }
+    public void setCourse(Course course) { this.course = course; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public Professor getProfessor() { return professor; }
+    public void setProfessor(Professor professor) { this.professor = professor; }
 
-    public Course getCourse() {
-        return course;
-    }
+    public List<AssignmentAttributes> getAttributes() { return attributes; }
+    public void setAttributes(List<AssignmentAttributes> attributes) { this.attributes = attributes; }
 
-    public void setCourse(Course course) {
-        this.course = course;
-    }
+    public List<AssignmentValue> getValues() { return values; }
+    public void setValues(List<AssignmentValue> values) { this.values = values; }
 
-    public Professor getProfessor() {
-        return professor;
-    }
+    public CourseGradingItem getGradingItem() { return gradingItem; }
+    public void setGradingItem(CourseGradingItem gradingItem) { this.gradingItem = gradingItem; }
 
-    public void setProfessor(Professor professor) {
-        this.professor = professor;
-    }
-
-    public List<AssignmentAttributes> getAttributes() {
-        return attributes;
-    }
-
-    public void setAttributes(List<AssignmentAttributes> attributes) {
-        this.attributes = attributes;
-    }
-
-    public List<AssignmentValue> getValues() {
-        return values;
-    }
-
-    public void setValues(List<AssignmentValue> values) {
-        this.values = values;
-    }
 }
