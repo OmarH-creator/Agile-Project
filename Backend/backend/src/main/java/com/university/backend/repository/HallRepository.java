@@ -1,18 +1,30 @@
 package com.university.backend.repository;
 
-import com.university.backend.entity.Hall;
+import com.university.backend.entity.Hall.Hall;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
 import java.util.Optional;
-import org.springframework.transaction.annotation.Transactional; // Import needed for deletion
 
+@Repository
 public interface HallRepository extends JpaRepository<Hall, Long> {
-    // Find hall by its name (e.g., "Main Auditorium")
-    Optional<Hall> findByHallName(String hallName);
 
- // --- NEW: Existence Check ---
-    boolean existsByHallName(String hallName); // Added for consistency
-    
- // --- NEW: Deletion Method ---
-    @Transactional // Required for modifying operations
-    void deleteByHallName(String hallName);
+    /**
+     * Fetches the Hall, joins the Values, and joins the Attribute definitions
+     * in a single optimized SQL query.
+     */
+    @Query("SELECT h FROM Hall h " +
+            "LEFT JOIN FETCH h.values v " +
+            "LEFT JOIN FETCH v.attribute " +
+            "WHERE h.hallId = :id")
+    Optional<Hall> findFullHallById(@Param("id") Long id);
+
+    // Static column lookup (More efficient than EAV lookup)
+    java.util.List<Hall> findByHallName(String hallName);
+
+    // Custom lookup to find a Hall by its "Name" attribute in the EAV tables
+    @Query("SELECT h FROM Hall h JOIN h.values v JOIN v.attribute a WHERE a.attributeName = 'Name' AND v.valString = :name")
+    java.util.List<Hall> findByName(@Param("name") String name);
 }

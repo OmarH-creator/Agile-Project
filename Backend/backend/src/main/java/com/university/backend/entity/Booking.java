@@ -2,6 +2,7 @@ package com.university.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.university.backend.entity.Hall.Hall;
 import jakarta.persistence.*;
 import java.util.Date;
 
@@ -24,17 +25,16 @@ public class Booking {
     @Column(length = 255)
     private String purpose;
 
-    
     // staffId is now mandatory to link the Professor or Admin who made the booking
     @Column(nullable = false)
-    private String staffId; 
+    private String staffId;
 
     // Define the relationship: Many Bookings belong to One Hall
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "hallName", nullable = false)
+    @JoinColumn(name = "hall_id", nullable = false)
     @JsonIgnore
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private Hall hall; // Reference to the Hall this booking is for
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    private com.university.backend.entity.Hall.Hall hall; // Reference to the Hall this booking is for
 
     // Transient field: This allows the JSON to send "hallName" as a string,
     // and we can read it, even though we don't save it to this column directly.
@@ -59,28 +59,65 @@ public class Booking {
         // A conflict occurs if they overlap in time
         return startTime.before(other.endTime) && endTime.after(other.startTime);
     }
-    
+
     // --- Getters and Setters ---
 
-    public Date getStartTime() { return startTime; }
-    public void setStartTime(Date startTime) { this.startTime = startTime; }
-    public Date getEndTime() { return endTime; }
-    public void setEndTime(Date endTime) { this.endTime = endTime; }
-    public String getPurpose() { return purpose; }
-    public void setPurpose(String purpose) { this.purpose = purpose; }
-    public long getReservationId() { return reservationId; }
-    public void setReservationId(long reservationId) { this.reservationId = reservationId; }
-    public String getStaffId() { return staffId; }
-    public void setStaffId(String staffId) { this.staffId = staffId; }
-    public Hall getHall() { return hall; }
-    public void setHall(Hall hall) { this.hall = hall;
-        // Automatically set the transient name for convenience
-        if(hall != null) this.hallName = hall.getHallName();
+    public Date getStartTime() {
+        return startTime;
     }
 
-    // This Getter allows the Frontend to see "hallName": "Lecture Hall A" in the response
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
+
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
+    }
+
+    public long getReservationId() {
+        return reservationId;
+    }
+
+    public void setReservationId(long reservationId) {
+        this.reservationId = reservationId;
+    }
+
+    public String getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(String staffId) {
+        this.staffId = staffId;
+    }
+
+    public com.university.backend.entity.Hall.Hall getHall() {
+        return hall;
+    }
+
+    public void setHall(Hall hall) {
+        this.hall = hall;
+        // Automatically set the transient name for convenience
+        if (hall != null)
+            this.hallName = hall.getHallName();
+    }
+
+    // This Getter allows the Frontend to see "hallName": "Lecture Hall A" in the
+    // response
     public String getHallName() {
-        if (hall != null) return hall.getHallName();
+        if (hall != null)
+            return hall.getHallName();
         return hallName;
     }
 

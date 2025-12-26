@@ -12,4 +12,5 @@ public interface CoursePrerequisiteRepository extends JpaRepository<CoursePrereq
     List<CoursePrerequisite> findByCourse(com.university.backend.entity.Course course);
     void deleteByCourse(com.university.backend.entity.Course course);
     void deleteByPrerequisite(com.university.backend.entity.Course prerequisite);
+    List<CoursePrerequisite> findByCourse_CourseCode(String courseCode);
 }

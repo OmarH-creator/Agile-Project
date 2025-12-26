@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import './Curriculum.css';
 import umsLogo from '../../assets/UMS Logo.png';
 import { Link } from 'react-router-dom';
@@ -37,6 +38,7 @@ const Curriculum = () => {
         const fetchCourses = async () => {
             try {
                 const data = await getAllCourses();
+                console.log("DEBUG: Fetched courses from API:", data); // Debug Log
                 // Map backend data to frontend structure
                 const formattedCourses = data.map(course => ({
                     code: course.courseCode,
@@ -178,12 +180,13 @@ const Curriculum = () => {
             }
 
             // 3. Refresh & Close
-            alert("Course created successfully!");
+            toast.success("Course created successfully!");
             resetNewCourse();
-            window.location.reload(); // Simple reload to refresh data
+            // Optional: wait a bit before reload to let toast show, or use state update instead of reload
+            setTimeout(() => window.location.reload(), 1000);
         } catch (err) {
             console.error(err);
-            alert("Failed to create course. Code might already exist.");
+            toast.error("Failed to create course. Code might already exist.");
         }
     };
 

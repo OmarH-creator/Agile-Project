@@ -19,10 +19,14 @@ public interface ProfessorRepository extends JpaRepository<Professor, String> {
     @Transactional // Required for modifying operations
     void deleteByProfessorId(String professorId);
 
+    Optional<Professor> findByProfessorCoursesContaining(String courseName);
     // --- ADD THIS METHOD ---
     // This enables searching by ID with pagination
     Page<Professor> findByProfessorIdStartingWith(String prefix, Pageable pageable);
 
+    Optional<Professor> findByProfessorEmail(String professorEmail);
     // Optional: If you prefer searching by Name instead of ID, add this:
     // Page<Professor> findByProfessorNameContainingIgnoreCase(String name, Pageable pageable);
+
+    Optional<Professor> findByProfessorCoursesContains(String courseName);
 }

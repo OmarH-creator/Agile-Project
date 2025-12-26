@@ -15,6 +15,9 @@ public class Professor {
     @Column(nullable = false)
     private String professorName;
 
+    @Column(nullable = false)
+    private Integer Payment;
+
     @Column(unique = true, nullable = false)
     private String professorEmail;
 
@@ -43,6 +46,7 @@ public class Professor {
     }
 
     // Getters and Setters
+
     public String getProfessorId() {
         return professorId;
     }
@@ -79,8 +83,18 @@ public class Professor {
         return professorCourses;
     }
 
+
     public void setProfessorCourses(List<String> professorCourses) {
         this.professorCourses = professorCourses;
     }
+
+    public Integer getPayment() {
+        return Payment;
+    }
+
+    public void setPayment(Integer payment) {
+        this.Payment = payment;
+    }
 }
+
 // bamoot fe ma3amee3ak ya besheer ma3moo3 ma3moo3

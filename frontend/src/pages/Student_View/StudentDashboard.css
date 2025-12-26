@@ -70,7 +70,8 @@ body {
     box-shadow: 12px 12px 26px var(--neo-shadow-dark), -12px -12px 22px var(--neo-shadow-light);
 }
 
-.topbar-left, .topbar-right {
+.topbar-left,
+.topbar-right {
     display: flex;
     align-items: center;
     gap: 16px;
@@ -119,15 +120,25 @@ body {
     height: 40px;
     border-radius: 12px;
     padding: 5px;
-    background: #fff; /* Keep logo white for visibility */
+    background: #fff;
+    /* Keep logo white for visibility */
 }
+
 /* Darken logo shell background for Student Theme only */
 .student-theme .brand-logo-shell {
     background: rgba(255, 255, 255, 0.9);
 }
 
-.mini-logo { width: 100%; height: 100%; object-fit: contain; }
-.brand-text { font-weight: 600; font-size: 16px; }
+.mini-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.brand-text {
+    font-weight: 600;
+    font-size: 16px;
+}
 
 /* --- 4. MAIN CONTENT AREA --- */
 .main {
@@ -150,14 +161,16 @@ body {
     border-radius: 28px;
     padding: 24px 30px;
     margin-bottom: 28px;
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 /* Dark Page Header */
 .student-theme .page-header {
     background: rgba(30, 41, 59, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: inset 4px 4px 20px rgba(0,0,0,0.2);
+    box-shadow: inset 4px 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .page-title {
@@ -175,24 +188,43 @@ body {
     color: var(--neo-accent);
     /* Darker icon bg */
     background: linear-gradient(135deg, rgba(45, 212, 191, 0.1), rgba(20, 184, 166, 0.2));
-    box-shadow: 4px 4px 10px rgba(0,0,0,0.3), -4px -4px 10px rgba(255,255,255,0.05);
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3), -4px -4px 10px rgba(255, 255, 255, 0.05);
 }
 
-.page-header h2 { margin: 0; font-size: 24px; font-weight: 700; color: var(--neo-text); }
-.page-sub { margin: 4px 0 0; font-size: 14px; color: var(--neo-muted); }
+.page-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--neo-text);
+}
+
+.page-sub {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--neo-muted);
+}
 
 /* --- 6. ICON BUTTONS (Menu, etc) --- */
 .student-theme .icon-btn {
-    width: 42px; height: 42px; border-radius: 16px; border: none;
-    display: grid; place-items: center; cursor: pointer;
+    width: 42px;
+    height: 42px;
+    border-radius: 16px;
+    border: none;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
     transition: all 0.2s;
 
     /* Dark Button Style */
     background: linear-gradient(145deg, rgba(51, 65, 85, 0.9), rgba(30, 41, 59, 0.9));
-    box-shadow: 5px 5px 10px rgba(0,0,0,0.3), -5px -5px 10px rgba(255,255,255,0.05);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.05);
     color: var(--neo-accent);
 }
-.student-theme .icon-btn:hover { transform: translateY(-2px); color: #fff; }
+
+.student-theme .icon-btn:hover {
+    transform: translateY(-2px);
+    color: #fff;
+}
 
 /* --- 7. GRID & CARDS --- */
 .grid {
@@ -227,29 +259,50 @@ body {
     /* Lighter hover state */
     background: linear-gradient(145deg, rgba(51, 65, 85, 1), rgba(30, 41, 59, 1));
     border-color: var(--neo-accent);
-    box-shadow: 22px 22px 40px rgba(0,0,0,0.5), -22px -22px 40px rgba(255,255,255,0.05);
+    box-shadow: 22px 22px 40px rgba(0, 0, 0, 0.5), -22px -22px 40px rgba(255, 255, 255, 0.05);
 }
 
 .card-title {
-    position: relative; z-index: 1;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 28px; height: 100%; box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px;
+    height: 100%;
+    box-sizing: border-box;
 }
 
-.student-theme .card-heading { font-size: 20px; font-weight: 600; color: var(--neo-text); }
-.student-theme .card-sub { margin-top: 6px; color: var(--neo-muted); font-size: 14px; }
+.student-theme .card-heading {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--neo-text);
+}
+
+.student-theme .card-sub {
+    margin-top: 6px;
+    color: var(--neo-muted);
+    font-size: 14px;
+}
 
 .student-theme .card-icon {
-    width: 60px; height: 60px; border-radius: 20px;
-    display: grid; place-items: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 20px;
+    display: grid;
+    place-items: center;
 
     color: var(--card-accent-strong);
     background: radial-gradient(circle at 25% 30%, rgba(255, 255, 255, 0.1), transparent 60%),
-    linear-gradient(150deg, rgba(255, 255, 255, 0.05), var(--card-accent));
+        linear-gradient(150deg, rgba(255, 255, 255, 0.05), var(--card-accent));
 
     box-shadow: 0 0 15px var(--card-glow);
 }
-.card-icon svg { width: 30px; height: 30px; }
+
+.card-icon svg {
+    width: 30px;
+    height: 30px;
+}
 
 /* --- 8. ACCENT COLORS (Dark Mode Palettes) --- */
 /* Violet -> Indigo */
@@ -273,12 +326,7 @@ body {
     --card-glow: rgba(14, 165, 233, 0.4);
 }
 
-/* Emerald -> Teal (Main) */
-.student-theme .card[data-accent='emerald'] {
-    --card-accent: rgba(20, 184, 166, 0.3);
-    --card-accent-strong: #2dd4bf;
-    --card-glow: rgba(20, 184, 166, 0.4);
-}
+
 
 /* Citrus -> Rose */
 .student-theme .card[data-accent='citrus'] {
@@ -289,12 +337,32 @@ body {
 
 /* --- RESPONSIVE --- */
 @media (max-width: 1100px) {
-    .shell { grid-template-columns: 80px 1fr; }
-    .sidebar { padding: 20px 10px; align-items: center; }
-    .nav-item span { display: none; }
+    .shell {
+        grid-template-columns: 80px 1fr;
+    }
+
+    .sidebar {
+        padding: 20px 10px;
+        align-items: center;
+    }
+
+    .nav-item span {
+        display: none;
+    }
 }
+
 @media (max-width: 900px) {
-    .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 16px; }
-    .sidebar { display: none; }
-    .topbar { padding: 0 16px; }
+    .shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        padding: 16px;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .topbar {
+        padding: 0 16px;
+    }
 }

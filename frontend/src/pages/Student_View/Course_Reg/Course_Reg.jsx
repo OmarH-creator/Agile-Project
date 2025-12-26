@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './Course_Reg.css';
-import { Icon } from '../../Admin_View/Admin-Student-Api';
+import { Icon, getStudent } from '../../Admin_View/Admin-Student-Api';
 import umsLogo from '../../../assets/UMS Logo.png';
+import { jwtDecode } from 'jwt-decode';
 
-// Set your Student ID here
-const CURRENT_STUDENT_ID = "22P0223";
 const API_BASE_URL = "http://localhost:8081/api/student";
 
 const Course_Reg = () => {
@@ -44,10 +43,37 @@ const Course_Reg = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const studentRes = await fetch(`${API_BASE_URL}/${CURRENT_STUDENT_ID}/profile`);
-            if (!studentRes.ok) throw new Error("Failed to load student");
-            const studentData = await studentRes.json();
+            // 1. Get Token & Identify Student
+            const token = localStorage.getItem("token");
+            if (!token) throw new Error("No login token found");
 
+            const decoded = jwtDecode(token);
+            const email = decoded.sub; // Extract email from token
+
+            // 2. Fetch Full Student Details (using Email) to get the ID
+            // Using the Admin-API helper which hits /api/admin/students/{email} -> returns Student Object
+            const studentData = await getStudent(email);
+
+            if (!studentData || !studentData.studentId) {
+                throw new Error("Student data not found for email: " + email);
+            }
+
+            // 3. Now we have the real ID, we can fetch everything else
+            // Note: Your original code fetched /profile from StudentController. 
+            // We can keep using that if it provides extra data, or just use `studentData` from step 2 if it's complete.
+            // Let's assume studentData from admin-api is sufficient for profile info.
+
+            // However, your StudentController endpoints are at /api/student/...
+            // The Admin-Api helper hits /api/admin/...
+            // If the user is a STUDENT, they might not have access to /api/admin endpoints?
+            // CHECK: Admin-Student-Api.js uses /api/admin. 
+            // If the user is logged in as a STUDENT, calls to /api/admin might fail 403 Forbidden?
+            // BUT, looking at AdminController methods, they don't seem to have @PreAuthorize("hasRole('ADMIN')").
+            // Assuming it allows it for now based on the fact that StudentCourses.jsx uses it.
+
+            const currentStudentId = studentData.studentId;
+
+            // Fetch available courses
             const coursesRes = await fetch(`${API_BASE_URL}/courses`);
             if (!coursesRes.ok) throw new Error("Failed to load courses");
             const coursesData = await coursesRes.json();
@@ -72,7 +98,7 @@ const Course_Reg = () => {
 
         } catch (error) {
             console.error("Error fetching data:", error);
-            setMsg("Error loading data. Is the backend running?");
+            setMsg("Error loading data. " + error.message);
         } finally {
             setLoading(false);
         }
@@ -208,7 +234,7 @@ const Course_Reg = () => {
                 </div>
 
                 {/* Status Message */}
-                {msg && <div className={`status-pill ${msg.includes("Failed") || msg.includes("Error") ? "status-error" : "status-success"}`} style={{marginBottom: '1rem', flexShrink: 0}}>{msg}</div>}
+                {msg && <div className={`status-pill ${msg.includes("Failed") || msg.includes("Error") ? "status-error" : "status-success"}`} style={{ marginBottom: '1rem', flexShrink: 0 }}>{msg}</div>}
 
                 {/* --- REGISTRATION TABLE CONTAINER (Scrollable) --- */}
                 <div className="table-container" style={{
@@ -223,76 +249,76 @@ const Course_Reg = () => {
                            Adjust this Hex Code if it doesn't perfectly match your background!
                         */}
                         <thead style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#1a1f2c' }}>
-                        <tr>
-                            <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Code</th>
-                            <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Course Name</th>
-                            <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Cred</th>
-                            <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Major</th>
-                            <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Prerequisite</th>
-                            <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Status</th>
-                            <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10, textAlign: 'right' }}>Action</th>
-                        </tr>
+                            <tr>
+                                <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Code</th>
+                                <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Course Name</th>
+                                <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Cred</th>
+                                <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Major</th>
+                                <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Prerequisite</th>
+                                <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10 }}>Status</th>
+                                <th style={{ position: 'sticky', top: 0, backgroundColor: '#1a1f2c', zIndex: 10, textAlign: 'right' }}>Action</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        {loading && <tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Loading courses...</td></tr>}
+                            {loading && <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Loading courses...</td></tr>}
 
-                        {!loading && displayedCourses.length === 0 && (
-                            <tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>No courses found matching "{searchTerm}"</td></tr>
-                        )}
+                            {!loading && displayedCourses.length === 0 && (
+                                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>No courses found matching "{searchTerm}"</td></tr>
+                            )}
 
-                        {displayedCourses.map(course => {
-                            const status = getCourseStatus(course);
+                            {displayedCourses.map(course => {
+                                const status = getCourseStatus(course);
 
-                            let rowClass = "";
-                            if (status === 'REGISTERED') rowClass = "row-green";
-                            if (status === 'COMPLETED') rowClass = "row-done";
-                            if (status === 'LOCKED_PREREQ') rowClass = "row-locked";
+                                let rowClass = "";
+                                if (status === 'REGISTERED') rowClass = "row-green";
+                                if (status === 'COMPLETED') rowClass = "row-done";
+                                if (status === 'LOCKED_PREREQ') rowClass = "row-locked";
 
-                            return (
-                                <tr key={course.id} className={rowClass}>
-                                    <td className="font-bold">{course.id}</td>
-                                    <td>{course.name}</td>
-                                    <td>{course.credit}</td>
-                                    <td>{course.majorId}</td>
-                                    <td>{course.prereq || "-"}</td>
+                                return (
+                                    <tr key={course.id} className={rowClass}>
+                                        <td className="font-bold">{course.id}</td>
+                                        <td>{course.name}</td>
+                                        <td>{course.credit}</td>
+                                        <td>{course.majorId}</td>
+                                        <td>{course.prereq || "-"}</td>
 
-                                    <td>
-                                        {status === 'REGISTERED' && <span className="tag tag-green">Selected</span>}
-                                        {status === 'COMPLETED' && <span className="tag tag-blue">Done</span>}
-                                        {status === 'FULL' && <span className="tag tag-red">Full</span>}
-                                        {status === 'LOCKED_PREREQ' && <span className="tag tag-grey">Locked</span>}
-                                        {status === 'AVAILABLE' && <span className="tag tag-blue-outline">Open</span>}
-                                    </td>
+                                        <td>
+                                            {status === 'REGISTERED' && <span className="tag tag-green">Selected</span>}
+                                            {status === 'COMPLETED' && <span className="tag tag-blue">Done</span>}
+                                            {status === 'FULL' && <span className="tag tag-red">Full</span>}
+                                            {status === 'LOCKED_PREREQ' && <span className="tag tag-grey">Locked</span>}
+                                            {status === 'AVAILABLE' && <span className="tag tag-blue-outline">Open</span>}
+                                        </td>
 
-                                    <td style={{textAlign: 'right'}}>
-                                        {status === 'AVAILABLE' && (
-                                            <button className="reg-btn btn-add" onClick={() => handleRegister(course.id)}>
-                                                Add
-                                            </button>
-                                        )}
-                                        {status === 'REGISTERED' && (
-                                            <button className="reg-btn btn-drop" onClick={() => handleDrop(course.id)}>
-                                                Drop
-                                            </button>
-                                        )}
-                                        {status === 'LOCKED_PREREQ' && (
-                                            <button
-                                                className="reg-btn btn-disabled"
-                                                disabled
-                                                title={`Missing Prerequisite: ${course.prereq}`}
-                                            >
-                                                Locked
-                                            </button>
-                                        )}
-                                        {(status === 'COMPLETED' || status === 'FULL') && status !== 'LOCKED_PREREQ' && (
-                                            <button className="reg-btn btn-disabled" disabled>
-                                                {status === 'FULL' ? 'Closed' : 'Done'}
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                                        <td style={{ textAlign: 'right' }}>
+                                            {status === 'AVAILABLE' && (
+                                                <button className="reg-btn btn-add" onClick={() => handleRegister(course.id)}>
+                                                    Add
+                                                </button>
+                                            )}
+                                            {status === 'REGISTERED' && (
+                                                <button className="reg-btn btn-drop" onClick={() => handleDrop(course.id)}>
+                                                    Drop
+                                                </button>
+                                            )}
+                                            {status === 'LOCKED_PREREQ' && (
+                                                <button
+                                                    className="reg-btn btn-disabled"
+                                                    disabled
+                                                    title={`Missing Prerequisite: ${course.prereq}`}
+                                                >
+                                                    Locked
+                                                </button>
+                                            )}
+                                            {(status === 'COMPLETED' || status === 'FULL') && status !== 'LOCKED_PREREQ' && (
+                                                <button className="reg-btn btn-disabled" disabled>
+                                                    {status === 'FULL' ? 'Closed' : 'Done'}
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

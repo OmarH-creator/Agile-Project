@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import './EditCourses.css';
 import umsLogo from '../../assets/UMS Logo.png';
@@ -77,24 +78,51 @@ const EditCourses = () => {
                     course.code === editingCourse.code ? editingCourse : course
                 ));
                 setEditingCourse(null);
-                alert("Course saved successfully!");
+                toast.success("Course saved successfully!");
             } catch (err) {
                 console.error("Failed to save course", err);
-                alert("Failed to save course changes.");
+                toast.error("Failed to save course changes.");
             }
         }
     };
 
     const handleDelete = async (courseCode) => {
-        if (window.confirm(`Are you sure you want to delete course ${courseCode}? This action cannot be undone.`)) {
-            try {
-                await deleteCourse(courseCode);
-                setCourses(prev => prev.filter(course => course.code !== courseCode));
-            } catch (err) {
-                console.error("Failed to delete course", err);
-                alert("Failed to delete course.");
-            }
-        }
+        toast((t) => (
+            <div className="toast-confirm">
+                <p>Delete <b>{courseCode}</b>?</p>
+                <div className="toast-actions">
+                    <button
+                        className="toast-btn-confirm"
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await deleteCourse(courseCode);
+                                setCourses(prev => prev.filter(course => course.code !== courseCode));
+                                toast.success(`Course ${courseCode} deleted.`);
+                            } catch (err) {
+                                console.error("Deleted failed", err);
+                                toast.error("Failed to delete course.");
+                            }
+                        }}
+                    >
+                        Delete
+                    </button>
+                    <button
+                        className="toast-btn-cancel"
+                        onClick={() => toast.dismiss(t.id)}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), {
+            duration: 5000,
+            style: {
+                background: '#1e293b',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.1)',
+            },
+        });
     };
 
     const handleInputChange = (field, value) => {

@@ -1,12 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import { Link } from 'react-router-dom';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
-import {getAdmin, Icon} from './Admin-Student-Api'
-import  {jwtDecode} from "jwt-decode";
+import { Icon } from './Admin-Student-Api';
+import { getAdmin, Icon } from './Admin-Student-Api'
+import { jwtDecode } from "jwt-decode";
 
 const AdminDashboard = () => {
+    // Used to highlight the active link in the sidebar
+    const location = useLocation();
     const [admin, setAdmin] = useState("");
+    const location = useLocation();
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -43,23 +49,40 @@ const AdminDashboard = () => {
             accent: 'violet',
             path: '/Admin/Curriculum'
         },
-        // --- Professor BUTTON ADDED BELOW ---
+        {
+            title: 'Requests & Approvals',
+            sub: 'Track pending requests and actions',
+            icon: Icon.requests,
+            accent: 'citrus',
+            path: '/Admin/Requests'
+        },
         {
             title: 'Professors',
             sub: 'Manage faculty assignments and staff',
-            icon: Icon.professor, /* Make sure to add 'professor' to your Icon export in Admin-Student-Api */
+            icon: Icon.professor,
             accent: 'emerald',
             path: '/Admin/Professors'
+        },
+        {
+            title: 'Announcements',
+            sub: 'Create and manage university announcements',
+            icon: Icon.megaphone,
+            accent: 'orange',
+            path: '/Admin/Announcements'
         }
     ];
 
     return (
         <div className="shell">
+            {/* --- TOPBAR --- */}
             <header className="topbar" role="banner">
                 <div className="topbar-left">
+                    <button className="icon-btn" aria-label="Menu" title="Menu">
+                        {Icon.menu16}
+                    </button>
                     <div className="brand-mini">
                         <div className="brand-logo-shell">
-                            <img src={String(umsLogo)} alt="UMS logo" className="mini-logo"/>
+                            <img src={String(umsLogo)} alt="UMS logo" className="mini-logo" />
                         </div>
                         <span className="brand-text brand-title">
                             University Management - Admin
@@ -69,7 +92,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="topbar-right">
                     <div className="sidebar-user">
-                    <div className="avatar" aria-hidden="true">
+                        <div className="avatar" aria-hidden="true">
                             <span className="avatar-ico">{Icon.user16}</span>
                         </div>
                         <div className="user-meta">
@@ -78,11 +101,9 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             </header>
-            {/*// header section end*/}
 
-            {/*/////////////////////////////////////////////////////////////////////////////////////////////////*/}
-            {/*/////////////////////////////////////////////////////////////////////////////////////////////////*/}
 
+            {/* --- MAIN CONTENT --- */}
             <main className="main" role="main">
                 <div className="page-header">
                     <div className="page-title">
@@ -95,29 +116,28 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 </div>
-                    <div className="grid">
-                        {tiles.map((tile) => (
-                                <Link
-                                    to={tile.path ?? '#'}
-                                    key={tile.title}
-                                    className="card"
-                                    data-accent={tile.accent}
-                                >
-                                    <div className="card-title">
-                                        <div>
-                                            <div className="card-heading">{tile.title}</div>
-                                            {tile.sub && <p className="card-sub">{tile.sub}</p>}
-                                        </div>
-                                        {tile.icon && (
-                                            <div className="card-icon" aria-hidden="true" data-accent={tile.accent}>
-                                                {tile.icon}
-                                            </div>
-                                        )}
+                <div className="grid">
+                    {tiles.map((tile) => (
+                        <Link
+                            to={tile.path ?? '#'}
+                            key={tile.title}
+                            className="card"
+                            data-accent={tile.accent}
+                        >
+                            <div className="card-title">
+                                <div>
+                                    <div className="card-heading">{tile.title}</div>
+                                    {tile.sub && <p className="card-sub">{tile.sub}</p>}
+                                </div>
+                                {tile.icon && (
+                                    <div className="card-icon" aria-hidden="true" data-accent={tile.accent}>
+                                        {tile.icon}
                                     </div>
-                                </Link>
-                            )
-                        )}
-                    </div>
+                                )}
+                            </div>
+                        </Link>
+                    ))}
+                </div>
             </main>
         </div>
     );

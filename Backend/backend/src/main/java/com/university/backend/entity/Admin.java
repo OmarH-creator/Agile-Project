@@ -1,5 +1,6 @@
 package com.university.backend.entity;
 
+import com.university.backend.entity.Hall.Hall;
 import jakarta.persistence.*;
 import java.util.Date;
 import java.util.ArrayList;

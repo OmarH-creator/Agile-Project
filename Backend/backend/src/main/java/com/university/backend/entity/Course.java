@@ -19,6 +19,13 @@ public class Course {
 
   @Column(name = "semester", nullable = false)
   private String semester;
+
+  @Transient
+  private java.util.List<String> prerequisites = new java.util.ArrayList<>();
+
+  @Transient
+  private String professorEmail;
+
   // Default constructor (required by JPA)
   public Course() {
   }
@@ -69,5 +76,21 @@ public class Course {
 
   public String getSemester() {return semester;}
 
-  public void setSemester(String semester) {}
+  public void setSemester(String semester) { this.semester = semester; }
+
+  public java.util.List<String> getPrerequisites() {
+    return prerequisites;
+  }
+
+  public void setPrerequisites(java.util.List<String> prerequisites) {
+    this.prerequisites = prerequisites;
+  }
+
+  public String getProfessorEmail() {
+    return professorEmail;
+  }
+
+  public void setProfessorEmail(String professorEmail) {
+    this.professorEmail = professorEmail;
+  }
 }

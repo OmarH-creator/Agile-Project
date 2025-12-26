@@ -56,10 +56,10 @@ public class StudentController {
             // 1. Find the Major for this course
             // If no major is found (e.g. general elective), we return "N/A" or "General"
             Optional<MajorReq> majorReq = majorReqRepository.findFirstByCourse_CourseCode(c.getCourseCode());
-            String majorId = majorReq.map(req -> req.getMajor().getMajorId()).orElse("General");
+            String majorId = majorReq.map(req -> req.getMajor().getMajorId()).orElse("N/A");
 
             // 2. Find Prerequisites
-            List<CoursePrerequisite> prereqs = prerequisiteRepository.findByCourse_CourseCode(c.getCourseCode());
+            List<CoursePrerequisite> prereqs = prerequisiteRepository.findByCourse(c);
 
             // Convert list of objects to a single string like "CS101, MATH101" or "None"
             String prereqString;
@@ -127,7 +127,7 @@ public class StudentController {
 
         // E. Check: Prerequisites
         // Get list of required courses for the target course
-        List<CoursePrerequisite> prerequisites = prerequisiteRepository.findByCourse_CourseCode(courseCode); //
+        List<CoursePrerequisite> prerequisites = prerequisiteRepository.findByCourse(course); //
 
         for (CoursePrerequisite prereq : prerequisites) {
             String requiredCourseCode = prereq.getPrerequisite().getCourseCode();

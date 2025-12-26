@@ -79,7 +79,7 @@ const StudentRecord = ({ student }) => {
                     </div>
                 </header>
 
-                {error && <div className="error-banner" style={{color:'red', padding:'10px'}}>{error}</div>}
+                {error && <div className="error-banner" style={{ color: 'red', padding: '10px' }}>{error}</div>}
 
                 <div className="kpi-grid">
                     <div className="kpi-card">
@@ -99,7 +99,7 @@ const StudentRecord = ({ student }) => {
                 <div className="meta-grid">
                     <div><span className="meta-label">Phone</span><span className="meta-value">{student.phone}</span></div>
                     <div><span className="meta-label">Address</span><span className="meta-value">{student.address}</span></div>
-                    <div><span className="meta-label">Birthdate</span><span className="meta-value">{student.dateOfBirth}</span></div>
+                    <div><span className="meta-label">Birthdate</span><span className="meta-value">{student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A'}</span></div>
                 </div>
             </article>
 
@@ -112,22 +112,22 @@ const StudentRecord = ({ student }) => {
                 <div className="history-table-wrapper">
                     <table className="history-table">
                         <thead>
-                        <tr>
-                            <th>Course</th>
-                            <th>Credits</th>
-                            <th>Grade</th>
-                            <th>Semester</th>
-                        </tr>
+                            <tr>
+                                <th>Course</th>
+                                <th>Credits</th>
+                                <th>Grade</th>
+                                <th>Semester</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        {(student.completedCourses || []).map((record, idx) => (
-                            <tr key={idx}>
-                                <td>{record.courseName}</td>
-                                <td>{record.credits}</td>
-                                <td>{record.grade}</td>
-                                <td>{record.semester}</td>
-                            </tr>
-                        ))}
+                            {(student.completedCourses || []).map((record, idx) => (
+                                <tr key={idx}>
+                                    <td>{record.courseName}</td>
+                                    <td>{record.credits}</td>
+                                    <td>{record.grade}</td>
+                                    <td>{record.semester}</td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
@@ -164,11 +164,11 @@ const StudentRecord = ({ student }) => {
                         </header>
                         <div className="modal-body">
                             {transcriptModal.loading ? (
-                                <div style={{textAlign: 'center', padding: '20px'}}>
+                                <div style={{ textAlign: 'center', padding: '20px' }}>
                                     {Icon.spinner || 'Loading...'} Generating transcript...
                                 </div>
                             ) : (
-                                <pre className="transcript-viewer" style={{whiteSpace: 'pre-wrap', maxHeight: '400px', overflowY: 'auto'}}>
+                                <pre className="transcript-viewer" style={{ whiteSpace: 'pre-wrap', maxHeight: '400px', overflowY: 'auto' }}>
                                     {transcriptModal.content}
                                 </pre>
                             )}
