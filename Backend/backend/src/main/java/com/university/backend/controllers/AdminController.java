@@ -5,6 +5,7 @@ import com.university.backend.entity.*;
 import com.university.backend.entity.Hall.Hall;
 import com.university.backend.entity.Hall.HallAttribute;
 import com.university.backend.entity.Hall.HallValue;
+import com.university.backend.entity.StaffRequests.StaffRequest;
 import com.university.backend.repository.*;
 import com.university.backend.services.HallService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -299,29 +300,8 @@ public class AdminController {
         if (professorRepository.existsByProfessorId(professor.getProfessorId())) {
             return ResponseEntity.badRequest().body("Professor with this ID already exists.");
         }
-        if (userRepository.existsByEmail(professor.getProfessorEmail())) {
-            return ResponseEntity.badRequest().body("User with this Email already exists.");
-        }
-
-        try {
-            // 2. Create the Login User
-            User newUser = new User();
-            newUser.setEmail(professor.getProfessorEmail());
-            // Set default password to the Professor ID (encrypted)
-            newUser.setPassword("null");
-            newUser.setRole("PROFESSOR");
-            userRepository.save(newUser);
-
-            // 3. Save Professor
-            // (Optional) Link them if your entity has a user field:
-            // professor.setUser(newUser);
-
-            professorRepository.save(professor);
-            return ResponseEntity.ok("Professor and User account created successfully.");
-
-        } catch (Exception e) {
-            throw new RuntimeException("Error creating professor: " + e.getMessage());
-        }
+        professorRepository.save(professor);
+        return ResponseEntity.ok("Professor created successfully.");
     }
 
 
@@ -351,7 +331,8 @@ public class AdminController {
     }
 
     @PutMapping("/professors/{professorId}")
-    public ResponseEntity<String> updateProfessorRecord(@PathVariable String professorId, @RequestBody Professor updatedProfessor) {
+    public ResponseEntity<String> updateProfessorRecord(@PathVariable String professorId,
+            @RequestBody Professor updatedProfessor) {
         Optional<Professor> profOpt = professorRepository.findByProfessorId(professorId);
 
         if (profOpt.isEmpty()) {
@@ -493,11 +474,10 @@ public class AdminController {
                 request.getHallName(),
                 request.getStart(),
                 request.getEnd(),
-                id
-        );
+                id);
 
         if (hasConflict) {
-             return ResponseEntity.badRequest().body("Update failed: Time conflict in hall " + request.getHallName());
+            return ResponseEntity.badRequest().body("Update failed: Time conflict in hall " + request.getHallName());
         }
 
         // 4. Apply Updates
@@ -552,9 +532,17 @@ public class AdminController {
 
         Hall hall = hallOpt.get();
 
-        // 2. Update EAV Attributes (Capacity, etc.)
-        if (payload.get("Capacity") != null) {
-            updateHallValue(hall, "Capacity", payload.get("Capacity"));
+        // 2. Update EAV Attributes (Dynamic Loop)
+        for (Map.Entry<String, Object> entry : payload.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            // Skip static keys or keys unrelated to EAV
+            if (key.equals("Hall_Name") || key.equals("hallName")) {
+                continue;
+            }
+
+            updateHallValue(hall, key, value);
         }
 
         // 3. Update Name (Static Field)
@@ -572,7 +560,7 @@ public class AdminController {
         hallRepository.save(hall);
         return ResponseEntity.ok("Hall updated successfully.");
     }
-
+    
     // Helper to update EAV values
     private void updateHallValue(Hall hall, String key, Object value) {
         Optional<HallAttribute> attrOpt = hall.getAttributes().stream()
@@ -587,7 +575,7 @@ public class AdminController {
             Optional<HallValue> existingVal = hall.getValues().stream()
                     .filter(v -> v.getAttribute().getAttributeName().equals(key))
                     .findFirst();
-
+            
             HallValue val;
             if (existingVal.isPresent()) {
                 val = existingVal.get();
@@ -598,8 +586,10 @@ public class AdminController {
                 hall.getValues().add(val);
             }
 
-            if (value instanceof Integer) val.setValInt((Integer) value);
-            else if (value instanceof String) val.setValString((String) value);
+            if (value instanceof Integer)
+                val.setValInt((Integer) value);
+            else if (value instanceof String)
+                val.setValString((String) value);
             // Add other types as needed
         }
     }
@@ -799,6 +789,44 @@ public class AdminController {
         return ResponseEntity.ok("Announcement created successfully");
     }
 
+    // --- Request Management ---
+    @Autowired
+    private StaffRequestRepository staffRequestRepository;
+
+    @GetMapping("/requests")
+    public ResponseEntity<?> getAllRequests() {
+        try {
+            return ResponseEntity.ok(staffRequestRepository.findAll());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error fetching requests: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/requests/{id}/approve")
+    public ResponseEntity<String> approveRequest(@PathVariable Long id) {
+        Optional<StaffRequest> reqOpt = staffRequestRepository.findById(id);
+        if (reqOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Request not found.");
+        }
+        StaffRequest req = reqOpt.get();
+        req.setStatus("Approved");
+        staffRequestRepository.save(req);
+        return ResponseEntity.ok("Request approved.");
+    }
+
+    @PutMapping("/requests/{id}/reject")
+    public ResponseEntity<String> rejectRequest(@PathVariable Long id) {
+        Optional<StaffRequest> reqOpt = staffRequestRepository.findById(id);
+        if (reqOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Request not found.");
+        }
+        StaffRequest req = reqOpt.get();
+        req.setStatus("Rejected");
+        staffRequestRepository.save(req);
+        return ResponseEntity.ok("Request rejected.");
+    }
+
     // Helper class for the booking JSON body
     public static class BookingRequest {
         private String hallName;
@@ -809,17 +837,52 @@ public class AdminController {
         private String staffId;
 
         // Getters and Setters
-        public String getHallName() { return hallName; }
-        public void setHallName(String hallName) { this.hallName = hallName; }
-        public Date getStart() { return start; }
-        public void setStart(Date start) { this.start = start; }
-        public Date getEnd() { return end; }
-        public void setEnd(Date end) { this.end = end; }
-        public String getPurpose() { return purpose; }
-        public void setPurpose(String purpose) { this.purpose = purpose; }
-        public long getReservationId() { return reservationId; }
-        public void setReservationId(long reservationId) { this.reservationId = reservationId; }
-        public String  getStaffId() { return staffId; }
-        public void setStaffId(String staffId) { this.staffId = staffId; }
+        public String getHallName() {
+            return hallName;
+        }
+
+        public void setHallName(String hallName) {
+            this.hallName = hallName;
+        }
+
+        public Date getStart() {
+            return start;
+        }
+
+        public void setStart(Date start) {
+            this.start = start;
+        }
+
+        public Date getEnd() {
+            return end;
+        }
+
+        public void setEnd(Date end) {
+            this.end = end;
+        }
+
+        public String getPurpose() {
+            return purpose;
+        }
+
+        public void setPurpose(String purpose) {
+            this.purpose = purpose;
+        }
+
+        public long getReservationId() {
+            return reservationId;
+        }
+
+        public void setReservationId(long reservationId) {
+            this.reservationId = reservationId;
+        }
+
+        public String getStaffId() {
+            return staffId;
+        }
+
+        public void setStaffId(String staffId) {
+            this.staffId = staffId;
+        }
     }
 }

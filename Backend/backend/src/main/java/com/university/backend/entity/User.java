@@ -14,13 +14,15 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     @Column(nullable = false)
     private String role;
 
     // Default constructor (required by JPA)
-    public User() {}
+    public User() {
+    }
 
     // Constructor without ID (since ID is auto-generated)
     public User(String email, String password, String role) {
@@ -28,7 +30,7 @@ public class User {
         this.password = password;
         this.role = role;
     }
-    
+
     // Constructor with ID (useful for testing or updates)
     public User(Long id, String email, String password, String role) {
         this.id = id;
@@ -63,11 +65,11 @@ public class User {
         this.password = password;
     }
 
-    public String getRole() { 
-        return role; 
+    public String getRole() {
+        return role;
     }
 
-    public void setRole(String role) { 
-        this.role = role; 
+    public void setRole(String role) {
+        this.role = role;
     }
 }

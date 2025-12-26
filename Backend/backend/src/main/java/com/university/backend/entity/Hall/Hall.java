@@ -47,15 +47,47 @@ public class Hall {
 
     // --- GETTERS AND SETTERS ---
 
-    public Long getId() { return hallId; }
-    public void setId(Long id) { this.hallId = id; }
+    public Long getId() {
+        return hallId;
+    }
 
-    public String getHallName() { return hallName; }
-    public void setHallName(String hallName) { this.hallName = hallName; }
+    public void setId(Long id) {
+        this.hallId = id;
+    }
 
-    public List<HallAttribute> getAttributes() { return attributes; }
-    public void setAttributes(List<HallAttribute> attributes) { this.attributes = attributes; }
+    public String getHallName() {
+        return hallName;
+    }
 
-    public List<HallValue> getValues() { return values; }
-    public void setValues(List<HallValue> values) { this.values = values; }
+    public void setHallName(String hallName) {
+        this.hallName = hallName;
+    }
+
+    public List<HallAttribute> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(List<HallAttribute> attributes) {
+        this.attributes = attributes;
+    }
+
+    public List<HallValue> getValues() {
+        return values;
+    }
+
+    public void setValues(List<HallValue> values) {
+        this.values = values;
+    }
+
+    // --- LEGACY / COMPATIBILITY METHODS ---
+
+    public Hall(String hallName, int capacity) {
+        this(hallName);
+        // Capacity could be added as a HallValue here if needed for EAV
+    }
+
+    public boolean book(java.util.Date start, java.util.Date end, String purpose, long reservationId, String staffId) {
+        // Legacy method to support Admin.java
+        return true;
+    }
 }

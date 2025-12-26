@@ -21,6 +21,9 @@ public interface HallRepository extends JpaRepository<Hall, Long> {
             "WHERE h.hallId = :id")
     Optional<Hall> findFullHallById(@Param("id") Long id);
 
+    // Static column lookup (More efficient than EAV lookup)
+    Optional<Hall> findByHallName(String hallName);
+
     // Custom lookup to find a Hall by its "Name" attribute in the EAV tables
     @Query("SELECT h FROM Hall h JOIN h.values v JOIN v.attribute a WHERE a.attributeName = 'Name' AND v.valString = :name")
     Optional<Hall> findByName(@Param("name") String name);

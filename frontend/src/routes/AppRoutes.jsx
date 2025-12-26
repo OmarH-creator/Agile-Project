@@ -26,6 +26,7 @@ function AppRoutes() {
         <Route path="/Admin/Students" element={<StudentServices/>}/>
         <Route path="/Admin/Professors" element={<ProfessorManagement/>}/>
         <Route path="/Admin/Facilities" element={<FacilitiesUI />} />
+        <Route path="/Admin/Requests" element={<RequestManagement />} />
         <Route path="/Admin/Curriculum" element={<Curriculum />} />
         <Route path="/Admin/Curriculum/Edit-courses" element={<EditCourses />} />
         {/* 2. ADD THIS ROUTE */}

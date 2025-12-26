@@ -64,21 +64,51 @@ public class Assignment {
 
     // --- GETTERS AND SETTERS ---
 
-    public Long getId() { return assignmentId; }
-    public void setId(Long id) { this.assignmentId = id; }
+    public Long getId() {
+        return assignmentId;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public void setId(Long id) {
+        this.assignmentId = id;
+    }
 
-    public Course getCourse() { return course; }
-    public void setCourse(Course course) { this.course = course; }
+    public String getTitle() {
+        return title;
+    }
 
-    public Professor getProfessor() { return professor; }
-    public void setProfessor(Professor professor) { this.professor = professor; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public List<AssignmentAttributes> getAttributes() { return attributes; }
-    public void setAttributes(List<AssignmentAttributes> attributes) { this.attributes = attributes; }
+    public Course getCourse() {
+        return course;
+    }
 
-    public List<AssignmentValue> getValues() { return values; }
-    public void setValues(List<AssignmentValue> values) { this.values = values; }
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public Professor getProfessor() {
+        return professor;
+    }
+
+    public void setProfessor(Professor professor) {
+        this.professor = professor;
+    }
+
+    public List<AssignmentAttributes> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(List<AssignmentAttributes> attributes) {
+        this.attributes = attributes;
+    }
+
+    public List<AssignmentValue> getValues() {
+        return values;
+    }
+
+    public void setValues(List<AssignmentValue> values) {
+        this.values = values;
+    }
 }

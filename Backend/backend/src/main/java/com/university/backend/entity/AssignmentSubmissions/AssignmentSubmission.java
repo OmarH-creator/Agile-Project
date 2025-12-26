@@ -56,18 +56,43 @@ public class AssignmentSubmission {
 
     // --- GETTERS AND SETTERS ---
 
-    public Long getId() { return submissionId; }
-    public void setId(Long id) { this.submissionId = id; }
+    public Long getId() {
+        return submissionId;
+    }
 
-    public Assignment getAssignment() { return assignment; }
-    public void setAssignment(Assignment assignment) { this.assignment = assignment; }
+    public void setId(Long id) {
+        this.submissionId = id;
+    }
 
-    public Student getStudent() { return student; }
-    public void setStudent(Student student) { this.student = student; }
+    public Assignment getAssignment() {
+        return assignment;
+    }
 
-    public List<SubmissionAttributes> getAttributes() { return attributes; }
-    public void setAttributes(List<SubmissionAttributes> attributes) { this.attributes = attributes; }
+    public void setAssignment(Assignment assignment) {
+        this.assignment = assignment;
+    }
 
-    public List<SubmissionValue> getValues() { return values; }
-    public void setValues(List<SubmissionValue> values) { this.values = values; }
+    public Student getStudent() {
+        return student;
+    }
+
+    public void setStudent(Student student) {
+        this.student = student;
+    }
+
+    public List<SubmissionAttributes> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(List<SubmissionAttributes> attributes) {
+        this.attributes = attributes;
+    }
+
+    public List<SubmissionValue> getValues() {
+        return values;
+    }
+
+    public void setValues(List<SubmissionValue> values) {
+        this.values = values;
+    }
 }

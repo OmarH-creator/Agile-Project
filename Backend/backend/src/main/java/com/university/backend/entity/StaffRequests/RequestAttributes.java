@@ -20,7 +20,8 @@ public class RequestAttributes {
     @Column(nullable = false)
     private String dataType;
 
-    public RequestAttributes() {}
+    public RequestAttributes() {
+    }
 
     public RequestAttributes(StaffRequest request, String attributeName, String dataType) {
         this.request = request;
@@ -29,12 +30,36 @@ public class RequestAttributes {
     }
 
     // Getters and Setters
-    public Long getId() { return AttributeId; }
-    public void setId(Long id) { this.AttributeId = id; }
-    public StaffRequest getRequest() { return request; }
-    public void setRequest(StaffRequest request) { this.request = request; }
-    public String getAttributeName() { return attributeName; }
-    public void setAttributeName(String attributeName) { this.attributeName = attributeName; }
-    public String getDataType() { return dataType; }
-    public void setDataType(String dataType) { this.dataType = dataType; }
+    public Long getId() {
+        return AttributeId;
+    }
+
+    public void setId(Long id) {
+        this.AttributeId = id;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public StaffRequest getRequest() {
+        return request;
+    }
+
+    public void setRequest(StaffRequest request) {
+        this.request = request;
+    }
+
+    public String getAttributeName() {
+        return attributeName;
+    }
+
+    public void setAttributeName(String attributeName) {
+        this.attributeName = attributeName;
+    }
+
+    public String getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
+    }
 }

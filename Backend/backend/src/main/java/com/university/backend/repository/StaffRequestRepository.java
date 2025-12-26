@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,4 +21,9 @@ public interface StaffRequestRepository extends JpaRepository<StaffRequest, Long
             "LEFT JOIN FETCH v.attribute " +
             "WHERE r.requestId = :id")
     Optional<StaffRequest> findFullRequestById(@Param("id") Long id);
+
+    /**
+     * Find all requests by a specific requester (User ID).
+     */
+    List<StaffRequest> findByRequester_Id(Long requesterId);
 }
