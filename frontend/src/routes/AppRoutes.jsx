@@ -10,7 +10,6 @@ import ProfessorManagement from "../pages/Admin_View/ProfessorManagement";
 import StudentDashboard from "../pages/Student_View/StudentDashboard";
 import Course_Reg from "../pages/Student_View/Course_Reg/Course_Reg"; // Import the new file
 import ParentDashboard from "../pages/Parent/ParentDashboard";
-import ProfessorManagement from "../pages/Admin_View/ProfessorManagement"; // Import the new file
 import ProfessorDashboard from "../pages/TeachingStaff_View/ProfessorDashboard";
 import RequestManagement from "../pages/Admin_View/RequestManagement"; // Import RequestManagement
 function AppRoutes() {
@@ -32,7 +31,7 @@ function AppRoutes() {
         <Route path="/parent" element={<ParentDashboard />} />
         {/* 2. ADD THIS ROUTE */}
         <Route path="/professor" element={<ProfessorDashboard />} />
-        <Route path="/Student" />
+
       </Routes>
     </Router>
   );
