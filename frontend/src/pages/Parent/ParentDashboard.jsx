@@ -130,7 +130,7 @@ export default function ParentDashboard() {
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Department</th>
-                                    <th>GPA</th>
+                                    {/*<th>GPA</th>*/}
                                     <th>Email</th>
                                     <th>Courses Taken</th>
                                     <th>Actions</th>
@@ -144,7 +144,7 @@ export default function ParentDashboard() {
                                             <td>{child.studentId}</td>
                                             <td>{child.name}</td>
                                             <td>{child.major?.majorName || "Undeclared"}</td>
-                                            <td>{calculateGPA(records)}</td>
+                                            {/*<td>{calculateGPA(records)}</td>*/}
                                             <td>{child.email}</td>
                                             <td>{records.length}</td>
                                             <td>
@@ -248,7 +248,7 @@ export default function ParentDashboard() {
                                         <div key={child.studentId} className="student-grade-card">
                                             <div className="card-header">
                                                 <h4>{child.name} ({child.studentId})</h4>
-                                                <span className="gpa-badge">GPA: {calculateGPA(records)}</span>
+                                                {/*<span className="gpa-badge">GPA: {calculateGPA(records)}</span>*/}
                                             </div>
                                             <p><strong>Department:</strong> {child.major?.majorName || "Undeclared"}</p>
                                             <p><strong>Courses Completed:</strong> {records.length}</p>
