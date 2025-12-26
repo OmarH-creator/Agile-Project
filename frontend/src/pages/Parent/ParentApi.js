@@ -41,3 +41,31 @@ export async function getChildCourseRecords(email, studentId) {
         throw err;
     }
 }
+
+
+// Add to ParentApi.js
+export const getProfessorByCourse = async (courseName) => {
+    try {
+        const response = await fetch(`/api/professor/course/${courseName}/info`);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching professor:", error);
+        return null;
+    }
+};
+
+// Or bulk fetch (more efficient)
+export const getProfessorsForCourses = async (courseNames) => {
+    try {
+        const response = await fetch(`/api/professor/courses/professors`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({courses: courseNames})
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching professors:", error);
+        return {};
+    }
+};
