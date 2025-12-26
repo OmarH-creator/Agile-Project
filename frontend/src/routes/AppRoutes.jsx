@@ -16,6 +16,9 @@ import Announcements from "../pages/Admin_View/Announcements/Announcements";
 import StudentAnnouncements from "../pages/Student_View/StudentAnnouncements/StudentAnnouncements";
 import StudentCourses from "../pages/Student_View/StudentCourses/StudentCourses";
 import ParentDashboard from "../pages/Parent/ParentDashboard";
+import ProfessorManagement from "../pages/Admin_View/ProfessorManagement"; // Import the new file
+import ProfessorDashboard from "../pages/TeachingStaff_View/ProfessorDashboard";
+import RequestManagement from "../pages/Admin_View/RequestManagement"; // Import RequestManagement
 function AppRoutes() {
   return (
     <Router>

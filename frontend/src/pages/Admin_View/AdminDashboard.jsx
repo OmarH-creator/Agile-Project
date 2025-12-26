@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
+import { Link } from 'react-router-dom';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
@@ -7,6 +9,8 @@ import { getAdmin, Icon } from './Admin-Student-Api'
 import { jwtDecode } from "jwt-decode";
 
 const AdminDashboard = () => {
+    // Used to highlight the active link in the sidebar
+    const location = useLocation();
     const [admin, setAdmin] = useState("");
     const location = useLocation();
 
@@ -73,6 +77,9 @@ const AdminDashboard = () => {
             {/* --- TOPBAR --- */}
             <header className="topbar" role="banner">
                 <div className="topbar-left">
+                    <button className="icon-btn" aria-label="Menu" title="Menu">
+                        {Icon.menu16}
+                    </button>
                     <div className="brand-mini">
                         <div className="brand-logo-shell">
                             <img src={String(umsLogo)} alt="UMS logo" className="mini-logo" />

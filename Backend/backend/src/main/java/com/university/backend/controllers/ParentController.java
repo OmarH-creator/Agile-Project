@@ -54,20 +54,20 @@ public class ParentController {
 
         // 2. Try JPA repository method
         List<Course_record> jpaRecords = courseRecordRepository.findByStudentStudentId(studentId);
-        response.put("jpaRecordsCount", jpaRecords.size());
+        response.put("jpaRecordsCount", Optional.of(jpaRecords.size()));
         response.put("jpaRecords", jpaRecords);
 
         // 3. Try custom query (if you have it)
         try {
             // If you added the @Query method in CourseRecordRepository
             List<Course_record> queryRecords = courseRecordRepository.findCoursesByStudentId(studentId);
-            response.put("queryRecordsCount", queryRecords.size());
+            response.put("queryRecordsCount", Optional.of(queryRecords.size()));
         } catch (Exception e) {
             response.put("queryError", e.getMessage());
         }
 
         // 4. Check student's completedCourses (via relationship)
-        response.put("completedCoursesCount", student.getCompletedCourses().size());
+        response.put("completedCoursesCount", Optional.of(student.getCompletedCourses().size()));
         response.put("completedCourses", student.getCompletedCourses());
 
         System.out.println("=== DEBUG FOR STUDENT " + studentId + " ===");
@@ -91,10 +91,10 @@ public class ParentController {
 
             while (rs.next()) {
                 Map<String, Object> record = new HashMap<>();
-                record.put("id", rs.getLong("id"));
+                record.put("id", Optional.of(rs.getLong("id")));
                 record.put("course_name", rs.getString("course_name"));
-                record.put("grade", rs.getDouble("grade"));
-                record.put("credits", rs.getInt("credits"));
+                record.put("grade", Optional.of(rs.getDouble("grade")));
+                record.put("credits", Optional.of(rs.getInt("credits")));
                 record.put("semester", rs.getString("semester"));
                 record.put("student_id", rs.getString("student_id"));
                 results.add(record);
@@ -170,8 +170,8 @@ public class ParentController {
         Map<String, Object> response = new HashMap<>();
         response.put("students", students);
         response.put("courseRecords", recordsByStudent);
-        response.put("totalStudents", students.size());
-        response.put("totalCourses", courseRecords.size());
+        response.put("totalStudents", Optional.of(students.size()));
+        response.put("totalCourses", Optional.of(courseRecords.size()));
 
         return response;
     }

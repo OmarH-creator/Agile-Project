@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import Illust from "../../assets/loginimage.png";
+import confetti from 'canvas-confetti';
 import umsLogo from "../../assets/UMS Logo.png";
 import confetti from "canvas-confetti";
 import { login } from "../../auth/login";
