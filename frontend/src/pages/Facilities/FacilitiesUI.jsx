@@ -25,8 +25,9 @@ const hallAPI = {
             method: 'POST',
             headers: createHeaders(),
             body: JSON.stringify({
-                hallName: hallData.name,
-                capacity: parseInt(hallData.capacity)
+                Hall_Name: hallData.name, // Use Hall_Name to match backend EAV expectation
+                Capacity: parseInt(hallData.capacity),
+                Location: hallData.location // Add Location
             })
         });
         if (!response.ok) {
@@ -78,8 +79,9 @@ const hallAPI = {
             method: 'PUT',
             headers: createHeaders(),
             body: JSON.stringify({
-                hallName: hallData.name, // The NEW name
-                capacity: parseInt(hallData.capacity)
+                Hall_Name: hallData.name, // The NEW name matches backend expectation
+                Capacity: parseInt(hallData.capacity),
+                Location: hallData.location // Explicitly send Location
             })
         });
         if (!response.ok) {
@@ -157,7 +159,7 @@ const bookingAPI = {
         }
         return await response.text();
     },
-// --- UPDATE (Connected) ---
+    // --- UPDATE (Connected) ---
     updateBooking: async (id, bookingData) => {
         const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
             method: 'PUT',
@@ -218,6 +220,7 @@ const defaultHallForm = {
     code: '',
     type: hallTypes[0],
     capacity: '',
+    location: '', // Added location
     building: '',
     resources: '',
     status: 'Available'
@@ -379,7 +382,8 @@ const Facilities = () => {
         name: h.hallName || h.name,
         capacity: h.capacity,
         code: h.code || (h.hallName || h.name),
-        building: h.building || 'Main Building',
+        // FIX: Map backend 'Location' attribute to frontend 'building' field
+        building: h.Location || h.building || 'Main Building',
         type: h.type || 'Lecture Hall',
         status: h.status || 'Available',
         resources: h.resources || ''
@@ -564,7 +568,7 @@ const Facilities = () => {
         const payload = {
             name: hallModal.form.name.trim(),
             capacity: Number(hallModal.form.capacity),
-            // ... other fields
+            location: hallModal.form.building // FIX: Map input 'building' to 'location'
         };
 
         if (!payload.name || payload.capacity <= 0) {
@@ -599,6 +603,8 @@ const Facilities = () => {
             );
         }
     };
+
+
 
     const deleteHall = async () => {
         if (!deletePrompt.hall) return;
@@ -1049,12 +1055,12 @@ const Facilities = () => {
                         ))}
                     </div>
 
-                    <div className="schedule-grid-body" style={{height: `${timelineHeight}px`, position: 'relative'}}>
+                    <div className="schedule-grid-body" style={{ height: `${timelineHeight}px`, position: 'relative' }}>
                         {/* Background Grid Lines */}
                         <div className="time-column" aria-hidden="true">
                             {timelineSlots.slice(0, -1).map((slot) => (
-                                <div className="time-slot" key={slot.time} style={{height: `${SLOT_PIXEL_HEIGHT}px`}}>
-                                    {slot.label ? <span>{slot.label}</span> : <span className="time-tick"/>}
+                                <div className="time-slot" key={slot.time} style={{ height: `${SLOT_PIXEL_HEIGHT}px` }}>
+                                    {slot.label ? <span>{slot.label}</span> : <span className="time-tick" />}
                                 </div>
                             ))}
                             <div className="time-slot time-slot-end">
@@ -1064,14 +1070,14 @@ const Facilities = () => {
 
                         {/* Day Columns */}
                         {daysOfWeek.map((day) => (
-                            <div className="day-column" key={day} role="gridcell" style={{position: 'relative'}}>
+                            <div className="day-column" key={day} role="gridcell" style={{ position: 'relative' }}>
                                 {/* Background Stripes */}
                                 <div className="slot-stripes" aria-hidden="true">
                                     {timelineSlots.slice(0, -1).map((slot, index) => (
                                         <span
                                             className="slot-stripe"
                                             key={`${day}-stripe-${slot.time}-${index}`}
-                                            style={{height: `${SLOT_PIXEL_HEIGHT}px`}}
+                                            style={{ height: `${SLOT_PIXEL_HEIGHT}px` }}
                                         />
                                     ))}
                                 </div>
@@ -1117,8 +1123,8 @@ const Facilities = () => {
                                             onClick={() => openBookingModal(event)}
                                         >
                                             <strong>{event.course}</strong>
-                                            <span className="event-meta" style={{color: textColor}}>{event.hall}</span>
-                                            <small style={{color: textColor}}>{event.start} - {event.end}</small>
+                                            <span className="event-meta" style={{ color: textColor }}>{event.hall}</span>
+                                            <small style={{ color: textColor }}>{event.start} - {event.end}</small>
 
                                             {event.conflict && (
                                                 <div style={{
@@ -1155,14 +1161,14 @@ const Facilities = () => {
                             Code
                             <input value={hallModal.form.code} onChange={(e) => setHallModal((prev) => ({
                                 ...prev,
-                                form: {...prev.form, code: e.target.value}
-                            }))} placeholder="Optional code"/>
+                                form: { ...prev.form, code: e.target.value }
+                            }))} placeholder="Optional code" />
                         </label>
                         <label>
                             Type
                             <select value={hallModal.form.type} onChange={(e) => setHallModal((prev) => ({
                                 ...prev,
-                                form: {...prev.form, type: e.target.value}
+                                form: { ...prev.form, type: e.target.value }
                             }))}>
                                 {hallTypes.map((type) => (
                                     <option key={type} value={type}>{type}</option>
@@ -1172,30 +1178,30 @@ const Facilities = () => {
                         <label>
                             Capacity
                             <input type="number" value={hallModal.form.capacity}
-                                   onChange={(e) => setHallModal((prev) => ({
-                                       ...prev,
-                                       form: {...prev.form, capacity: e.target.value}
-                                   }))} required/>
+                                onChange={(e) => setHallModal((prev) => ({
+                                    ...prev,
+                                    form: { ...prev.form, capacity: e.target.value }
+                                }))} required />
                         </label>
                         <label>
                             Building / Location
                             <input value={hallModal.form.building} onChange={(e) => setHallModal((prev) => ({
                                 ...prev,
-                                form: {...prev.form, building: e.target.value}
-                            }))} required/>
+                                form: { ...prev.form, building: e.target.value }
+                            }))} required />
                         </label>
                         <label>
                             Resources
                             <textarea value={hallModal.form.resources} onChange={(e) => setHallModal((prev) => ({
                                 ...prev,
-                                form: {...prev.form, resources: e.target.value}
-                            }))} placeholder="Optional"/>
+                                form: { ...prev.form, resources: e.target.value }
+                            }))} placeholder="Optional" />
                         </label>
                         <label>
                             Status
                             <select value={hallModal.form.status} onChange={(e) => setHallModal((prev) => ({
                                 ...prev,
-                                form: {...prev.form, status: e.target.value}
+                                form: { ...prev.form, status: e.target.value }
                             }))}>
                                 {hallStatuses.map((status) => (
                                     <option key={status} value={status}>{status}</option>
@@ -1225,8 +1231,8 @@ const Facilities = () => {
                         <p>"{deletePrompt.hall?.name}" will be removed from the directory. You can re-create it
                             later.</p>
                         <div className="modal-actions">
-                            <button className="ghost" onClick={() => setDeletePrompt({open: false, hall: null})}
-                                    disabled={loading}>Cancel
+                            <button className="ghost" onClick={() => setDeletePrompt({ open: false, hall: null })}
+                                disabled={loading}>Cancel
                             </button>
                             <button className="danger" onClick={deleteHall} disabled={loading}>
                                 {loading ? 'Deleting...' : 'Delete'}
@@ -1244,8 +1250,8 @@ const Facilities = () => {
                         <label>
                             Comment (optional)
                             <textarea value={requestAction.comment}
-                                      onChange={(e) => setRequestAction((prev) => ({...prev, comment: e.target.value}))}
-                                      placeholder="Notes for the faculty"/>
+                                onChange={(e) => setRequestAction((prev) => ({ ...prev, comment: e.target.value }))}
+                                placeholder="Notes for the faculty" />
                         </label>
                         <div className="modal-actions">
                             <button type="button" className="ghost" onClick={() => setRequestAction({

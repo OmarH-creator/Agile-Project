@@ -8,6 +8,7 @@ import StudentServices from "../pages/Admin_View/StudentServices";
 import ProfessorRecords from "../pages/Admin_View/ProfessorRecords";
 import ProfessorManagement from "../pages/Admin_View/ProfessorManagement"; // Import the new file
 import ProfessorDashboard from "../pages/TeachingStaff_View/ProfessorDashboard";
+import RequestManagement from "../pages/Admin_View/RequestManagement"; // Import RequestManagement
 function AppRoutes() {
   return (
     <Router>
@@ -15,9 +16,10 @@ function AppRoutes() {
         <Route path="/" element={<Login />} />
         {/*<Route path="/login" element={<Login />} />*/}
         <Route path="/Admin" element={<AdminDashboard />} />
-        <Route path="/Admin/Students" element={<StudentServices/>}/>
-        <Route path="/Admin/Professors" element={<ProfessorManagement/>}/>
+        <Route path="/Admin/Students" element={<StudentServices />} />
+        <Route path="/Admin/Professors" element={<ProfessorManagement />} />
         <Route path="/Admin/Facilities" element={<FacilitiesUI />} />
+        <Route path="/Admin/Requests" element={<RequestManagement />} />
         <Route path="/Admin/Curriculum" element={<Curriculum />} />
         <Route path="/Admin/Curriculum/Edit-courses" element={<EditCourses />} />
         {/* 2. ADD THIS ROUTE */}

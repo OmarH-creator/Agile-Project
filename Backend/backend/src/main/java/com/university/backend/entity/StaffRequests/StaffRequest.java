@@ -17,6 +17,7 @@ public class StaffRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requester_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private User requester;
 
     @Column(nullable = false)
@@ -57,21 +58,51 @@ public class StaffRequest {
 
     // --- GETTERS AND SETTERS ---
 
-    public Long getId() { return requestId; }
-    public void setId(Long id) { this.requestId = id; }
+    public Long getId() {
+        return requestId;
+    }
 
-    public User getRequester() { return requester; }
-    public void setRequester(User requester) { this.requester = requester; }
+    public void setId(Long id) {
+        this.requestId = id;
+    }
 
-    public String getRequestType() { return requestType; }
-    public void setRequestType(String requestType) { this.requestType = requestType; }
+    public User getRequester() {
+        return requester;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setRequester(User requester) {
+        this.requester = requester;
+    }
 
-    public List<RequestAttributes> getAttributes() { return attributes; }
-    public void setAttributes(List<RequestAttributes> attributes) { this.attributes = attributes; }
+    public String getRequestType() {
+        return requestType;
+    }
 
-    public List<RequestValue> getValues() { return values; }
-    public void setValues(List<RequestValue> values) { this.values = values; }
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public List<RequestAttributes> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(List<RequestAttributes> attributes) {
+        this.attributes = attributes;
+    }
+
+    public List<RequestValue> getValues() {
+        return values;
+    }
+
+    public void setValues(List<RequestValue> values) {
+        this.values = values;
+    }
 }

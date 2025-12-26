@@ -60,10 +60,48 @@ export const ProfessorAPI = {
         }
     },
 
-    // 4. Create an Assignment
+    // 4. Create an Assignment (Modified for File Upload)
     createAssignment: async (assignmentData) => {
+        // assignmentData = { title, description, courseName, professorId, deadline, file }
         try {
-            const response = await api.post('/assignment', assignmentData);
+            const formData = new FormData();
+
+            // Extract Course Code if needed, or pass full string if that's what backend expects (Backend expects Course_Id which is Code)
+            const courseCode = assignmentData.courseName.split(' - ')[0];
+
+            const payload = {
+                Title: assignmentData.title,
+                Course_Id: courseCode,
+                Professor_Id: assignmentData.professorId,
+                Description: assignmentData.description,
+                Due_Date: assignmentData.deadline,
+                Max_Grade: assignmentData.maxGrade || 100,
+                Is_Visible: true
+            };
+
+            // Add Custom Attributes (Dynamic Fields)
+            Object.keys(assignmentData).forEach(key => {
+                // exclude known keys that we mapped manually above
+                const knownKeys = ['title', 'coursename', 'professorid', 'description', 'deadline', 'maxgrade', 'file'];
+                if (!knownKeys.includes(key)) {
+                    payload[key] = assignmentData[key];
+                }
+            });
+
+            formData.append('payload', JSON.stringify(payload));
+
+            if (assignmentData.file) {
+                formData.append('file', assignmentData.file);
+            }
+
+            // Note: Content-Type 'multipart/form-data' is set automatically by browser when using FormData
+            // We do NOT need to set it manually. In fact, setting it manually breaks the boundary.
+            // We must nullify the Content-Type header to allow the browser to set it with the boundary
+            const response = await api.post('/create', formData, {
+                headers: {
+                    'Content-Type': undefined
+                }
+            });
             return response.data;
         } catch (error) {
             console.error("Error creating assignment:", error);
@@ -71,10 +109,37 @@ export const ProfessorAPI = {
         }
     },
 
+    // 4.1 Update Assignment
+    updateAssignment: async (id, assignmentData) => {
+        try {
+            const payload = {
+                Title: assignmentData.title,
+                Description: assignmentData.description,
+                Max_Grade: assignmentData.maxGrade,
+                Due_Date: assignmentData.deadline
+            };
+
+            // Add Custom Attributes (Dynamic Fields)
+            Object.keys(assignmentData).forEach(key => {
+                const knownKeys = ['title', 'description', 'maxgrade', 'deadline'];
+                if (!knownKeys.includes(key)) {
+                    payload[key] = assignmentData[key];
+                }
+            });
+            const response = await api.post(`/update/${id}`, payload);
+            return response.data;
+        } catch (error) {
+            console.error("Error updating assignment:", error);
+            throw error;
+        }
+    },
+
     // 5. Get Assignments for a course
     getAssignments: async (courseName) => {
         try {
-            const response = await api.get(`/assignment/${courseName}`);
+            // Extract Course Code from "CSE112 - Computer Org" -> "CSE112"
+            const courseCode = courseName.split(' - ')[0];
+            const response = await api.get(`/assignment/${courseCode}`);
             return response.data;
         } catch (error) {
             console.error("Error fetching assignments:", error);
@@ -101,6 +166,50 @@ export const ProfessorAPI = {
             return response.data;
         } catch (error) {
             console.error("Error grading assignment:", error);
+            throw error;
+        }
+    },
+
+    // 8. Get Professor Requests
+    getRequests: async (professorId) => {
+        try {
+            const response = await api.get(`/${professorId}/requests`);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching requests:", error);
+            throw error;
+        }
+    },
+
+    // 9. Create Professor Request
+    createRequest: async (requestData) => {
+        try {
+            const response = await api.post('/request/create', requestData);
+            return response.data;
+        } catch (error) {
+            console.error("Error creating request:", error);
+            throw error;
+        }
+    },
+
+    // 10. Book a Hall
+    bookHall: async (bookingData) => {
+        try {
+            const response = await api.post('/halls/book', bookingData);
+            return response.data;
+        } catch (error) {
+            console.error("Error booking hall:", error);
+            throw error;
+        }
+    },
+
+    // 11. Get All Halls
+    getAllHalls: async () => {
+        try {
+            const response = await api.get('/halls');
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching halls:", error);
             throw error;
         }
     }

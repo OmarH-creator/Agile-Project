@@ -5,6 +5,7 @@ import com.university.backend.entity.*;
 import com.university.backend.entity.Hall.Hall;
 import com.university.backend.entity.Hall.HallAttribute;
 import com.university.backend.entity.Hall.HallValue;
+import com.university.backend.entity.StaffRequests.StaffRequest;
 import com.university.backend.repository.*;
 import com.university.backend.services.HallService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,15 +104,18 @@ public class AdminController {
 
         try {
             // 2. Update simple fields
-            if (payload.containsKey("name")) student.setName((String) payload.get("name"));
-            //Checks Email uniqueness
+            if (payload.containsKey("name"))
+                student.setName((String) payload.get("name"));
+            // Checks Email uniqueness
             if (payload.containsKey("email")) {
                 String newEmail = (String) payload.get("email");
                 Optional<Student> emailOwner = studentRepository.findByEmail(newEmail);
 
-                // If a student exists with this email, AND their ID is not the ID of the student we are currently editing
+                // If a student exists with this email, AND their ID is not the ID of the
+                // student we are currently editing
                 if (emailOwner.isPresent() && !emailOwner.get().getStudentId().equals(id)) {
-                    return ResponseEntity.badRequest().body("Error: The email '" + newEmail + "' is already used by another student.");
+                    return ResponseEntity.badRequest()
+                            .body("Error: The email '" + newEmail + "' is already used by another student.");
                 }
                 student.setEmail(newEmail);
             }
@@ -122,12 +126,15 @@ public class AdminController {
 
                 // If phone exists AND belongs to someone else (different ID)
                 if (phoneOwner.isPresent() && !phoneOwner.get().getStudentId().equals(id)) {
-                    return ResponseEntity.badRequest().body("Error: The phone number '" + newPhone + "' is already used by another student.");
+                    return ResponseEntity.badRequest()
+                            .body("Error: The phone number '" + newPhone + "' is already used by another student.");
                 }
                 student.setPhone(newPhone);
             }
-            if (payload.containsKey("address")) student.setAddress((String) payload.get("address"));
-            if (payload.containsKey("militaryStatus")) student.setMilitaryStatus((String) payload.get("militaryStatus"));
+            if (payload.containsKey("address"))
+                student.setAddress((String) payload.get("address"));
+            if (payload.containsKey("militaryStatus"))
+                student.setMilitaryStatus((String) payload.get("militaryStatus"));
 
             // 3. Update Major if it changed
             if (payload.containsKey("majorId")) {
@@ -142,11 +149,13 @@ public class AdminController {
             return ResponseEntity.ok("Student updated successfully.");
 
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            return ResponseEntity.badRequest().body("Error: Duplicate entry detected. Please check Email, Phone, or ID.");
+            return ResponseEntity.badRequest()
+                    .body("Error: Duplicate entry detected. Please check Email, Phone, or ID.");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("System Error: " + e.getMessage());
         }
     }
+
     @GetMapping("/students/{studentId}")
     public ResponseEntity<?> getStudent(@PathVariable String studentId) {
         Optional<Student> student = studentRepository.findByStudentId(studentId);
@@ -171,7 +180,6 @@ public class AdminController {
             return ResponseEntity.ok(studentRepository.findAll(pageable));
         }
     }
-
 
     @GetMapping("/students/{studentId}/transcript")
     public ResponseEntity<String> generateTranscript(@PathVariable String studentId) {
@@ -244,7 +252,8 @@ public class AdminController {
     }
 
     @PutMapping("/professors/{professorId}")
-    public ResponseEntity<String> updateProfessorRecord(@PathVariable String professorId, @RequestBody Professor updatedProfessor) {
+    public ResponseEntity<String> updateProfessorRecord(@PathVariable String professorId,
+            @RequestBody Professor updatedProfessor) {
         Optional<Professor> profOpt = professorRepository.findByProfessorId(professorId);
 
         if (profOpt.isEmpty()) {
@@ -308,11 +317,12 @@ public class AdminController {
         String hallName = (String) payload.get("Hall_Name");
         if (hallRepository.findByName(hallName).isPresent()) {
             // Return conflict or bad request
-            //return ResponseEntity.badRequest().body("Hall with this name already exists.");
-             // For now, let's just proceed or throw exception.
-             // Ideally, HallService should handle this check.
+            // return ResponseEntity.badRequest().body("Hall with this name already
+            // exists.");
+            // For now, let's just proceed or throw exception.
+            // Ideally, HallService should handle this check.
         }
-        
+
         HallResponseDTO newHall = hallService.createHall(payload);
         return ResponseEntity.ok(newHall);
     }
@@ -342,11 +352,10 @@ public class AdminController {
         boolean hasConflict = bookingRepository.existsByHallAndOverlap(
                 request.getHallName(),
                 request.getStart(),
-                request.getEnd()
-        );
+                request.getEnd());
 
         if (hasConflict) {
-             return ResponseEntity.badRequest().body("Booking failed: Time conflict.");
+            return ResponseEntity.badRequest().body("Booking failed: Time conflict.");
         }
 
         try {
@@ -385,11 +394,10 @@ public class AdminController {
                 request.getHallName(),
                 request.getStart(),
                 request.getEnd(),
-                id
-        );
+                id);
 
         if (hasConflict) {
-             return ResponseEntity.badRequest().body("Update failed: Time conflict in hall " + request.getHallName());
+            return ResponseEntity.badRequest().body("Update failed: Time conflict in hall " + request.getHallName());
         }
 
         try {
@@ -438,11 +446,19 @@ public class AdminController {
 
         Hall hall = hallOpt.get();
 
-        // 2. Update EAV Attributes (Capacity, etc.)
-        if (payload.get("Capacity") != null) {
-            updateHallValue(hall, "Capacity", payload.get("Capacity"));
+        // 2. Update EAV Attributes (Dynamic Loop)
+        for (Map.Entry<String, Object> entry : payload.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            // Skip static keys or keys unrelated to EAV
+            if (key.equals("Hall_Name") || key.equals("hallName")) {
+                continue;
+            }
+
+            updateHallValue(hall, key, value);
         }
-        
+
         // 3. Update Name (Static Field)
         String newName = (String) payload.get("Hall_Name");
         if (newName != null && !newName.equals(hall.getHallName())) {
@@ -458,7 +474,7 @@ public class AdminController {
         hallRepository.save(hall);
         return ResponseEntity.ok("Hall updated successfully.");
     }
-    
+
     // Helper to update EAV values
     private void updateHallValue(Hall hall, String key, Object value) {
         Optional<HallAttribute> attrOpt = hall.getAttributes().stream()
@@ -473,7 +489,7 @@ public class AdminController {
             Optional<HallValue> existingVal = hall.getValues().stream()
                     .filter(v -> v.getAttribute().getAttributeName().equals(key))
                     .findFirst();
-            
+
             HallValue val;
             if (existingVal.isPresent()) {
                 val = existingVal.get();
@@ -484,8 +500,10 @@ public class AdminController {
                 hall.getValues().add(val);
             }
 
-            if (value instanceof Integer) val.setValInt((Integer) value);
-            else if (value instanceof String) val.setValString((String) value);
+            if (value instanceof Integer)
+                val.setValInt((Integer) value);
+            else if (value instanceof String)
+                val.setValString((String) value);
             // Add other types as needed
         }
     }
@@ -585,6 +603,44 @@ public class AdminController {
         return ResponseEntity.status(404).body("Hall '" + hallName + "' not found.");
     }
 
+    // --- Request Management ---
+    @Autowired
+    private StaffRequestRepository staffRequestRepository;
+
+    @GetMapping("/requests")
+    public ResponseEntity<?> getAllRequests() {
+        try {
+            return ResponseEntity.ok(staffRequestRepository.findAll());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error fetching requests: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/requests/{id}/approve")
+    public ResponseEntity<String> approveRequest(@PathVariable Long id) {
+        Optional<StaffRequest> reqOpt = staffRequestRepository.findById(id);
+        if (reqOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Request not found.");
+        }
+        StaffRequest req = reqOpt.get();
+        req.setStatus("Approved");
+        staffRequestRepository.save(req);
+        return ResponseEntity.ok("Request approved.");
+    }
+
+    @PutMapping("/requests/{id}/reject")
+    public ResponseEntity<String> rejectRequest(@PathVariable Long id) {
+        Optional<StaffRequest> reqOpt = staffRequestRepository.findById(id);
+        if (reqOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Request not found.");
+        }
+        StaffRequest req = reqOpt.get();
+        req.setStatus("Rejected");
+        staffRequestRepository.save(req);
+        return ResponseEntity.ok("Request rejected.");
+    }
+
     // Helper class for the booking JSON body
     public static class BookingRequest {
         private String hallName;
@@ -595,17 +651,52 @@ public class AdminController {
         private String staffId;
 
         // Getters and Setters
-        public String getHallName() { return hallName; }
-        public void setHallName(String hallName) { this.hallName = hallName; }
-        public Date getStart() { return start; }
-        public void setStart(Date start) { this.start = start; }
-        public Date getEnd() { return end; }
-        public void setEnd(Date end) { this.end = end; }
-        public String getPurpose() { return purpose; }
-        public void setPurpose(String purpose) { this.purpose = purpose; }
-        public long getReservationId() { return reservationId; }
-        public void setReservationId(long reservationId) { this.reservationId = reservationId; }
-        public String  getStaffId() { return staffId; }
-        public void setStaffId(String staffId) { this.staffId = staffId; }
+        public String getHallName() {
+            return hallName;
+        }
+
+        public void setHallName(String hallName) {
+            this.hallName = hallName;
+        }
+
+        public Date getStart() {
+            return start;
+        }
+
+        public void setStart(Date start) {
+            this.start = start;
+        }
+
+        public Date getEnd() {
+            return end;
+        }
+
+        public void setEnd(Date end) {
+            this.end = end;
+        }
+
+        public String getPurpose() {
+            return purpose;
+        }
+
+        public void setPurpose(String purpose) {
+            this.purpose = purpose;
+        }
+
+        public long getReservationId() {
+            return reservationId;
+        }
+
+        public void setReservationId(long reservationId) {
+            this.reservationId = reservationId;
+        }
+
+        public String getStaffId() {
+            return staffId;
+        }
+
+        public void setStaffId(String staffId) {
+            this.staffId = staffId;
+        }
     }
 }

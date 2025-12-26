@@ -29,6 +29,46 @@ public class StaffRequestService {
     }
 
     /**
+     * FETCH: Retrieves all requests for a specific requester.
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<StaffRequestResponseDTO> getRequestsByRequester(Long requesterId) {
+        // 1. Fetch entities
+        java.util.List<StaffRequest> requests = staffRequestRepository.findByRequester_Id(requesterId);
+
+        // 2. Convert to DTOs
+        return requests.stream().map(request -> {
+            StaffRequestResponseDTO response = new StaffRequestResponseDTO(request.getId());
+            
+            // Map STATIC fields
+            response.addField("Request_Type", request.getRequestType());
+            response.addField("Status", request.getStatus());
+            response.addField("Date_Submitted", extractAttributeValue(request, "Date_Submitted"));
+            
+            if (request.getRequester() != null) {
+                response.addField("Requester_Id", request.getRequester().getId());
+            }
+
+            // Map DYNAMIC fields (Simple loop)
+            for (RequestValue val : request.getValues()) {
+                String key = val.getAttribute().getAttributeName();
+                Object value = extractValue(val);
+                response.addField(key, value);
+            }
+            return response;
+        }).collect(Collectors.toList());
+    }
+    
+    // Helper to get a specific attribute value directly (e.g., for Date_Submitted summary)
+    private Object extractAttributeValue(StaffRequest request, String attrName) {
+         return request.getValues().stream()
+                 .filter(v -> v.getAttribute().getAttributeName().equals(attrName))
+                 .findFirst()
+                 .map(this::extractValue)
+                 .orElse(null);
+    }
+
+    /**
      * FETCH: Retrieves the full structure (Static Columns + EAV) and flattens it.
      */
     @Transactional(readOnly = true)
