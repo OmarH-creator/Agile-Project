@@ -42,6 +42,8 @@ public class UserRepoTest {
         users.add(createGenericUser("admin@university.edu", "securePass123", "ADMIN"));
         users.add(createGenericUser("dr.smith@university.edu", "pass123", "PROFESSOR"));
         users.add(createGenericUser("dr.jones@university.edu", "pass123", "PROFESSOR"));
+        users.add(createGenericUser("david.robinson5@uni.edu", "pass123", "STUDENT"));
+        users.add(createGenericUser("betty.lewis13@uni.edu", "pass123", "STUDENT"));
 
         // Save users using Repository
         userRepository.saveAll(users);

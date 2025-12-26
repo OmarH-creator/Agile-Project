@@ -56,7 +56,7 @@ public class StudentController {
             // 1. Find the Major for this course
             // If no major is found (e.g. general elective), we return "N/A" or "General"
             Optional<MajorReq> majorReq = majorReqRepository.findFirstByCourse_CourseCode(c.getCourseCode());
-            String majorId = majorReq.map(req -> req.getMajor().getMajorId()).orElse("General");
+            String majorId = majorReq.map(req -> req.getMajor().getMajorId()).orElse("N/A");
 
             // 2. Find Prerequisites
             List<CoursePrerequisite> prereqs = prerequisiteRepository.findByCourse(c);
