@@ -5,7 +5,8 @@ import umsLogo from "../../assets/UMS Logo.png";
 import {
     updateProfessor,
     deleteProfessor,
-    assignCourseToProfessor
+    assignCourseToProfessor,
+    getAllCourses // Import the new function
 } from './Admin-Professor-Api';
 
 // IMPORT 2: Get the Icons and UI helpers from the OLD file
@@ -21,6 +22,7 @@ const ProfessorRecord = ({ professor, onRefresh }) => {
     const [formMode, setFormMode] = useState(null);
     const [formData, setFormData] = useState({});
     const [courseInput, setCourseInput] = useState('');
+    const [availableCourses, setAvailableCourses] = useState([]); // State for dropdown
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -47,9 +49,18 @@ const ProfessorRecord = ({ professor, onRefresh }) => {
         setFormMode('edit');
     };
 
-    const openAssignCourse = () => {
+    const openAssignCourse = async () => {
         setCourseInput('');
         setFormMode('assign');
+        setLoading(true);
+        try {
+            const courses = await getAllCourses();
+            setAvailableCourses(courses);
+        } catch (err) {
+            setError("Failed to load courses: " + err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleEditSubmit = async (e) => {
@@ -246,18 +257,27 @@ const ProfessorRecord = ({ professor, onRefresh }) => {
                         </header>
                         <div className="modal-body">
                             <form id="assignForm" onSubmit={handleAssignSubmit}>
-                                <p style={{marginBottom:'1rem', color:'var(--neo-muted)'}}>
-                                    Enter the course name/code exactly as it appears in the system.
+                                <p style={{ marginBottom: '1rem', color: 'var(--neo-muted)' }}>
+                                    Select a course to assign to this professor.
                                 </p>
                                 <label className="full">
-                                    <span>Course Name</span>
-                                    <input
+                                    <span>Select Course</span>
+                                    <select
                                         value={courseInput}
                                         onChange={(e) => setCourseInput(e.target.value)}
-                                        placeholder="e.g. CS101 Introduction to CS"
                                         required
                                         autoFocus
-                                    />
+                                    >
+                                        <option value="">-- Choose a Course --</option>
+                                        {availableCourses.map(course => {
+                                            const value = `${course.courseCode} - ${course.courseName}`;
+                                            return (
+                                                <option key={course.courseCode} value={value}>
+                                                    {value}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
                                 </label>
                             </form>
                         </div>

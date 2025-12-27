@@ -95,3 +95,19 @@ export async function createProfessor(professorData) {
     }
     return await response.text();
 }
+
+// [NEW] Get All Courses for Dropdown
+export async function getAllCourses() {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/courses`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch courses');
+    }
+    return await response.json();
+}

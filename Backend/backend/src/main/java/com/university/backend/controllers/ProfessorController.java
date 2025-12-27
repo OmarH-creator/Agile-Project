@@ -260,19 +260,18 @@ public class ProfessorController {
         }
 
         // Check if a submission already exists (update it), or create a new one
-        // Note: findFullSubmissionById returns Optional<AssignmentSubmission>
-        // But we need to find by Assignment AND Student, which the current repo method
-        // doesn't do directly.
-        // For now, let's assume we are creating a new one or finding it manually if
-        // needed.
-        // Ideally, you'd have submissionRepository.findByAssignmentAndStudent(...)
+        // Correctly using existing repository method
+        Optional<AssignmentSubmission> existingSub = submissionRepository
+                .findByAssignment_IdAndStudent_StudentId(request.getAssignmentId(), request.getStudentId());
 
-        // Simplified logic: Create new submission or update if we had a way to find it
-        // by student+assignment
-        AssignmentSubmission submission = new AssignmentSubmission(assignmentOpt.get(), studentOpt.get());
-
-        // Save first to generate attributes
-        submission = submissionRepository.save(submission);
+        AssignmentSubmission submission;
+        if (existingSub.isPresent()) {
+            submission = existingSub.get();
+        } else {
+            submission = new AssignmentSubmission(assignmentOpt.get(), studentOpt.get());
+            // Save first to generate attributes
+            submission = submissionRepository.save(submission);
+        }
 
         // Update Score and Feedback using EAV
         updateSubmissionValue(submission, "Grade", request.getScore());
@@ -285,22 +284,34 @@ public class ProfessorController {
 
     // Helper to update EAV values
     private void updateSubmissionValue(AssignmentSubmission submission, String key, Object value) {
+        // Find the Attribute Definition first
         Optional<SubmissionAttributes> attrOpt = submission.getAttributes().stream()
                 .filter(a -> a.getAttributeName().equals(key))
                 .findFirst();
 
         if (attrOpt.isPresent()) {
             SubmissionAttributes attr = attrOpt.get();
-            SubmissionValue val = new SubmissionValue();
-            val.setSubmission(submission);
-            val.setAttribute(attr);
 
+            // Check if a VALUE already exists for this attribute
+            Optional<SubmissionValue> valOpt = submission.getValues().stream()
+                    .filter(v -> v.getAttribute().getId().equals(attr.getId()))
+                    .findFirst();
+
+            SubmissionValue val;
+            if (valOpt.isPresent()) {
+                val = valOpt.get(); // Update existing
+            } else {
+                val = new SubmissionValue(); // Create new
+                val.setSubmission(submission);
+                val.setAttribute(attr);
+                submission.getValues().add(val); // Add to list
+            }
+
+            // Set the value based on type
             if (value instanceof Double)
                 val.setValDouble((Double) value);
             else if (value instanceof String)
                 val.setValString((String) value);
-
-            submission.getValues().add(val);
         }
     }
 
@@ -693,8 +704,8 @@ public class ProfessorController {
     }
 
     // =================================================================
-// SECTION 8: PAYMENT TAB (Simple)
-// =================================================================
+    // SECTION 8: PAYMENT TAB (Simple)
+    // =================================================================
 
     @GetMapping("/{professorId}/payment")
     public ResponseEntity<?> getProfessorPayment(@PathVariable String professorId) {
@@ -727,8 +738,7 @@ public class ProfessorController {
                 return ResponseEntity.ok(Map.of(
                         "professorName", "Not Assigned",
                         "professorEmail", "",
-                        "message", "No professor assigned to this course"
-                ));
+                        "message", "No professor assigned to this course"));
             }
 
             Professor professor = professorOpt.get();
@@ -736,8 +746,7 @@ public class ProfessorController {
                     "professorId", professor.getProfessorId(),
                     "professorName", professor.getProfessorName(),
                     "professorEmail", professor.getProfessorEmail(),
-                    "department", professor.getProfessorDepartment()
-            ));
+                    "department", professor.getProfessorDepartment()));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -763,13 +772,11 @@ public class ProfessorController {
                     Professor prof = professorOpt.get();
                     response.put(courseName, Map.of(
                             "professorName", prof.getProfessorName(),
-                            "professorEmail", prof.getProfessorEmail()
-                    ));
+                            "professorEmail", prof.getProfessorEmail()));
                 } else {
                     response.put(courseName, Map.of(
                             "professorName", "Not Assigned",
-                            "professorEmail", ""
-                    ));
+                            "professorEmail", ""));
                 }
             }
 

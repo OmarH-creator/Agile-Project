@@ -214,8 +214,8 @@ export default function ParentDashboard() {
                                         {courseRecords[selectedStudent.studentId].map((record, index) => (
                                             <tr key={index}>
                                                 <td>{record.courseName}</td>
-                                                <td className={`grade-${record.grade >= 60 ? 'pass' : 'fail'}`}>
-                                                    {record.grade}%
+                                                <td>
+                                                    {record.grade}
                                                 </td>
                                                 <td>{record.credits}</td>
                                                 <td>{record.semester}</td>
@@ -259,7 +259,7 @@ export default function ParentDashboard() {
                                                     <ul>
                                                         {records.slice(0, 3).map((record, idx) => (
                                                             <li key={idx}>
-                                                                {record.courseName}: {record.grade}% ({record.semester})
+                                                                {record.courseName}: {record.grade} ({record.semester})
                                                             </li>
                                                         ))}
                                                         {records.length > 3 && (

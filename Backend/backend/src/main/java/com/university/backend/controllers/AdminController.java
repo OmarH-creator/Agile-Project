@@ -64,7 +64,6 @@ public class AdminController {
     @Autowired
     private CoursePrerequisiteRepository coursePrerequisiteRepository; // ADDED
 
-
     @GetMapping("/{email}")
     public ResponseEntity<String> fetchAdminByEmail(@PathVariable String email) {
         Optional<Admin> admin = adminRepository.findByEmail(email);
@@ -156,15 +155,18 @@ public class AdminController {
 
         try {
             // 2. Update simple fields
-            if (payload.containsKey("name")) student.setName((String) payload.get("name"));
-            //Checks Email uniqueness
+            if (payload.containsKey("name"))
+                student.setName((String) payload.get("name"));
+            // Checks Email uniqueness
             if (payload.containsKey("email")) {
                 String newEmail = (String) payload.get("email");
                 Optional<Student> emailOwner = studentRepository.findByEmail(newEmail);
 
-                // If a student exists with this email, AND their ID is not the ID of the student we are currently editing
+                // If a student exists with this email, AND their ID is not the ID of the
+                // student we are currently editing
                 if (emailOwner.isPresent() && !emailOwner.get().getStudentId().equals(id)) {
-                    return ResponseEntity.badRequest().body("Error: The email '" + newEmail + "' is already used by another student.");
+                    return ResponseEntity.badRequest()
+                            .body("Error: The email '" + newEmail + "' is already used by another student.");
                 }
                 student.setEmail(newEmail);
             }
@@ -175,29 +177,34 @@ public class AdminController {
 
                 // If phone exists AND belongs to someone else (different ID)
                 if (phoneOwner.isPresent() && !phoneOwner.get().getStudentId().equals(id)) {
-                    return ResponseEntity.badRequest().body("Error: The phone number '" + newPhone + "' is already used by another student.");
+                    return ResponseEntity.badRequest()
+                            .body("Error: The phone number '" + newPhone + "' is already used by another student.");
                 }
                 student.setPhone(newPhone);
             }
-            if (payload.containsKey("address")) student.setAddress((String) payload.get("address"));
-            if (payload.containsKey("militaryStatus")) student.setMilitaryStatus((String) payload.get("militaryStatus"));
+            if (payload.containsKey("address"))
+                student.setAddress((String) payload.get("address"));
+            if (payload.containsKey("militaryStatus"))
+                student.setMilitaryStatus((String) payload.get("militaryStatus"));
 
             if (payload.containsKey("dateOfBirth")) {
-                 String dobStr = (String) payload.get("dateOfBirth");
-                 if (dobStr != null) {
-                     student.setDateOfBirth(Date.from(java.time.Instant.parse(dobStr)));
-                 }
+                String dobStr = (String) payload.get("dateOfBirth");
+                if (dobStr != null) {
+                    student.setDateOfBirth(Date.from(java.time.Instant.parse(dobStr)));
+                }
             }
-//            if (payload.containsKey("status")) student.setStatus((String) payload.get("status"));
+            // if (payload.containsKey("status")) student.setStatus((String)
+            // payload.get("status"));
 
-//            if (payload.containsKey("gradYear"))
-//                student.setGradYear(((Number) payload.get("gradYear")).intValue());
-//            if (payload.containsKey("completedHours"))
-//                student.setCompletedHours(((Number) payload.get("completedHours")).intValue());
-//            if (payload.containsKey("fees"))
-//                student.setFees(((Number) payload.get("fees")).doubleValue());
-//            if (payload.containsKey("gpa"))
-//                student.setGpa(((Number) payload.get("gpa")).doubleValue());
+            // if (payload.containsKey("gradYear"))
+            // student.setGradYear(((Number) payload.get("gradYear")).intValue());
+            // if (payload.containsKey("completedHours"))
+            // student.setCompletedHours(((Number)
+            // payload.get("completedHours")).intValue());
+            // if (payload.containsKey("fees"))
+            // student.setFees(((Number) payload.get("fees")).doubleValue());
+            // if (payload.containsKey("gpa"))
+            // student.setGpa(((Number) payload.get("gpa")).doubleValue());
 
             // 3. Update Major if it changed
             if (payload.containsKey("majorId")) {
@@ -212,7 +219,8 @@ public class AdminController {
             return ResponseEntity.ok("Student updated successfully.");
 
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            return ResponseEntity.badRequest().body("Error: Duplicate entry detected. Please check Email, Phone, or ID.");
+            return ResponseEntity.badRequest()
+                    .body("Error: Duplicate entry detected. Please check Email, Phone, or ID.");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("System Error: " + e.getMessage());
         }
@@ -252,7 +260,6 @@ public class AdminController {
             return ResponseEntity.ok(studentRepository.findAll(pageable));
         }
     }
-
 
     @GetMapping("/students/{studentId}/transcript")
     public ResponseEntity<String> generateTranscript(@PathVariable String studentId) {
@@ -301,8 +308,27 @@ public class AdminController {
         if (professorRepository.existsByProfessorId(professor.getProfessorId())) {
             return ResponseEntity.badRequest().body("Professor with this ID already exists.");
         }
-        professorRepository.save(professor);
-        return ResponseEntity.ok("Professor created successfully.");
+
+        // 2. Check if User Email already exists
+        if (userRepository.existsByEmail(professor.getProfessorEmail())) {
+            return ResponseEntity.badRequest().body("User with this Email already exists.");
+        }
+
+        try {
+            // 3. Create Login User
+            User newUser = new User();
+            newUser.setEmail(professor.getProfessorEmail());
+            newUser.setPassword("null"); // Default password = "null" to force reset
+            newUser.setRole("PROFESSOR");
+            userRepository.save(newUser);
+
+            // 4. Save Professor Profile
+            professorRepository.save(professor);
+            return ResponseEntity.ok("Professor and User account created successfully.");
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating professor: " + e.getMessage());
+        }
     }
 
     @GetMapping("/professors")
@@ -396,9 +422,10 @@ public class AdminController {
         String hallName = (String) payload.get("Hall_Name");
         if (!hallRepository.findByName(hallName).isEmpty()) {
             // Return conflict or bad request
-            //return ResponseEntity.badRequest().body("Hall with this name already exists.");
-             // For now, let's just proceed or throw exception.
-             // Ideally, HallService should handle this check.
+            // return ResponseEntity.badRequest().body("Hall with this name already
+            // exists.");
+            // For now, let's just proceed or throw exception.
+            // Ideally, HallService should handle this check.
         }
 
         HallResponseDTO newHall = hallService.createHall(payload);
@@ -430,11 +457,10 @@ public class AdminController {
         boolean hasConflict = bookingRepository.existsByHallAndOverlap(
                 request.getHallName(),
                 request.getStart(),
-                request.getEnd()
-        );
+                request.getEnd());
 
         if (hasConflict) {
-             return ResponseEntity.badRequest().body("Booking failed: Time conflict.");
+            return ResponseEntity.badRequest().body("Booking failed: Time conflict.");
         }
 
         try {
@@ -445,7 +471,7 @@ public class AdminController {
             newBooking.setPurpose(request.getPurpose());
             newBooking.setStaffId(String.valueOf(request.getStaffId()));
 
-//            newBooking.setHall(hall);
+            // newBooking.setHall(hall);
 
             bookingRepository.save(newBooking);
 
@@ -626,7 +652,8 @@ public class AdminController {
 
     @PutMapping("/courses/{courseCode}/prerequisites")
     @Transactional
-    public ResponseEntity<String> updatePrerequisites(@PathVariable String courseCode, @RequestBody List<String> prerequisiteCodes) {
+    public ResponseEntity<String> updatePrerequisites(@PathVariable String courseCode,
+            @RequestBody List<String> prerequisiteCodes) {
         Optional<Course> courseOpt = courseRepository.findByCourseCode(courseCode);
         if (courseOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Course not found.");
@@ -692,10 +719,10 @@ public class AdminController {
                 System.out.println("DEBUG: No professor found for " + lookupName);
 
                 // ehtyay: try searching just by name in case of inconsistencies
-                 Optional<Professor> profByName = professorRepository.findByProfessorCoursesContains(c.getCourseName());
-                 if (profByName.isPresent()) {
-                     c.setProfessorEmail(profByName.get().getProfessorEmail());
-                 }
+                Optional<Professor> profByName = professorRepository.findByProfessorCoursesContains(c.getCourseName());
+                if (profByName.isPresent()) {
+                    c.setProfessorEmail(profByName.get().getProfessorEmail());
+                }
             }
             return ResponseEntity.ok(c);
         }

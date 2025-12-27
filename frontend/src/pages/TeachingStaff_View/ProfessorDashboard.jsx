@@ -385,7 +385,7 @@ const ProfessorDashboard = () => {
 
             await ProfessorAPI.gradeAssignment({
                 assignmentId: viewingAssignment.id,
-                studentId: sub.studentId, // Ensure DTO has this
+                studentId: sub.data?.Student_Id, // Correctly access Student_Id from DTO data map
                 score: parseFloat(score),
                 feedback: feedback
             });
@@ -1216,16 +1216,16 @@ const ProfessorDashboard = () => {
                                                 </thead>
                                                 <tbody>
                                                     {submissions.map(sub => {
-                                                        const grade = sub.values?.Grade || '-';
-                                                        const feedback = sub.values?.Feedback || '';
+                                                        const grade = sub.data?.Grade || '-';
+                                                        const feedback = sub.data?.Feedback || '';
                                                         return (
                                                             <tr key={sub.id}>
-                                                                <td>{sub.studentId}</td>
-                                                                <td>{sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : '-'}</td>
+                                                                <td>{sub.data?.Student_Id || '-'}</td>
+                                                                <td>{sub.data?.Submission_Date ? new Date(sub.data.Submission_Date).toLocaleString() : '-'}</td>
                                                                 <td>
-                                                                    {sub.values?.Attachment_Url ? (
+                                                                    {sub.data?.Attachment_Url ? (
                                                                         <a
-                                                                            href={`http://localhost:8081${sub.values.Attachment_Url}`}
+                                                                            href={`http://localhost:8081${sub.data.Attachment_Url}`}
                                                                             target="_blank"
                                                                             rel="noreferrer"
                                                                             style={{ color: 'var(--primary-color)', textDecoration: 'underline' }}

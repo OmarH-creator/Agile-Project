@@ -497,8 +497,11 @@
 
 .assignment-item {
     padding: 20px;
-    background: #fff;
+    background: #ffffff !important;
+    /* Force White Background */
     border-left: 5px solid var(--neo-accent);
+    color: #333 !important;
+    /* Force Dark Text */
 }
 
 .assign-header {

@@ -40,7 +40,9 @@ export const ProfessorAPI = {
     // 2. Get students enrolled in a specific course
     getStudentsInCourse: async (courseName) => {
         try {
-            const response = await api.get(`/course/${courseName}/students`);
+            // Extract Course Code "CSE111 - Name" -> "CSE111"
+            const courseCode = courseName.split(' - ')[0];
+            const response = await api.get(`/course/${courseCode}/students`);
             return response.data; // Returns Array<Student>
         } catch (error) {
             console.error("Error fetching students:", error);
@@ -52,7 +54,11 @@ export const ProfessorAPI = {
     assignFinalGrade: async (gradeData) => {
         // gradeData = { studentId, courseName, grade, semester }
         try {
-            const response = await api.post('/course/grade', gradeData);
+            // Extract Course Code if needed
+            const courseCode = gradeData.courseName.split(' - ')[0];
+            const payload = { ...gradeData, courseName: courseCode };
+
+            const response = await api.post('/course/grade', payload);
             return response.data;
         } catch (error) {
             console.error("Error assigning grade:", error);
