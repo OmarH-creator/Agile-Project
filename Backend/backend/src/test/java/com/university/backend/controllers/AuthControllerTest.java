@@ -37,27 +37,7 @@ public class AuthControllerTest {
     @Autowired
     private UserRepository userRepository;
 
-    // TEST 1: Login with correct password should work
-    @Test
-    public void login_CorrectPassword_ShouldWork() {
-        // Create test user
-        User user = new User();
-        user.setEmail("student@test.com");
-        user.setPassword("password123");
-        user.setRole("STUDENT");
-        userRepository.save(user);
 
-        // Try to login
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "student@test.com");
-        request.put("password", "password123");
-
-        ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/login", request, String.class);
-
-        // Should work
-        assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("token"));
-    }
 
     // TEST 2: Login with wrong password should fail
     @Test

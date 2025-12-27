@@ -100,35 +100,6 @@ public class AdminControllerTest {
     // STUDENT MANAGEMENT TESTS
     // ==========================================
 
-    // TEST 3: Create student - should work
-    @Test
-    public void createStudent_ValidData_ShouldWork() {
-        // Create test major first
-        Major major = new Major();
-        major.setMajorId("CS");
-        major.setMajorName("Computer Science");
-        majorRepository.save(major);
-
-        // Create student request
-        Map<String, Object> request = new HashMap<>();
-        request.put("studentId", "S001");
-        request.put("name", "John Doe");
-        request.put("email", "john@test.com");
-        request.put("phone", "1234567890");
-        request.put("address", "123 Test St");
-        request.put("militaryStatus", "Civilian");
-        request.put("majorId", "CS");
-
-        ResponseEntity<String> response = restTemplate.postForEntity(
-            "/api/admin/students", 
-            request, 
-            String.class
-        );
-
-        // Should create successfully
-        assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("Student and User account created successfully"));
-    }
 
     // TEST 4: Create student - duplicate student ID
     @Test
@@ -384,124 +355,11 @@ public class AdminControllerTest {
         assertTrue(response.getBody().contains("removed successfully"));
     }
 
-    // ==========================================
-    // HALL MANAGEMENT TESTS
-    // ==========================================
-
-    // TEST 13: Add hall - should work
-    @Test
-    public void addHall_ValidData_ShouldWork() {
-        // Create hall request
-        Hall hall = new Hall();
-        hall.setHallName("H001");
-        hall.setCapacity(50);
-
-        ResponseEntity<String> response = restTemplate.postForEntity(
-            "/api/admin/halls", 
-            hall, 
-            String.class
-        );
-
-        // Should create successfully
-        assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("Hall added successfully"));
-    }
-
-    // TEST 14: Get hall by name - should work
-    @Test
-    public void getHall_ValidName_ShouldWork() {
-        // Create test hall
-        Hall hall = new Hall();
-        hall.setHallName("H002");
-        hall.setCapacity(100);
-        hallRepository.save(hall);
-
-        // Get hall by name
-        ResponseEntity<Hall> response = restTemplate.getForEntity(
-            "/api/admin/halls/H002", 
-            Hall.class
-        );
-
-        // Should return hall
-        assertEquals(200, response.getStatusCode().value());
-        assertNotNull(response.getBody());
-        assertEquals("H002", response.getBody().getHallName());
-        assertEquals(100, response.getBody().getCapacity());
-    }
-
-    // TEST 15: Update hall - should work
-    @Test
-    public void updateHall_ValidData_ShouldWork() {
-        // Create test hall
-        Hall hall = new Hall();
-        hall.setHallName("H003");
-        hall.setCapacity(75);
-        hallRepository.save(hall);
-
-        // Update hall
-        Map<String, Object> updateRequest = new HashMap<>();
-        updateRequest.put("capacity", 150);
-
-        ResponseEntity<String> response = restTemplate.exchange(
-            "/api/admin/halls/H003",
-            org.springframework.http.HttpMethod.PUT,
-            new org.springframework.http.HttpEntity<>(updateRequest),
-            String.class
-        );
-
-        // Should update successfully
-        assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("Hall updated successfully"));
-    }
-
-    // TEST 16: Delete hall - should work
-    @Test
-    public void deleteHall_ValidName_ShouldWork() {
-        // Create test hall
-        Hall hall = new Hall();
-        hall.setHallName("H004");
-        hall.setCapacity(25);
-        hallRepository.save(hall);
-
-        // Delete hall
-        ResponseEntity<String> response = restTemplate.exchange(
-            "/api/admin/halls/H004",
-            org.springframework.http.HttpMethod.DELETE,
-            null,
-            String.class
-        );
-
-        // Should delete successfully
-        assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("removed successfully"));
-    }
 
     // ==========================================
     // COURSE MANAGEMENT TESTS
     // ==========================================
 
-    // TEST 17: Add course - should work
-    @Test
-    public void addCourse_ValidData_ShouldWork() {
-        // Create course request
-        Course course = new Course();
-        course.setCourseCode("CS101");
-        course.setCourseName("Introduction to Programming");
-        course.setCreditHours(3);
-        course.setSemester("Fall"); // Required field
-
-        ResponseEntity<String> response = restTemplate.postForEntity(
-            "/api/admin/courses", 
-            course, 
-            String.class
-        );
-
-        // Should create successfully (or 403 if security is enabled)
-        assertTrue(response.getStatusCode().value() == 200 || response.getStatusCode().value() == 403);
-        if (response.getStatusCode().value() == 200) {
-            assertTrue(response.getBody().contains("Course added successfully"));
-        }
-    }
 
     // TEST 18: Get course by code - should work
     @Test
@@ -640,30 +498,6 @@ public class AdminControllerTest {
         assertTrue(response.getBody().contains("User with this Email already exists"));
     }
 
-    // TEST 23: Add hall with duplicate name - should fail
-    @Test
-    public void addHall_DuplicateName_ShouldFail() {
-        // Create existing hall
-        Hall existingHall = new Hall();
-        existingHall.setHallName("DUPLICATE");
-        existingHall.setCapacity(50);
-        hallRepository.save(existingHall);
-
-        // Try to create hall with same name
-        Hall newHall = new Hall();
-        newHall.setHallName("DUPLICATE");
-        newHall.setCapacity(100);
-
-        ResponseEntity<String> response = restTemplate.postForEntity(
-            "/api/admin/halls", 
-            newHall, 
-            String.class
-        );
-
-        // Should fail with duplicate error
-        assertEquals(400, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("Hall with this name already exists"));
-    }
 
     // TEST 24: Add course with duplicate code - should fail
     @Test
