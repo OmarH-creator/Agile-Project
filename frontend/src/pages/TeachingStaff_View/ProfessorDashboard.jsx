@@ -237,66 +237,70 @@ const ProfessorDashboard = () => {
     // --- ACTION: Create/Update Assignment ---
     const handleCreateAssignment = async (e) => {
         e.preventDefault();
+
+        // --- HELPER: Auto-convert strings to numbers ---
+        const parseValue = (val) => {
+            // If it's a number string (e.g. "15"), convert it. Otherwise keep as string.
+            if (!isNaN(val) && val.trim !== "") {
+                return Number(val);
+            }
+            return val;
+        };
+
         try {
+            // 1. Prepare Base Payload (Shared logic)
+            const basePayload = {
+                title: newAssignData.title,
+                description: newAssignData.description,
+                maxGrade: parseValue(newAssignData.maxGrade), // Ensure this is a number
+                deadline: newAssignData.deadline,
+                Grading_Item_Id: newAssignData.gradingItemId
+            };
+
+            // 2. Flatten Custom Attributes & Parse Types
+            newAssignData.customAttributes.forEach(attr => {
+                if (attr.key && attr.value) {
+                    // Parse the value so backend sees INTEGER/DOUBLE, not STRING
+                    basePayload[attr.key] = parseValue(attr.value);
+                }
+            });
+
             if (editingAssignmentId) {
-                // UPDATE
-                // Merge static fields with custom attributes
-                const updatePayload = {
-                    title: newAssignData.title,
-                    description: newAssignData.description,
-                    maxGrade: newAssignData.maxGrade,
-                    deadline: newAssignData.deadline,
-                    Grading_Item_Id: newAssignData.gradingItemId // Add bucket ID
-                };
-                // Add custom attributes to payload
-                newAssignData.customAttributes.forEach(attr => {
-                    if (attr.key && attr.value) {
-                        updatePayload[attr.key] = attr.value;
-                    }
-                });
-
-                await ProfessorAPI.updateAssignment(editingAssignmentId, updatePayload);
+                // --- UPDATE MODE ---
+                // Note: Updates usually don't handle files unless you have specific logic for it
+                await ProfessorAPI.updateAssignment(editingAssignmentId, basePayload);
                 alert("Assignment Updated!");
-            } else {
-                // CREATE
-                // Merge static fields with custom attributes
-                const createPayload = {
-                    title: newAssignData.title,
-                    description: newAssignData.description,
-                    courseName: selectedCourse,
-                    professorId: professorId,
-                    deadline: newAssignData.deadline,
-                    maxGrade: newAssignData.maxGrade,
-                    deadline: newAssignData.deadline,
-                    maxGrade: newAssignData.maxGrade,
-                    file: newAssignData.file,
-                    Grading_Item_Id: newAssignData.gradingItemId // Add bucket ID
-                };
-                // Add custom attributes to payload
-                newAssignData.customAttributes.forEach(attr => {
-                    if (attr.key && attr.value) {
-                        createPayload[attr.key] = attr.value;
-                    }
-                });
 
-                await ProfessorAPI.createAssignment(createPayload);
+            } else {
+                // --- CREATE MODE ---
+                // Add static creation-only fields
+                basePayload.courseName = selectedCourse;
+                basePayload.professorId = professorId;
+                basePayload.file = newAssignData.file;
+
+                await ProfessorAPI.createAssignment(basePayload);
                 alert("Assignment Created!");
             }
 
-            setNewAssignData({ title: '', description: '', deadline: '', maxGrade: 100, file: null, customAttributes: [], gradingItemId: '' });
+            // 3. Reset & Refresh
+            setNewAssignData({
+                title: '', description: '', deadline: '',
+                maxGrade: 100, file: null, customAttributes: [], gradingItemId: ''
+            });
             setShowCreateAssign(false);
             setEditingAssignmentId(null);
 
-            // Refresh list
             const data = await ProfessorAPI.getAssignments(selectedCourse);
             setAssignments(Array.isArray(data) ? data : []);
+
         } catch (e) {
             console.error(e);
-            const errorMsg = e.response?.data ? (typeof e.response.data === 'object' ? JSON.stringify(e.response.data) : e.response.data) : e.message;
+            const errorMsg = e.response?.data
+                ? (typeof e.response.data === 'object' ? JSON.stringify(e.response.data) : e.response.data)
+                : e.message;
             alert("Failed to save assignment: " + errorMsg);
         }
     };
-
     // --- ACTION: View Submissions ---
     const handleViewSubmissions = async (assignment) => {
         setViewingAssignment(assignment);

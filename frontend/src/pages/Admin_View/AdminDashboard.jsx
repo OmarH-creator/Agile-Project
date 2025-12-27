@@ -1,10 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import { Link } from 'react-router-dom';
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './AdminDashboard.css';
 import umsLogo from '../../assets/UMS Logo.png';
-import { Icon } from './Admin-Student-Api';
 import { getAdmin, Icon } from './Admin-Student-Api'
 import { jwtDecode } from "jwt-decode";
 
@@ -12,7 +9,6 @@ const AdminDashboard = () => {
     // Used to highlight the active link in the sidebar
     const location = useLocation();
     const [admin, setAdmin] = useState("");
-    const location = useLocation();
 
     useEffect(() => {
         const token = localStorage.getItem("token");

@@ -445,7 +445,7 @@ public class AdminController {
             newBooking.setPurpose(request.getPurpose());
             newBooking.setStaffId(String.valueOf(request.getStaffId()));
 
-            newBooking.setHall(hall);
+//            newBooking.setHall(hall);
 
             bookingRepository.save(newBooking);
 

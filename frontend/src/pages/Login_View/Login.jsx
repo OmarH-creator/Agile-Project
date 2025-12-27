@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import Illust from "../../assets/loginimage.png";
-import confetti from 'canvas-confetti';
+//import confetti from 'canvas-confetti';
 import umsLogo from "../../assets/UMS Logo.png";
 import confetti from "canvas-confetti";
-import { login } from "../../auth/login";
+//import { login } from "../../auth/login";
 import { login, checkStatus, SetPassword } from "../../auth/login";
 
 function FloatingLabelInput({ id, type, label, value, setValue }) {
@@ -105,11 +105,11 @@ function Login() {
                 setIsLoading(false);
                 return;
             }
-            if (!emailPattern.test(email)) {
-                setError("Please enter a valid email address.");
-                setIsLoading(false);
-                return;
-            }
+            // if (!emailPattern.test(email)) {
+            //     setError("Please enter a valid email address.");
+            //     setIsLoading(false);
+            //     return;
+            // }
 
             // 1. Call the API
             const data = await login(email, password);
@@ -125,12 +125,15 @@ function Login() {
             // The backend MUST return 'userId' and 'role' in the JSON response
             localStorage.setItem("token", data.token);
             localStorage.setItem("role", data.role);
-            if (data.userId) localStorage.setItem("userId", data.userId);
+            // BACKEND sends 'businessId' (e.g. "P-101"), not 'userId'
+            if (data.businessId || data.userId) {
+                localStorage.setItem("userId", data.businessId || data.userId);
+            }
 
-            if(data.role === "ADMIN") navigate("/admin");
-            else if(data.role === "STUDENT") navigate("/student");
-            else if(data.role === "PROFESSOR") navigate("/professor");
-            else if(data.role === "PARENT") navigate("/parent");
+            if (data.role === "ADMIN") navigate("/admin");
+            else if (data.role === "STUDENT") navigate("/student");
+            else if (data.role === "PROFESSOR") navigate("/professor");
+            else if (data.role === "PARENT") navigate("/parent");
             else setError("User role not recognized.");
 
         } catch (err) {
@@ -236,8 +239,8 @@ function Login() {
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <h3>Set New Password</h3>
-                        <p style={{marginBottom: '15px', color: '#666'}}>
-                            Create a password for <br/><strong>{email}</strong>
+                        <p style={{ marginBottom: '15px', color: '#666' }}>
+                            Create a password for <br /><strong>{email}</strong>
                         </p>
 
                         <div className="modal-input-group">
@@ -246,25 +249,25 @@ function Login() {
                                 placeholder="New Password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                style={{width: '100%', padding: '10px', marginBottom: '10px'}}
+                                style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
                             />
                             <input
                                 type="password"
                                 placeholder="Confirm Password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                style={{width: '100%', padding: '10px', marginBottom: '10px'}}
+                                style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
                             />
                         </div>
 
-                        {modalError && <div style={{color: 'red', marginBottom: '10px'}}>{modalError}</div>}
+                        {modalError && <div style={{ color: 'red', marginBottom: '10px' }}>{modalError}</div>}
 
                         <div className="modal-actions">
                             <button
                                 type="button"
                                 onClick={() => setShowModal(false)}
                                 className="cancel-btn"
-                                style={{marginRight: '10px', padding: '8px 15px', cursor: 'pointer'}}
+                                style={{ marginRight: '10px', padding: '8px 15px', cursor: 'pointer' }}
                             >
                                 Cancel
                             </button>
@@ -272,7 +275,7 @@ function Login() {
                                 type="button"
                                 onClick={handleAssignPassword}
                                 className="submit-btn"
-                                style={{padding: '8px 15px', background: '#007bff', color: 'white', border: 'none', cursor: 'pointer'}}
+                                style={{ padding: '8px 15px', background: '#007bff', color: 'white', border: 'none', cursor: 'pointer' }}
                             >
                                 Save Password
                             </button>

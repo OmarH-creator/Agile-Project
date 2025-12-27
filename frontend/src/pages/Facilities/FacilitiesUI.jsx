@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, {useMemo, useState, useEffect, useRef} from 'react';
 import './FacilitiesUI.css';
 import umsLogo from '../../assets/UMS Logo.png';
 import html2canvas from "html2canvas";

@@ -15,7 +15,7 @@ public class Professor {
     @Column(nullable = false)
     private String professorName;
 
-    @Column(nullable = false)
+    @Column
     private Integer Payment;
 
     @Column(unique = true, nullable = false)
