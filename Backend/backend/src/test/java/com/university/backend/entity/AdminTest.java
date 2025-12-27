@@ -5,25 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * SIMPLE Admin Entity Tests - Easy to Read and Understand
- * 
- * This file tests the Admin.java entity using basic JUnit syntax.
- * No complex Spring annotations - just simple object testing like your JavaFX course!
- * 
- * Tests cover:
- * - Object creation with constructors
- * - Getter and setter methods
- * - Field validation (admin ID, email uniqueness)
- * - Course assignment functionality
- * - Basic admin operations
- * - Edge cases and null handling
- * 
- * Note: This tests only the Admin entity object itself, not the business logic
- * methods that interact with UniversityRepository (those would need integration tests).
- * 
- * Total: 20+ simple tests covering all Admin entity functionality.
- */
+
 public class AdminTest {
 
     // ==========================================

@@ -5,22 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Date;
 import java.util.List;
 
-/**
- * SIMPLE Student Entity Tests - Easy to Read and Understand
- * 
- * This file tests the Student.java entity using basic JUnit syntax.
- * No complex Spring annotations - just simple object testing like your JavaFX course!
- * 
- * Tests cover:
- * - Object creation with constructors
- * - Getter and setter methods
- * - Field validation (student ID, email, phone uniqueness)
- * - Business logic (GPA calculation, course enrollment)
- * - Course management (current and completed courses)
- * - Edge cases and null handling
- * 
- * Total: 25+ simple tests covering all Student functionality.
- */
 public class StudentTest {
 
     // ==========================================

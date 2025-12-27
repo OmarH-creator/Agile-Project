@@ -14,19 +14,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * COMPLETE AuthController Tests
-
- * This ONE file covers ALL testing requirements from the checklist:
- * - Login with valid/invalid credentials
- * - Login with non-existent users
- * - Login with empty/null data
- * - Check status for first-time and returning users
- * - Set password for new users
- * - All error cases and edge cases
-
- * Uses simple syntax - no complex mocking or hard annotations.
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public class AuthControllerTest {

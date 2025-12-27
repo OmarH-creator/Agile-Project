@@ -5,22 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * SIMPLE Professor Entity Tests - Easy to Read and Understand
- * 
- * This file tests the Professor.java entity using basic JUnit syntax.
- * No complex Spring annotations - just simple object testing like your JavaFX course!
- * 
- * Tests cover:
- * - Object creation with constructors
- * - Getter and setter methods
- * - Field validation (professor ID, email uniqueness)
- * - Course assignment functionality
- * - Department validation
- * - Edge cases and null handling
- * 
- * Total: 20+ simple tests covering all Professor functionality.
- */
 public class ProfessorTest {
 
     // ==========================================

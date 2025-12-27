@@ -3,22 +3,6 @@ package com.university.backend.entity;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * SIMPLE User Entity Tests - Easy to Read and Understand
- * 
- * This file tests the User.java entity using basic JUnit syntax.
- * No complex Spring annotations - just simple object testing like your JavaFX course!
- * 
- * Tests cover:
- * - Object creation with constructors
- * - Getter and setter methods
- * - Field validation
- * - Email format validation
- * - Role validation
- * - Edge cases and null handling
- * 
- * Total: 15+ simple tests covering all User functionality.
- */
 public class UserTest {
 
     // ==========================================

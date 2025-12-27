@@ -15,22 +15,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * COMPLETE StudentController Tests - Simple and Easy to Read
- * 
- * This ONE file covers ALL testing requirements for StudentController:
- * - Student Profile Management
- * - Course Registration (with prerequisite checking)
- * - Course Dropping
- * - Available Courses Listing
- * - Major Validation
- * - Credit Limit Validation
- * - Error Handling
- * 
- * Uses simple syntax - no complex mocking or hard annotations.
- * 
- * Total: 20+ comprehensive tests covering all StudentController functionality.
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public class StudentControllerTest {

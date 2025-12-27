@@ -14,18 +14,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * COMPLETE AdminController Tests
-
- * This ONE file covers ALL testing requirements for AdminController:
- * - Student Management (CRUD operations)
- * - Professor Management (CRUD operations)
- * - Hall Management (CRUD operations)
- * - Course Management (CRUD operations)
- * - Booking Management (CRUD operations)
- * - Admin fetch operations
-
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public class AdminControllerTest {
